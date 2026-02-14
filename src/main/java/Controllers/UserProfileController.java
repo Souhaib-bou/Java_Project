@@ -1,0 +1,149 @@
+package Controllers;
+
+import Models.User;
+import Services.UserService;
+import Utils.UserSession;
+
+import javafx.fxml.FXML;
+import javafx.scene.control.*;
+
+import java.sql.SQLException;
+
+public class UserProfileController {
+
+    @FXML private TextField txtFirstName;
+    @FXML private TextField txtLastName;
+    @FXML private TextField txtEmail;
+    @FXML private PasswordField txtPassword;
+
+    @FXML private Label lblMsg;
+
+    private final UserService userService = new UserService();
+    private MainShellController shell;
+
+    @FXML
+    private void initialize() {
+        loadFromSession();
+    }
+
+    public void setShell(MainShellController shell) {
+        this.shell = shell;
+    }
+
+    private void loadFromSession() {
+        User u = UserSession.getInstance().getCurrentUser();
+        if (u == null) return;
+
+        txtFirstName.setText(nullToEmpty(u.getFirstName()));
+        txtLastName.setText(nullToEmpty(u.getLastName()));
+        txtEmail.setText(nullToEmpty(u.getEmail()));
+        txtPassword.setText(nullToEmpty(u.getPassword()));
+    }
+
+    @FXML
+    private void handleSave() {
+        User u = UserSession.getInstance().getCurrentUser();
+        if (u == null) return;
+
+        String fn = nullToEmpty(txtFirstName.getText()).trim();
+        String ln = nullToEmpty(txtLastName.getText()).trim();
+        String em = nullToEmpty(txtEmail.getText()).trim();
+        String pw = nullToEmpty(txtPassword.getText());
+
+        if (fn.isEmpty() || ln.isEmpty() || em.isEmpty() || pw.isEmpty()) {
+            lblMsg.setText("First name, last name, email, and password are required.");
+            return;
+        }
+        if (!em.contains("@") || !em.contains(".")) {
+            lblMsg.setText("Please enter a valid email.");
+            return;
+        }
+
+        try {
+            // keep roleId + status unchanged
+            User updated = new User(
+                    u.getUserId(),
+                    fn,
+                    ln,
+                    em,
+                    pw,
+                    u.getRoleId(),
+                    u.getStatus()
+            );
+
+            userService.updateUser(u.getUserId(), updated);
+
+            // update session too
+            u.setFirstName(fn);
+            u.setLastName(ln);
+            u.setEmail(em);
+            u.setPassword(pw);
+
+            lblMsg.setText("Profile updated.");
+            if (shell != null) shell.refreshShellUserChip();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            lblMsg.setText("Update failed: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void handleDeactivateAccount() {
+        User u = UserSession.getInstance().getCurrentUser();
+        if (u == null) return;
+
+        var res = new Alert(
+                Alert.AlertType.CONFIRMATION,
+                "Deactivate your account?\n\nYou will be logged out immediately.",
+                ButtonType.OK, ButtonType.CANCEL
+        ).showAndWait();
+
+        if (res.isEmpty() || res.get() != ButtonType.OK) return;
+
+        try {
+            userService.setUserStatus(u.getUserId(), "inactive");
+
+            // clear session + logout to login screen
+            UserSession.getInstance().clear();
+            if (shell != null) shell.handleLogout();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            lblMsg.setText("Deactivate failed: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    private void handleDeleteAccount() {
+        User u = UserSession.getInstance().getCurrentUser();
+        if (u == null) return;
+
+        var res = new Alert(Alert.AlertType.CONFIRMATION,
+                "Are you sure you want to delete your account?\nThis action cannot be undone.",
+                ButtonType.OK, ButtonType.CANCEL).showAndWait();
+
+        if (res.isPresent() && res.get() == ButtonType.OK) {
+            try {
+                userService.deleteUser(u.getUserId());
+                UserSession.getInstance().clear();
+
+                // return to login
+                if (shell != null) shell.handleLogout();
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+                lblMsg.setText("Delete failed: " + e.getMessage());
+            }
+        }
+    }
+
+    @FXML
+    private void handleBack() {
+        if (shell != null) shell.backToPlans();
+    }
+
+    private String nullToEmpty(String s) {
+        return s == null ? "" : s;
+    }
+}

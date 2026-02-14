@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="Controllers.OnboardingPlanEditController"
+            stylesheets="@styles/hirely.css"
+            styleClass="app-root">
+
+    <!-- optional: gives nice breathing room when resizing -->
+    <padding>
+        <Insets top="18" right="18" bottom="18" left="18"/>
+    </padding>
+
+    <center>
+        <!-- Card now stretches with the window -->
+        <VBox spacing="14" styleClass="card" maxWidth="Infinity" maxHeight="Infinity">
+            <Label text="Update Plan" styleClass="section-title"/>
+
+            <!-- Let GridPane stretch -->
+            <GridPane hgap="12" vgap="10" VBox.vgrow="ALWAYS">
+                <columnConstraints>
+                    <!-- label column stays fixed -->
+                    <ColumnConstraints minWidth="110" hgrow="NEVER"/>
+                    <!-- fields column grows -->
+                    <ColumnConstraints minWidth="260" hgrow="ALWAYS"/>
+                </columnConstraints>
+
+                <Label text="User" styleClass="form-label"
+                       GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                <ComboBox fx:id="cmbUser" promptText="Select a user..."
+                          GridPane.rowIndex="0" GridPane.columnIndex="1"
+                          maxWidth="Infinity"/>
+
+                <Label text="Status" styleClass="form-label"
+                       GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                <ComboBox fx:id="cmbStatus"
+                          GridPane.rowIndex="1" GridPane.columnIndex="1"
+                          maxWidth="Infinity"/>
+
+                <Label text="Deadline" styleClass="form-label"
+                       GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                <DatePicker fx:id="dpDeadline"
+                            GridPane.rowIndex="2" GridPane.columnIndex="1"
+                            maxWidth="Infinity"/>
+            </GridPane>
+
+            <!-- Buttons stay bottom-right and don't float in the middle -->
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button text="Cancel" onAction="#handleCancel" styleClass="btn-secondary"/>
+                <Button text="Save" onAction="#handleSave" styleClass="btn-primary"/>
+            </HBox>
+        </VBox>
+    </center>
+
+</BorderPane>
