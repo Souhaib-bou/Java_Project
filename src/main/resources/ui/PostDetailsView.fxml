@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="ui.PostDetailsController">
+
+    <top>
+        <HBox fx:id="appBar" styleClass="app-bar" alignment="CENTER_LEFT" spacing="12">
+            <Label text="Post" styleClass="section-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button fx:id="editPostBtn" text="Edit" onAction="#onEditPost" styleClass="secondary"/>
+                <Button fx:id="deletePostBtn" text="Delete" onAction="#onDeletePost" styleClass="danger"/>
+            </HBox>
+
+            <HBox spacing="8" alignment="CENTER_RIGHT">
+                 <padding><Insets left="16"/></padding>
+                 <Button text="_" onAction="#onMinimize" styleClass="win-btn"/>
+                 <Button text="□" onAction="#onMaximize" styleClass="win-btn"/>
+                 <Button text="X" onAction="#onClose" styleClass="win-btn, win-close"/>
+            </HBox>
+        </HBox>
+    </top>
+
+    <center>
+        <VBox alignment="TOP_CENTER" fillWidth="true">
+            <padding>
+                <Insets top="22" right="20" bottom="22" left="20"/>
+            </padding>
+
+            <VBox spacing="16" maxWidth="980" prefWidth="980" VBox.vgrow="ALWAYS">
+
+                <!-- FULL POST CARD -->
+                <VBox styleClass="card" spacing="14" minHeight="200" maxHeight="450">
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label fx:id="categoryChip" styleClass="chip"/>
+                        <Label fx:id="statusChip" styleClass="chip"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="pinnedChip" text="&#x1F4CC; PINNED" styleClass="chip" visible="false" managed="false"/>
+                        <Label fx:id="lockedChip" text="&#x1F512; LOCKED" styleClass="chip chip-danger" visible="false" managed="false"/>
+                    </HBox>
+
+                    <Label fx:id="titleLabel" styleClass="post-title" wrapText="true"/>
+                    <Label fx:id="metaLabel" styleClass="muted"/>
+                    <Separator/>
+                    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
+                        <Label fx:id="contentLabel" styleClass="post-body" wrapText="true"/>
+                    </ScrollPane>
+                </VBox>
+
+                <!-- COMMENT COMPOSER -->
+                <VBox spacing="10" VBox.vgrow="ALWAYS">
+                    <HBox alignment="CENTER_LEFT">
+                        <Label text="Comments" styleClass="section-title"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="Refresh" onAction="#onRefreshComments" styleClass="secondary"/>
+                    </HBox>
+
+                    <HBox spacing="12">
+                        <TextArea fx:id="commentArea" promptText="Write a comment..." wrapText="true"
+                                  prefRowCount="4" HBox.hgrow="ALWAYS" styleClass="card"/>
+
+                        <VBox spacing="10" minWidth="180">
+                            <ComboBox fx:id="commentStatusBox" maxWidth="Infinity" visible="false" managed="false"/>
+                            <Button fx:id="addCommentBtn" text="Add" onAction="#onAddComment" styleClass="primary" maxWidth="Infinity"/>
+                            <Button fx:id="updateCommentBtn" text="Update" onAction="#onUpdateComment" styleClass="secondary" maxWidth="Infinity"/>
+                            <Button fx:id="deleteCommentBtn" text="Delete" onAction="#onDeleteComment" styleClass="danger" maxWidth="Infinity"/>
+                        </VBox>
+                    </HBox>
+
+                    <ListView fx:id="commentListView" VBox.vgrow="ALWAYS"/>
+                    <Label fx:id="lockHint" text="" styleClass="muted"/>
+                </VBox>
+
+            </VBox>
+        </VBox>
+    </center>
+
+</BorderPane>

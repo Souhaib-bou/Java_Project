@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="ui.UserProfileController">
+
+    <top>
+        <HBox fx:id="appBar" styleClass="app-bar" alignment="CENTER_LEFT" spacing="12">
+            <Label fx:id="profileTitle" text="My Profile" styleClass="section-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="Refresh" onAction="#onRefresh" styleClass="secondary"/>
+
+            <HBox spacing="8" alignment="CENTER_RIGHT">
+                 <padding><Insets left="16"/></padding>
+                 <Button text="_" onAction="#onMinimize" styleClass="win-btn"/>
+                 <Button text="□" onAction="#onMaximize" styleClass="win-btn"/>
+                 <Button text="X" onAction="#onClose" styleClass="win-btn, win-close"/>
+            </HBox>
+        </HBox>
+    </top>
+
+    <center>
+        <VBox spacing="14" fillWidth="true">
+            <padding>
+                <Insets top="18" right="18" bottom="18" left="18"/>
+            </padding>
+
+            <TabPane tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+                <tabs>
+                    <Tab text="My Posts">
+                        <BorderPane>
+                            <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
+                            <center>
+                                <ListView fx:id="myPostsList"/>
+                            </center>
+                        </BorderPane>
+                    </Tab>
+
+                    <Tab text="My Comments">
+                        <BorderPane>
+                            <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
+                            <center>
+                                <ListView fx:id="myCommentsList"/>
+                            </center>
+                        </BorderPane>
+                    </Tab>
+                </tabs>
+            </TabPane>
+        </VBox>
+    </center>
+
+</BorderPane>

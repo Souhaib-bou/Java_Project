@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="ui.AdminForumController">
+
+    <top>
+        <HBox fx:id="appBar" styleClass="app-bar" alignment="CENTER_LEFT" spacing="12">
+            <!-- Logo inside App Bar (Modern Clean Style) -->
+            <ImageView fx:id="logoView" fitHeight="60" preserveRatio="true"/>
+
+            <!-- user asked to remove "HIRELY" text title -->
+            <Label fx:id="currentUserLabel" styleClass="muted"/>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <TextField fx:id="searchField" promptText="Search posts..." prefWidth="320"/>
+            <ComboBox fx:id="sortBox" prefWidth="140"/>
+            <Button fx:id="newPostBtn" text="New Post" onAction="#onNewPost" styleClass="primary"/>
+            <Button fx:id="userForumBtn" text="User Forum" onAction="#onOpenUserForum" styleClass="secondary"/>
+
+            <ComboBox fx:id="devUserBox" prefWidth="150" />
+
+            <HBox spacing="8" alignment="CENTER_RIGHT">
+                 <padding><Insets left="16"/></padding>
+                 <Button text="_" onAction="#onMinimize" styleClass="win-btn"/>
+                 <Button text="□" onAction="#onMaximize" styleClass="win-btn"/>
+                 <Button text="X" onAction="#onClose" styleClass="win-btn, win-close"/>
+            </HBox>
+
+        </HBox>
+    </top>
+
+    <center>
+        <TabPane fx:id="mainTabs" side="TOP" tabClosingPolicy="UNAVAILABLE">
+            <tabs>
+                <!-- FEED TAB -->
+                <Tab text="Feed">
+                    <SplitPane dividerPositions="0.34">
+                        <!-- LEFT: Feed -->
+                        <VBox spacing="14">
+                            <padding>
+                                <Insets top="16" right="16" bottom="16" left="16"/>
+                            </padding>
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="Latest Posts" styleClass="section-title"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Button text="Refresh" onAction="#onRefreshPosts" styleClass="secondary"/>
+                            </HBox>
+
+                            <ListView fx:id="postListView" VBox.vgrow="ALWAYS"/>
+                        </VBox>
+
+                        <!-- RIGHT: Preview / Compact View -->
+                        <BorderPane>
+                            <padding>
+                                <Insets top="16" right="16" bottom="16" left="16"/>
+                            </padding>
+                            <top>
+                                <VBox spacing="10">
+                                    <HBox alignment="CENTER_LEFT" spacing="10">
+                                        <Label fx:id="postTitleLabel" text="Select a post" styleClass="post-title" wrapText="true"/>
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <Button fx:id="editPostBtn" text="Edit" onAction="#onEditPost" styleClass="secondary"/>
+                                        <Button fx:id="deletePostBtn" text="Delete" onAction="#onDeletePost" styleClass="danger"/>
+                                    </HBox>
+                                    <Label fx:id="postMetaLabel" styleClass="muted"/>
+                                </VBox>
+                            </top>
+                            <center>
+                                <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;">
+                                    <VBox spacing="14" styleClass="card">
+                                        <padding>
+                                            <Insets top="22" right="22" bottom="22" left="22"/>
+                                        </padding>
+                                        <Label fx:id="postContentLabel" wrapText="true" styleClass="post-body"/>
+                                    </VBox>
+                                </ScrollPane>
+                            </center>
+                            <bottom>
+                                <VBox alignment="CENTER">
+                                    <padding>
+                                        <Insets top="10" right="10" bottom="10" left="10"/>
+                                    </padding>
+                                    <Button text="View Full Post &amp; Comments" onAction="#onViewFullPost" styleClass="primary" maxWidth="Infinity"/>
+                                </VBox>
+                            </bottom>
+                        </BorderPane>
+                    </SplitPane>
+                </Tab>
+
+                <!-- POST VIEW TAB -->
+                <Tab fx:id="postTab" text="Post">
+                    <ScrollPane fitToWidth="true" hbarPolicy="NEVER" pannable="true">
+                        <content>
+                            <VBox fx:id="postPage" spacing="20" alignment="TOP_LEFT" fillWidth="true">
+                                <padding>
+                                    <Insets top="24" right="40" bottom="24" left="40"/>
+                                </padding>
+
+                                <!-- Full Post Card -->
+                                <VBox spacing="16" styleClass="card" maxWidth="Infinity">
+                                    <padding>
+                                        <Insets top="22" right="22" bottom="22" left="22"/>
+                                    </padding>
+                                    <HBox alignment="CENTER_LEFT" spacing="12">
+                                        <Label fx:id="categoryChip2" styleClass="chip"/>
+                                        <Label fx:id="statusChip2" styleClass="chip"/>
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <Label fx:id="pinnedChip2" text="&#x1F4CC; PINNED" styleClass="chip" visible="false" managed="false"/>
+                                        <Label fx:id="lockedChip2" text="&#x1F512; LOCKED" styleClass="chip chip-danger" visible="false" managed="false"/>
+                                    </HBox>
+
+                                    <Label fx:id="postTitleLabel2" styleClass="post-title" wrapText="true"/>
+                                    <Label fx:id="postMetaLabel2" styleClass="muted"/>
+                                    <Separator/>
+                                    <Label fx:id="postContentLabel2" wrapText="true" styleClass="post-body"/>
+                                </VBox>
+
+                                <!-- Comment Input -->
+                                <VBox spacing="12">
+                                    <Label text="What are your thoughts?" styleClass="section-title"/>
+                                    <HBox spacing="16">
+                                        <TextArea fx:id="commentArea2" promptText="Write a comment..." wrapText="true"
+                                                  prefRowCount="4" HBox.hgrow="ALWAYS" styleClass="card"/>
+
+                                        <VBox spacing="10" minWidth="180">
+                                            <ComboBox fx:id="commentStatusBox2" maxWidth="Infinity"/>
+                                            <Button fx:id="addCommentBtn2" text="Add Comment" onAction="#onAddComment2" styleClass="primary" maxWidth="Infinity"/>
+                                            <Button fx:id="updateCommentBtn2" text="Update" onAction="#onUpdateComment2" styleClass="secondary" maxWidth="Infinity"/>
+                                            <Button fx:id="deleteCommentBtn2" text="Delete" onAction="#onDeleteComment2" styleClass="danger" maxWidth="Infinity"/>
+                                        </VBox>
+                                    </HBox>
+                                </VBox>
+
+                                <!-- Comments List -->
+                                <VBox spacing="12" VBox.vgrow="ALWAYS">
+                                    <HBox alignment="CENTER_LEFT">
+                                        <Label text="Comments" styleClass="section-title"/>
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <Button text="Refresh Comments" onAction="#onRefreshComments2" styleClass="secondary"/>
+                                    </HBox>
+                                    <ListView fx:id="commentListView2" VBox.vgrow="ALWAYS" />
+                                </VBox>
+                            </VBox>
+                        </content>
+                    </ScrollPane>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </center>
+
+</BorderPane>

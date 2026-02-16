@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+
+<StackPane xmlns="http://javafx.com/javafx/21"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="ui.UserForumController">
+
+    <BorderPane>
+
+        <!-- TOP APP BAR -->
+        <top>
+            <HBox fx:id="appBar" styleClass="app-bar" alignment="CENTER_LEFT" spacing="12">
+                <ImageView fx:id="logoView" fitHeight="34" preserveRatio="true"/>
+
+                <Label text="HIRELY" styleClass="brand"/>
+
+                <Label fx:id="currentUserLabel" styleClass="muted">
+                    <HBox.margin>
+                        <Insets left="14"/>
+                    </HBox.margin>
+                </Label>
+
+                <Region HBox.hgrow="ALWAYS"/>
+
+                <TextField fx:id="searchField" promptText="Search approved posts..." prefWidth="280"/>
+                <ComboBox fx:id="sortBox" prefWidth="140"/>
+
+                <Button fx:id="newPostBtn" text="New Post" onAction="#onNewPost" styleClass="primary"/>
+                <Button fx:id="profileBtn" text="Profile" onAction="#onOpenProfile" styleClass="secondary"/>
+                <Button fx:id="adminPanelBtn" text="Admin Panel" onAction="#onOpenAdminPanel" styleClass="secondary"/>
+                <Button fx:id="becomeAdminBtn" text="Dev: Admin" onAction="#onBecomeAdmin" styleClass="secondary" />
+
+                <ComboBox fx:id="devUserBox" prefWidth="120" />
+
+                <HBox spacing="8" alignment="CENTER_RIGHT">
+                     <padding><Insets left="16"/></padding>
+                     <Button text="_" onAction="#onMinimize" styleClass="win-btn"/>
+                     <Button text="□" onAction="#onMaximize" styleClass="win-btn"/>
+                     <Button text="X" onAction="#onClose" styleClass="win-btn, win-close"/>
+                </HBox>
+            </HBox>
+        </top>
+
+        <!-- CENTER FEED (CENTERED COLUMN) -->
+        <center>
+            <VBox alignment="TOP_CENTER" fillWidth="true">
+                <padding>
+                    <Insets top="22" right="20" bottom="22" left="20"/>
+                </padding>
+
+                <VBox fx:id="feedColumn" spacing="14" maxWidth="1350" prefWidth="1350" VBox.vgrow="ALWAYS">
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Feed" styleClass="section-title"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button text="Refresh" onAction="#onRefresh" styleClass="secondary"/>
+                    </HBox>
+
+                    <ListView fx:id="postListView" VBox.vgrow="ALWAYS" prefHeight="760"/>
+                </VBox>
+            </VBox>
+        </center>
+
+        <bottom>
+            <HBox alignment="CENTER">
+                <padding><Insets top="10" right="10" bottom="10" left="10"/></padding>
+                <Label fx:id="hintLabel" text="Tip: Double-click a post to open it." styleClass="muted"/>
+            </HBox>
+        </bottom>
+
+    </BorderPane>
+
+</StackPane>
