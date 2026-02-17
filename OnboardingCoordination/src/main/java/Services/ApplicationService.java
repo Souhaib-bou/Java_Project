@@ -1,6 +1,5 @@
 package Services;
 
-import Models.Application;
 import Utils.MyDB;
 import java.sql.*;
 import java.time.LocalDateTime;

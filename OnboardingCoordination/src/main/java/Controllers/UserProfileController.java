@@ -2,8 +2,7 @@ package Controllers;
 
 import Models.User;
 import Services.UserService;
-import Utils.AvatarCropDialog;
-import Utils.UserSession;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;

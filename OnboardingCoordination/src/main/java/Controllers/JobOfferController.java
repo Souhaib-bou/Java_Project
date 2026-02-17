@@ -1,8 +1,5 @@
 package Controllers;
 
-import Models.JobOffer;
-import Services.JobOfferService;
-import Utils.UserSession;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.time.LocalDate;

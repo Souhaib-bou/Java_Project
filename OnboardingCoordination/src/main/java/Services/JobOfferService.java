@@ -1,6 +1,5 @@
 package Services;
 
-import Models.JobOffer;
 import Utils.MyDB;
 import java.sql.*;
 import java.util.ArrayList;

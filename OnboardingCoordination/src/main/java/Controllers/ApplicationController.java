@@ -1,7 +1,5 @@
 package Controllers;
 
-import Models.Application;
-import Services.ApplicationService;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;

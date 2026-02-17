@@ -66,14 +66,10 @@ public class OnboardingPlanController implements Initializable {
 
     // we keep the original plans UI node here so we can go back from Tasks
     private Parent plansContent;
-    private MainShellController shell;
 
     /**
      * Sets the shell value.
      */
-    public void setShell(MainShellController shell) {
-        this.shell = shell;
-    }
 
     @Override
     /**

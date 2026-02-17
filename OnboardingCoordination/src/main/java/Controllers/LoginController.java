@@ -1,8 +1,6 @@
 package Controllers;
 
 import Models.User;
-import Services.AuthService;
-import Utils.UserSession;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
