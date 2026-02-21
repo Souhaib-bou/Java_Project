@@ -7,6 +7,35 @@ import java.util.List;
  * Shared validation and normalization rules for posts and comments.
  * Controllers and repositories call this so behavior stays consistent.
  */
+/*
+ * ===============================
+ * POST VALIDATION RULES
+ * ===============================
+ *
+ * - Title is required
+ * - Title must be between 3 and 80 characters
+ * - Title cannot contain only symbols or spaces
+ * - Title must contain at least one letter or digit
+ *
+ * - Content is required
+ * - Content must be between 10 and 5000 characters
+ *
+ * - Category is optional
+ * - If provided, category must be between 2 and 30 characters
+ * - Category must start with '#'
+ * - Category may contain letters, numbers, spaces, '_' or '-'
+ *
+ */
+/*
+ * ===============================
+ * COMMENT VALIDATION RULES
+ * ===============================
+ *
+ * - Comment is required
+ * - Comment must be between 2 and 1000 characters
+ *
+ */
+
 public final class InputValidator {
 
     private InputValidator() {

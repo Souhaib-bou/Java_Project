@@ -50,6 +50,8 @@ public class UserForumController {
     private Button adminPanelBtn;
     @FXML
     private Button becomeAdminBtn;
+    @FXML
+    private ToggleButton themeToggle;
 
     @FXML
     private ListView<ForumPost> postListView;
@@ -79,6 +81,7 @@ public class UserForumController {
         }
 
         refreshSessionUI();
+        syncThemeToggle();
 
         // Dev-only quick identity switcher for local testing.
         devUserBox.setItems(FXCollections.observableArrayList(
@@ -178,7 +181,7 @@ public class UserForumController {
             // Navigation to user profile screen in a separate window.
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/UserProfileView.fxml"));
             Scene scene = new Scene(loader.load(), 1150, 750);
-            scene.getStylesheets().add(getClass().getResource("/styles/hirely.css").toExternalForm());
+            scene.getStylesheets().add(getClass().getResource(Session.getThemeStylesheetPath()).toExternalForm());
 
             Stage st = new Stage();
             st.initStyle(javafx.stage.StageStyle.UNDECORATED);
@@ -204,7 +207,8 @@ public class UserForumController {
         Dialog<ForumPost> dialog = new Dialog<>();
         dialog.setTitle(editing ? "Edit Post" : "New Post");
 
-        dialog.getDialogPane().getStylesheets().add(getClass().getResource("/styles/hirely.css").toExternalForm());
+        dialog.getDialogPane().getStylesheets()
+                .add(getClass().getResource(Session.getThemeStylesheetPath()).toExternalForm());
         dialog.getDialogPane().getStyleClass().add("root");
 
         ButtonType okType = new ButtonType(editing ? "Update" : "Create", ButtonBar.ButtonData.OK_DONE);
@@ -289,7 +293,7 @@ public class UserForumController {
             // Open details in a new stage to keep the feed context intact.
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/PostDetailsView.fxml"));
             Scene scene = new Scene(loader.load(), 1200, 850);
-            scene.getStylesheets().add(getClass().getResource("/styles/hirely.css").toExternalForm());
+            scene.getStylesheets().add(getClass().getResource(Session.getThemeStylesheetPath()).toExternalForm());
 
             PostDetailsController ctrl = loader.getController();
             ctrl.setPost(p);
@@ -372,7 +376,7 @@ public class UserForumController {
             // Role-gated navigation to admin moderation screen.
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/AdminForumView.fxml"));
             Scene scene = new Scene(loader.load(), 1250, 800);
-            scene.getStylesheets().add(getClass().getResource("/styles/hirely.css").toExternalForm());
+            scene.getStylesheets().add(getClass().getResource(Session.getThemeStylesheetPath()).toExternalForm());
 
             Stage st = new Stage();
             st.initStyle(javafx.stage.StageStyle.UNDECORATED);
@@ -393,6 +397,28 @@ public class UserForumController {
         util.Session.set(Session.getCurrentUserId(), Session.Role.ADMIN);
         refreshSessionUI();
         onRefresh();
+    }
+
+    @FXML
+    private void onToggleTheme() {
+        Session.LIGHT_MODE = themeToggle.isSelected();
+        syncThemeToggle();
+        applyThemeToScene();
+    }
+
+    private void syncThemeToggle() {
+        boolean light = Session.LIGHT_MODE;
+        themeToggle.setSelected(light);
+        themeToggle.setText(light ? "Dark" : "Light");
+    }
+
+    private void applyThemeToScene() {
+        Scene scene = themeToggle.getScene();
+        if (scene == null) {
+            return;
+        }
+        scene.getStylesheets().clear();
+        scene.getStylesheets().add(getClass().getResource(Session.getThemeStylesheetPath()).toExternalForm());
     }
 
     private static class DevUser {

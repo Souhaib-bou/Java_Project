@@ -31,6 +31,8 @@ public class UserProfileController {
     private ListView<ForumComment> myCommentsList;
     @FXML
     private HBox appBar;
+    @FXML
+    private ToggleButton themeToggle;
 
     private double xOffset = 0;
     private double yOffset = 0;
@@ -78,6 +80,7 @@ public class UserProfileController {
             }
         });
 
+        syncThemeToggle();
         onRefresh();
     }
 
@@ -99,7 +102,7 @@ public class UserProfileController {
             // Open post details in a separate window so profile stays open.
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/PostDetailsView.fxml"));
             Scene scene = new Scene(loader.load(), 1200, 860);
-            scene.getStylesheets().add(getClass().getResource("/styles/hirely.css").toExternalForm());
+            scene.getStylesheets().add(getClass().getResource(Session.getThemeStylesheetPath()).toExternalForm());
 
             PostDetailsController ctrl = loader.getController();
             ctrl.setPost(p);
@@ -182,5 +185,27 @@ public class UserProfileController {
     private void onClose() {
         // Close only this window; keep other app windows alive.
         appBar.getScene().getWindow().hide();
+    }
+
+    @FXML
+    private void onToggleTheme() {
+        Session.LIGHT_MODE = themeToggle.isSelected();
+        syncThemeToggle();
+        applyThemeToScene();
+    }
+
+    private void syncThemeToggle() {
+        boolean light = Session.LIGHT_MODE;
+        themeToggle.setSelected(light);
+        themeToggle.setText(light ? "Dark" : "Light");
+    }
+
+    private void applyThemeToScene() {
+        Scene scene = themeToggle.getScene();
+        if (scene == null) {
+            return;
+        }
+        scene.getStylesheets().clear();
+        scene.getStylesheets().add(getClass().getResource(Session.getThemeStylesheetPath()).toExternalForm());
     }
 }

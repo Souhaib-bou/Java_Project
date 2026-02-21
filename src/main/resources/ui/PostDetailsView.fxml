@@ -16,6 +16,7 @@
             <HBox spacing="10" alignment="CENTER_RIGHT">
                 <Button fx:id="editPostBtn" text="Edit" onAction="#onEditPost" styleClass="secondary"/>
                 <Button fx:id="deletePostBtn" text="Delete" onAction="#onDeletePost" styleClass="danger"/>
+                <ToggleButton fx:id="themeToggle" text="Light" onAction="#onToggleTheme" styleClass="secondary"/>
             </HBox>
 
             <HBox spacing="8" alignment="CENTER_RIGHT">

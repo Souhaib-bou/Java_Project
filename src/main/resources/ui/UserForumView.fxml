@@ -33,6 +33,7 @@
                 <Button fx:id="profileBtn" text="Profile" onAction="#onOpenProfile" styleClass="secondary"/>
                 <Button fx:id="adminPanelBtn" text="Admin Panel" onAction="#onOpenAdminPanel" styleClass="secondary"/>
                 <Button fx:id="becomeAdminBtn" text="Dev: Admin" onAction="#onBecomeAdmin" styleClass="secondary" />
+                <ToggleButton fx:id="themeToggle" text="Light" onAction="#onToggleTheme" styleClass="secondary"/>
 
                 <ComboBox fx:id="devUserBox" prefWidth="120" />
 

@@ -1,0 +1,137 @@
+
+================================================================================
+FORUM PROJECT - CORE FEATURES & LOGIC
+================================================================================
+
+--------------------------------------------------------------------------------
+1. INPUT VALIDATION
+--------------------------------------------------------------------------------
+Used to ensure data integrity before sending to database.
+
+* checkPost() [InputValidator.java]
+  - Validates title/content length and format.
+  - Ensures category is not empty.
+  - Returns a list of error messages (e.g., "Title must be at least 5 chars").
+
+* checkComment() [InputValidator.java]
+  - Validates comment content is not empty.
+  - Checks maximum length constraints.
+  - Returns error list.
+
+* norm() [InputValidator.java]
+  - Utility to trim whitespace and normalize string input.
+  - Prevents "   " entries.
+
+* validatePost() / validateComment() [InputValidator.java]
+  - Public wrappers called by Controllers.
+  - Aggregates all checks into a single validation pass.
+
+--------------------------------------------------------------------------------
+2. JAVAFX LOGIC (UI & CONTROLLERS)
+--------------------------------------------------------------------------------
+Manages the user interface, event handling, and view switching.
+
+* initialize() [All Controllers]
+  - Automatically called by JavaFX after FXML load.
+  - Sets up bindings (listeners), loads initial data, and configures table columns/cells.
+
+* setCellFactory() [ListViews]
+  - Customizes how items appear in lists.
+  - Uses `PostCardCell` (custom ListCell) to render complex UI cards instead of simple text strings.
+
+* filteredList.predicateProperty() [UserForumController / AdminForumController]
+  - Implements dynamic search filtering.
+  - Updates the visible list in real-time as user types in `searchField`.
+
+* sortedList.comparatorProperty() [UserForumController / AdminForumController]
+  - Handles sorting logic (Newest/Oldest, Pinned First).
+  - Dynamically reorders the list based on `sortBox` selection.
+
+* showPostEditor() [UserForumController / AdminForumController]
+  - Opens a modal `Dialog<ForumPost>` for creating or editing posts.
+  - Handles the result (Create vs Update) after dialog closes.
+
+* refreshSessionUI() [UserForumController / AdminForumController]
+  - Updates UI elements based on current user role (User vs Admin).
+  - Hides/Shows "Admin Panel" button or moderation tools.
+
+* refreshCommentActionVisibility() [PostDetailsController]
+  - "Smart UI" logic.
+  - Hides Add/Edit/Delete buttons if user lacks permission (e.g. not owner, post locked).
+  - Uses `setManaged(false)` to collapse empty space.
+
+--------------------------------------------------------------------------------
+3. CRUD OPERATIONS (CREATE, READ, UPDATE, DELETE)
+--------------------------------------------------------------------------------
+Core business logic for managing Posts and Comments.
+
+* insert() [ForumPostRepository / ForumCommentRepository]
+  - SQL `INSERT INTO`.
+  - usage: Creating new posts or comments.
+  - Sets initial status (PENDING for users, APPROVED for admins).
+
+* findAll() [ForumPostRepository]
+  - SQL `SELECT *`.
+  - usage: Admin view (sees all posts regardless of status).
+
+* findApproved() [ForumPostRepository]
+  - SQL `SELECT * WHERE status='APPROVED'`.
+  - usage: User feed (only shows approved content).
+
+* findByPostId() [ForumCommentRepository]
+  - SQL `SELECT * WHERE post_id=?`.
+  - usage: Loading comments for a specific post.
+
+* update() [ForumPostRepository]
+  - SQL `UPDATE`.
+  - usage: Editing titles, content, or changing status (Approve/Reject/Lock/Pin).
+
+* delete() [ForumPostRepository / ForumCommentRepository]
+  - SQL `DELETE`.
+  - usage: Removing content.
+
+--------------------------------------------------------------------------------
+4. UNIT TESTING
+--------------------------------------------------------------------------------
+Automated verification of logic, specifically validation rules.
+
+* @Test [JUnit Annotation]
+  - Marks a method as a test case.
+
+* assertTrue() / assertFalse() [InputValidatorTest.java]
+  - Verifies boolean conditions (e.g., "Validation should pass").
+
+* assertEquals() [InputValidatorTest.java]
+  - Checks if expected value matches actual value.
+
+* inputValidatorTest_EmptyTitle() [InputValidatorTest.java]
+  - Verifies that empty titles generate the correct error message.
+
+* inputValidatorTest_ValidPost() [InputValidatorTest.java]
+  - Verifies that valid input produces NO errors.
+
+--------------------------------------------------------------------------------
+5. DATABASE MANAGEMENT (JDBC)
+--------------------------------------------------------------------------------
+Direct communication with the MySQL database.
+
+* DB.getConnection() [DB.java]
+  - Establishes connection using `DriverManager`.
+  - Uses URL: `jdbc:mysql://localhost:3306/forum_db`.
+
+* PreparedStatement [Repositories]
+  - Used for ALL SQL queries.
+  - Prevents SQL Injection attacks by parameterizing inputs (`?`).
+
+* ResultSet [Repositories]
+  - Iterates over rows returned by `SELECT` queries.
+  - Maps SQL columns (`title`, `content`) to Java Objects (`ForumPost`).
+
+* mapRow() [Repositories]
+  - Helper method to convert a single SQL row into a Java Model object.
+  - Keeps code DRY (Don't Repeat Yourself).
+
+* Session [Session.java]
+  - In-memory state management.
+  - Tracks `currentUserId` and `Role` (ADMIN vs USER).
+  - Used by Repositories to tag authors and by Controllers to gate access.

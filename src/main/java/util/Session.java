@@ -13,6 +13,7 @@ public class Session {
 
     // Enables local role-switch controls in UI for development/testing.
     public static final boolean DEV_MODE = true; // set to false for production
+    public static boolean LIGHT_MODE = false;
     private static long currentUserId = 1;
     private static Role currentRole = Role.USER;
 
@@ -32,5 +33,9 @@ public class Session {
         // Central session mutation used when switching dev users or escalating role.
         currentUserId = userId;
         currentRole = role;
+    }
+
+    public static String getThemeStylesheetPath() {
+        return LIGHT_MODE ? "/styles/hirely-light.css" : "/styles/hirely.css";
     }
 }

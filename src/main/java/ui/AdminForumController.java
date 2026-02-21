@@ -56,6 +56,8 @@ public class AdminForumController {
     private ComboBox<DevUser> devUserBox;
     @FXML
     private Button userForumBtn;
+    @FXML
+    private ToggleButton themeToggle;
 
     // Window controls
     private double xOffset = 0;
@@ -155,6 +157,7 @@ public class AdminForumController {
         commentStatusBox2.getSelectionModel().select("PENDING");
 
         refreshSessionUI();
+        syncThemeToggle();
 
         // Dev-only identity switcher for quickly testing data ownership flows.
         devUserBox.setItems(FXCollections.observableArrayList(
@@ -334,7 +337,8 @@ public class AdminForumController {
         Dialog<ForumPost> dialog = new Dialog<>();
         dialog.setTitle(editing ? "Edit Post" : "New Post");
 
-        dialog.getDialogPane().getStylesheets().add(getClass().getResource("/styles/hirely.css").toExternalForm());
+        dialog.getDialogPane().getStylesheets()
+                .add(getClass().getResource(Session.getThemeStylesheetPath()).toExternalForm());
         dialog.getDialogPane().getStyleClass().add("root");
 
         ButtonType okType = new ButtonType(editing ? "Update" : "Create", ButtonBar.ButtonData.OK_DONE);
@@ -611,7 +615,7 @@ public class AdminForumController {
             // Navigation back to user-facing forum screen.
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/UserForumView.fxml"));
             Scene scene = new Scene(loader.load(), 1280, 720);
-            scene.getStylesheets().add(getClass().getResource("/styles/hirely.css").toExternalForm());
+            scene.getStylesheets().add(getClass().getResource(Session.getThemeStylesheetPath()).toExternalForm());
 
             Stage st = new Stage();
             st.initStyle(javafx.stage.StageStyle.UNDECORATED);
@@ -624,6 +628,28 @@ public class AdminForumController {
         } catch (Exception ex) {
             showError("Failed to open User Forum", ex);
         }
+    }
+
+    @FXML
+    private void onToggleTheme() {
+        Session.LIGHT_MODE = themeToggle.isSelected();
+        syncThemeToggle();
+        applyThemeToScene();
+    }
+
+    private void syncThemeToggle() {
+        boolean light = Session.LIGHT_MODE;
+        themeToggle.setSelected(light);
+        themeToggle.setText(light ? "Dark" : "Light");
+    }
+
+    private void applyThemeToScene() {
+        Scene scene = themeToggle.getScene();
+        if (scene == null) {
+            return;
+        }
+        scene.getStylesheets().clear();
+        scene.getStylesheets().add(getClass().getResource(Session.getThemeStylesheetPath()).toExternalForm());
     }
 
     private static class DevUser {

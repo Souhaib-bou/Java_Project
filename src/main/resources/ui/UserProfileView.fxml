@@ -13,6 +13,7 @@
             <Label fx:id="profileTitle" text="My Profile" styleClass="section-title"/>
             <Region HBox.hgrow="ALWAYS"/>
             <Button text="Refresh" onAction="#onRefresh" styleClass="secondary"/>
+            <ToggleButton fx:id="themeToggle" text="Light" onAction="#onToggleTheme" styleClass="secondary"/>
 
             <HBox spacing="8" alignment="CENTER_RIGHT">
                  <padding><Insets left="16"/></padding>

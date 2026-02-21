@@ -4,6 +4,7 @@ import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import util.Session;
 
 /**
  * JavaFX entry point for the Hirely forum desktop app.
@@ -19,7 +20,7 @@ public class Main extends Application {
 
         // Shared stylesheet used by all forum windows.
         scene.getStylesheets().add(
-                getClass().getResource("/styles/hirely.css").toExternalForm());
+                getClass().getResource(Session.getThemeStylesheetPath()).toExternalForm());
 
         stage.setTitle("Hirely Forum");
         stage.setScene(scene);

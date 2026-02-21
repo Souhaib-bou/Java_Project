@@ -1,22 +1,22 @@
 /* =========================================================
-   Hirely — Dark + Orange (Premium Interactive UI)
+   Hirely - Light + Orange
    ========================================================= */
 
 .root {
     -hirely-orange: #ff6a00;
     -hirely-orange-2: #ff7f2e;
 
-    -bg: #0b0f14;
-    -surface: #121826;
-    -surface-2: #0f141d;
-    -surface-3: #182030;
-    -border: #232b3d;
+    -bg: #f6f7fb;
+    -surface: #ffffff;
+    -surface-2: #f1f3f8;
+    -surface-3: #ffffff;
+    -border: #d9deea;
 
-    -text: #e6e9ef;
-    -muted: #b6c0cf;
+    -text: #101828;
+    -muted: #667085;
     -danger: #e5484d;
 
-    -focus-ring: rgba(255, 106, 0, 0.35);
+    -focus-ring: rgba(255, 106, 0, 0.25);
 
     -fx-base: -bg;
     -fx-background: -bg;
@@ -26,7 +26,6 @@
     -fx-font-size: 18px;
 }
 
-/* Force dark background everywhere */
 .border-pane,
 .split-pane,
 .vbox,
@@ -39,9 +38,6 @@
     -fx-background-color: -bg;
 }
 
-/* =========================================================
-   Typography
-   ========================================================= */
 .label {
     -fx-text-fill: -text;
 }
@@ -65,11 +61,11 @@
 .post-title {
     -fx-font-size: 30px;
     -fx-font-weight: 800;
-    -fx-text-fill: #ffffff;
+    -fx-text-fill: -text;
 }
 
 .post-body {
-    -fx-text-fill: #d7dce3;
+    -fx-text-fill: #344054;
     -fx-font-size: 18px;
     -fx-line-spacing: 4px;
 }
@@ -77,59 +73,48 @@
 .post-card-title {
     -fx-font-size: 19px;
     -fx-font-weight: 800;
-    -fx-text-fill: #ffffff;
+    -fx-text-fill: -text;
 }
 
 .post-card-preview {
     -fx-text-fill: -muted;
 }
 
-/* =========================================================
-   App Bar
-   ========================================================= */
 .app-bar {
-    -fx-background-color: -surface-2;
+    -fx-background-color: -surface;
     -fx-padding: 8 16;
     -fx-spacing: 12;
     -fx-border-color: -border;
     -fx-border-width: 0 0 1 0;
 }
 
-/* =========================================================
-   Cards + “lift” behavior
-   ========================================================= */
 .card {
-    -fx-background-color: #141c2a;
-    -fx-border-color: #2b3750;
+    -fx-background-color: -surface;
+    -fx-border-color: -border;
     -fx-border-width: 1;
     -fx-background-radius: 16;
     -fx-border-radius: 16;
     -fx-padding: 22;
-    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.45), 18, 0, 0, 8);
+    -fx-effect: dropshadow(three-pass-box, rgba(16, 24, 40, 0.10), 18, 0, 0, 8);
 }
 
-/* Hover feel */
 .card:hover {
     -fx-border-color: rgba(255, 106, 0, 0.55);
     -fx-effect: dropshadow(three-pass-box, rgba(255, 106, 0, 0.10), 22, 0, 0, 10);
 }
 
-/* Selected pseudo-class (used by PostCardCell) */
 .card:selected {
     -fx-border-color: -hirely-orange;
-    -fx-background-color: -surface-3;
+    -fx-background-color: -surface-2;
     -fx-effect: dropshadow(three-pass-box, rgba(255, 106, 0, 0.14), 26, 0, 0, 12);
 }
 
-/* =========================================================
-   Inputs — TextField / TextArea / ComboBox
-   ========================================================= */
 .text-field,
 .text-area,
 .combo-box-base {
     -fx-background-color: -surface;
     -fx-text-fill: -text;
-    -fx-prompt-text-fill: #7e8aa7;
+    -fx-prompt-text-fill: #98a2b3;
 
     -fx-background-radius: 12;
     -fx-border-radius: 12;
@@ -143,7 +128,6 @@
     -fx-background-color: -surface;
 }
 
-/* Focus ring */
 .text-field:focused,
 .text-area:focused,
 .combo-box-base:focused {
@@ -151,14 +135,12 @@
     -fx-effect: dropshadow(three-pass-box, -focus-ring, 18, 0, 0, 0);
 }
 
-/* Hover */
 .text-field:hover,
 .text-area:hover,
 .combo-box-base:hover {
     -fx-border-color: rgba(255, 106, 0, 0.35);
 }
 
-/* Combo popup */
 .combo-box-popup .list-view {
     -fx-background-color: -surface;
     -fx-border-color: -border;
@@ -182,9 +164,6 @@
     -fx-background-color: rgba(255, 106, 0, 0.18);
 }
 
-/* =========================================================
-   Buttons
-   ========================================================= */
 .button,
 .toggle-button {
     -fx-background-radius: 12;
@@ -194,7 +173,6 @@
     -fx-font-size: 16px;
 }
 
-/* Primary */
 .button.primary {
     -fx-background-color: -hirely-orange;
     -fx-text-fill: white;
@@ -209,7 +187,6 @@
     -fx-translate-y: 1;
 }
 
-/* Secondary */
 .button.secondary,
 .toggle-button.secondary {
     -fx-background-color: transparent;
@@ -236,7 +213,6 @@
     -fx-background-color: rgba(255, 106, 0, 0.12);
 }
 
-/* Danger */
 .button.danger {
     -fx-background-color: -danger;
     -fx-text-fill: white;
@@ -251,22 +227,17 @@
     -fx-translate-y: 1;
 }
 
-/* Disabled */
 .button:disabled,
 .toggle-button:disabled {
     -fx-opacity: 0.55;
 }
 
-/* =========================================================
-   ListView (important for your PostCardCell)
-   ========================================================= */
 .list-view {
     -fx-background-color: transparent;
     -fx-control-inner-background: transparent;
     -fx-padding: 0;
 }
 
-/* Remove default blue selection background and let “card:selected” shine */
 .list-cell {
     -fx-background-color: transparent;
     -fx-padding: 0 0 16 0;
@@ -280,7 +251,6 @@
     -fx-background-color: transparent;
 }
 
-/* Improve keyboard focus outline */
 .list-view:focused {
     -fx-background-insets: 0;
     -fx-border-color: rgba(255, 106, 0, 0.20);
@@ -288,30 +258,24 @@
     -fx-border-radius: 14;
 }
 
-/* =========================================================
-   Chips
-   ========================================================= */
 .chip {
     -fx-padding: 4 14;
     -fx-background-radius: 999;
     -fx-border-radius: 999;
 
-    -fx-background-color: rgba(255, 106, 0, 0.15);
-    -fx-border-color: rgba(255, 106, 0, 0.45);
+    -fx-background-color: rgba(255, 106, 0, 0.12);
+    -fx-border-color: rgba(255, 106, 0, 0.35);
 
-    -fx-text-fill: #ff7f2e;
+    -fx-text-fill: #c2410c;
     -fx-font-weight: 800;
 }
 
 .chip-danger {
-    -fx-background-color: rgba(229, 72, 77, 0.2);
-    -fx-border-color: rgba(229, 72, 77, 0.5);
-    -fx-text-fill: #ff6b6f;
+    -fx-background-color: rgba(229, 72, 77, 0.10);
+    -fx-border-color: rgba(229, 72, 77, 0.35);
+    -fx-text-fill: #b42318;
 }
 
-/* =========================================================
-   Tabs
-   ========================================================= */
 .tab-pane {
     -fx-padding: 0;
 }
@@ -348,14 +312,11 @@
     -fx-text-fill: -text;
 }
 
-/* =========================================================
-   ScrollBars (global)
-   ========================================================= */
 .scroll-pane {
     -fx-background-color: transparent;
 }
 
-.scroll-pane>.viewport {
+.scroll-pane > .viewport {
     -fx-background-color: transparent;
 }
 
@@ -372,16 +333,15 @@
 
 .scroll-bar:vertical .thumb,
 .scroll-bar:horizontal .thumb {
-    -fx-background-color: #313d4f;
+    -fx-background-color: #c5ccda;
     -fx-background-radius: 10;
 }
 
 .scroll-bar:vertical .thumb:hover,
 .scroll-bar:horizontal .thumb:hover {
-    -fx-background-color: #3c4a61;
+    -fx-background-color: #b6becf;
 }
 
-/* hide arrows for modern look */
 .scroll-bar .increment-button,
 .scroll-bar .decrement-button {
     -fx-padding: 0;
@@ -394,17 +354,11 @@
     -fx-padding: 0;
 }
 
-/* =========================================================
-   Separators
-   ========================================================= */
 .separator *.line {
     -fx-border-color: -border;
     -fx-border-width: 1 0 0 0;
 }
 
-/* =========================================================
-   Dialogs / Alerts
-   ========================================================= */
 .dialog-pane {
     -fx-background-color: -bg;
     -fx-border-color: -border;
@@ -424,9 +378,6 @@
     -fx-font-size: 16px;
 }
 
-/* =========================================================
-   Window Controls (your custom buttons)
-   ========================================================= */
 .win-btn {
     -fx-background-color: transparent;
     -fx-text-fill: -muted;
@@ -438,12 +389,12 @@
 }
 
 .win-btn:hover {
-    -fx-background-color: rgba(255, 255, 255, 0.10);
+    -fx-background-color: rgba(16, 24, 40, 0.06);
     -fx-text-fill: -text;
 }
 
 .win-btn:pressed {
-    -fx-background-color: rgba(255, 255, 255, 0.14);
+    -fx-background-color: rgba(16, 24, 40, 0.10);
     -fx-translate-y: 1;
 }
 

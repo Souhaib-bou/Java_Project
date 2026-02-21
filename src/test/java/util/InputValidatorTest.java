@@ -32,13 +32,13 @@ class InputValidatorTest {
     // ---------- POST: Title ----------
     @Test
     void validatePost_titleEmpty_fails() {
-        List<String> errors = InputValidator.validatePost("", "valid content here!", "#cat");
+        List<String> errors = InputValidator.validatePost("", "valid content here!", "#job");
         assertHasError(errors, "title");
     }
 
     @Test
     void validatePost_titleTooShort_fails() {
-        List<String> errors = InputValidator.validatePost("Hi", "valid content here!", "#cat");
+        List<String> errors = InputValidator.validatePost("Hi", "valid content here!", "#job");
         assertHasError(errors, "title");
         assertHasError(errors, "3");
     }
@@ -46,48 +46,48 @@ class InputValidatorTest {
     @Test
     void validatePost_titleTooLong_fails() {
         String title81 = repeat('a', 81);
-        List<String> errors = InputValidator.validatePost(title81, "valid content here!", "#cat");
+        List<String> errors = InputValidator.validatePost(title81, "valid content here!", "#job");
         assertHasError(errors, "title");
         assertHasError(errors, "80");
     }
 
     @Test
     void validatePost_titleAtMin_ok() {
-        List<String> errors = InputValidator.validatePost("Hey", "valid content here!", "#cat");
+        List<String> errors = InputValidator.validatePost("Hey", "valid content here!", "#job");
         assertNoErrors(errors);
     }
 
     @Test
     void validatePost_titleAtMax_ok() {
         String title80 = repeat('a', 80);
-        List<String> errors = InputValidator.validatePost(title80, "valid content here!", "#cat");
+        List<String> errors = InputValidator.validatePost(title80, "valid content here!", "#job");
         assertNoErrors(errors);
     }
 
     // ---------- POST: Content ----------
     @Test
     void validatePost_contentEmpty_fails() {
-        List<String> errors = InputValidator.validatePost("Good title", "", "#cat");
+        List<String> errors = InputValidator.validatePost("Good title", "", "#job");
         assertHasError(errors, "content");
     }
 
     @Test
     void validatePost_contentTooShort_fails() {
-        List<String> errors = InputValidator.validatePost("Good title", "123456789", "#cat"); // 9 chars
+        List<String> errors = InputValidator.validatePost("Good title", "123456789", "#job"); // 9 chars
         assertHasError(errors, "content");
         assertHasError(errors, "10");
     }
 
     @Test
     void validatePost_contentAtMin_ok() {
-        List<String> errors = InputValidator.validatePost("Good title", "1234567890", "#cat"); // 10 chars
+        List<String> errors = InputValidator.validatePost("Good title", "1234567890", "#job"); // 10 chars
         assertNoErrors(errors);
     }
 
     @Test
     void validatePost_contentTooLong_fails() {
         String big = repeat('x', 5001);
-        List<String> errors = InputValidator.validatePost("Good title", big, "#cat");
+        List<String> errors = InputValidator.validatePost("Good title", big, "#job");
         assertHasError(errors, "content");
         assertHasError(errors, "5000");
     }
@@ -95,7 +95,7 @@ class InputValidatorTest {
     @Test
     void validatePost_contentAtMax_ok() {
         String big = repeat('x', 5000);
-        List<String> errors = InputValidator.validatePost("Good title", big, "#cat");
+        List<String> errors = InputValidator.validatePost("Good title", big, "#job");
         assertNoErrors(errors);
     }
 

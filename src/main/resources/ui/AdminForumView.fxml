@@ -24,6 +24,7 @@
             <ComboBox fx:id="sortBox" prefWidth="140"/>
             <Button fx:id="newPostBtn" text="New Post" onAction="#onNewPost" styleClass="primary"/>
             <Button fx:id="userForumBtn" text="User Forum" onAction="#onOpenUserForum" styleClass="secondary"/>
+            <ToggleButton fx:id="themeToggle" text="Light" onAction="#onToggleTheme" styleClass="secondary"/>
 
             <ComboBox fx:id="devUserBox" prefWidth="150" />
 

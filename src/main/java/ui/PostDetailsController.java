@@ -4,6 +4,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
@@ -46,6 +47,8 @@ public class PostDetailsController {
     private Label lockHint;
     @FXML
     private HBox appBar;
+    @FXML
+    private ToggleButton themeToggle;
 
     private double xOffset = 0;
     private double yOffset = 0;
@@ -93,6 +96,8 @@ public class PostDetailsController {
                 appBar.getScene().getWindow().setY(event.getScreenY() - yOffset);
             }
         });
+
+        syncThemeToggle();
     }
 
     public void setPost(ForumPost p) {
@@ -331,7 +336,8 @@ public class PostDetailsController {
 
         Dialog<ForumPost> dialog = new Dialog<>();
         dialog.setTitle("Edit Post");
-        dialog.getDialogPane().getStylesheets().add(getClass().getResource("/styles/hirely.css").toExternalForm());
+        dialog.getDialogPane().getStylesheets()
+                .add(getClass().getResource(Session.getThemeStylesheetPath()).toExternalForm());
         dialog.getDialogPane().getStyleClass().add("root");
 
         ButtonType okType = new ButtonType("Update", ButtonBar.ButtonData.OK_DONE);
@@ -491,5 +497,27 @@ public class PostDetailsController {
     private void onClose() {
         // Close only this details window.
         appBar.getScene().getWindow().hide();
+    }
+
+    @FXML
+    private void onToggleTheme() {
+        Session.LIGHT_MODE = themeToggle.isSelected();
+        syncThemeToggle();
+        applyThemeToScene();
+    }
+
+    private void syncThemeToggle() {
+        boolean light = Session.LIGHT_MODE;
+        themeToggle.setSelected(light);
+        themeToggle.setText(light ? "Dark" : "Light");
+    }
+
+    private void applyThemeToScene() {
+        Scene scene = themeToggle.getScene();
+        if (scene == null) {
+            return;
+        }
+        scene.getStylesheets().clear();
+        scene.getStylesheets().add(getClass().getResource(Session.getThemeStylesheetPath()).toExternalForm());
     }
 }
