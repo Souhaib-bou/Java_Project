@@ -4,6 +4,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -22,6 +23,7 @@ import model.ForumPost;
 import org.kordamp.ikonli.javafx.FontIcon;
 import repo.ForumPostRepository;
 import repo.UserRepository;
+import util.ModerationService;
 import util.Session;
 import util.InputValidator;
 import java.util.List;
@@ -75,10 +77,13 @@ public class UserForumController {
 
     private final ForumPostRepository postRepo = new ForumPostRepository();
     private final UserRepository userRepo = new UserRepository();
+    private final ModerationService moderationService = new ModerationService();
 
     private final ObservableList<ForumPost> allApproved = FXCollections.observableArrayList();
     private FilteredList<ForumPost> filtered;
     private SortedList<ForumPost> sorted;
+    private boolean postSubmissionBusy = false;
+    private static final String DEFAULT_HINT = "Tip: Double-click a post to open it.";
 
     @FXML
     private void initialize() {
@@ -87,6 +92,7 @@ public class UserForumController {
             logoView.setImage(new Image(getClass().getResourceAsStream("/assets/logo.png")));
         } catch (Exception ignored) {
         }
+        hintLabel.setText(DEFAULT_HINT);
 
         refreshSessionUI();
         syncThemeToggle();
@@ -207,6 +213,9 @@ public class UserForumController {
     @FXML
     private void onNewPost() {
         // CREATE (posts): open editor in "new post" mode.
+        if (postSubmissionBusy) {
+            return;
+        }
         showPostEditor(null);
     }
 
@@ -262,8 +271,16 @@ public class UserForumController {
             if (btn != okType)
                 return null;
 
-            ForumPost p = editing ? existing : new ForumPost();
-            p.setAuthorId(Session.getCurrentUserId());
+            ForumPost p = new ForumPost();
+            if (editing && existing != null) {
+                p.setId(existing.getId());
+                p.setAuthorId(existing.getAuthorId());
+                p.setPinned(existing.isPinned());
+                p.setLocked(existing.isLocked());
+                p.setCreatedAt(existing.getCreatedAt());
+            } else {
+                p.setAuthorId(Session.getCurrentUserId());
+            }
 
             String t = InputValidator.norm(title.getText());
             String c = InputValidator.norm(content.getText());
@@ -273,27 +290,121 @@ public class UserForumController {
             p.setTitle(t);
             p.setContent(c);
             p.setCategory(cat);
-
-            p.setStatus("PENDING");
             return p;
         });
 
-        dialog.showAndWait().ifPresent(p -> {
-            try {
-                if (editing) {
-                    // UPDATE path for user's own post.
-                    postRepo.update(p);
-                    showInfo("Post updated (sent for approval)");
-                } else {
-                    // CREATE path for new post.
-                    postRepo.insert(p);
-                    showInfo("Post submitted for approval");
+        dialog.showAndWait().ifPresent(p -> submitPostWithModeration(p, editing));
+    }
+
+    private void submitPostWithModeration(ForumPost postDraft, boolean editing) {
+        setPostSubmissionBusy(true);
+
+        Task<PostSubmissionOutcome> task = new Task<>() {
+            @Override
+            protected PostSubmissionOutcome call() throws Exception {
+                ModerationService.ModerationResult moderation =
+                        moderationService.decideStatus(buildModerationText(postDraft));
+
+                if (ModerationService.STATUS_REJECTED.equals(moderation.getStatus())) {
+                    return PostSubmissionOutcome.rejected(moderation);
                 }
-                onRefresh();
-            } catch (Exception ex) {
-                showError("Failed to save post", ex);
+
+                postDraft.setStatus(moderation.getStatus());
+                if (editing) {
+                    postRepo.update(postDraft);
+                } else {
+                    long newId = postRepo.insert(postDraft);
+                    postDraft.setId(newId);
+                }
+
+                return PostSubmissionOutcome.saved(moderation, editing);
             }
+        };
+
+        task.setOnSucceeded(evt -> {
+            setPostSubmissionBusy(false);
+            PostSubmissionOutcome out = task.getValue();
+
+            if (out.rejected) {
+                showWarning("Rejected by automated moderation");
+                return;
+            }
+
+            showInfo(messageForPostStatus(out.status, out.usedFallback, out.editing));
+            onRefresh();
         });
+
+        task.setOnFailed(evt -> {
+            setPostSubmissionBusy(false);
+            showError("Failed to save post", asException(task.getException()));
+        });
+
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private String buildModerationText(ForumPost p) {
+        StringBuilder sb = new StringBuilder();
+        if (p.getTitle() != null && !p.getTitle().isBlank()) {
+            sb.append(p.getTitle().trim());
+        }
+        if (p.getContent() != null && !p.getContent().isBlank()) {
+            if (sb.length() > 0) {
+                sb.append('\n');
+            }
+            sb.append(p.getContent().trim());
+        }
+        if (p.getCategory() != null && !p.getCategory().isBlank()) {
+            if (sb.length() > 0) {
+                sb.append('\n');
+            }
+            sb.append(p.getCategory().trim());
+        }
+        return sb.toString();
+    }
+
+    private String messageForPostStatus(String status, boolean usedFallback, boolean editing) {
+        if (usedFallback) {
+            return editing ? "Post updated and submitted for review (moderation service unavailable)"
+                    : "Post submitted for review (moderation service unavailable)";
+        }
+        if (ModerationService.STATUS_APPROVED.equals(status)) {
+            return editing ? "Post updated and auto-approved" : "Post published (auto-approved)";
+        }
+        return editing ? "Post updated and submitted for review" : "Post submitted for review";
+    }
+
+    private void setPostSubmissionBusy(boolean busy) {
+        postSubmissionBusy = busy;
+        newPostBtn.setDisable(busy);
+        hintLabel.setText(busy ? "Checking content..." : DEFAULT_HINT);
+    }
+
+    private Exception asException(Throwable ex) {
+        return ex instanceof Exception e ? e : new Exception(ex == null ? "Unknown error" : ex.getMessage(), ex);
+    }
+
+    private static final class PostSubmissionOutcome {
+        private final String status;
+        private final boolean usedFallback;
+        private final boolean rejected;
+        private final boolean editing;
+
+        private PostSubmissionOutcome(String status, boolean usedFallback, boolean rejected, boolean editing) {
+            this.status = status;
+            this.usedFallback = usedFallback;
+            this.rejected = rejected;
+            this.editing = editing;
+        }
+
+        private static PostSubmissionOutcome saved(ModerationService.ModerationResult result, boolean editing) {
+            return new PostSubmissionOutcome(result.getStatus(), result.isUsedFallback(), false, editing);
+        }
+
+        private static PostSubmissionOutcome rejected(ModerationService.ModerationResult result) {
+            return new PostSubmissionOutcome(result.getStatus(), result.isUsedFallback(), true, false);
+        }
     }
 
     private void openPostDetails(ForumPost p) {
@@ -326,6 +437,14 @@ public class UserForumController {
     private void showInfo(String msg) {
         Alert a = new Alert(Alert.AlertType.INFORMATION);
         a.setTitle("Info");
+        a.setHeaderText(null);
+        a.setContentText(msg);
+        a.showAndWait();
+    }
+
+    private void showWarning(String msg) {
+        Alert a = new Alert(Alert.AlertType.WARNING);
+        a.setTitle("Moderation");
         a.setHeaderText(null);
         a.setContentText(msg);
         a.showAndWait();

@@ -2,7 +2,9 @@ package ui;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -16,8 +18,12 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import repo.ForumCommentRepository;
 import repo.ForumPostRepository;
 import repo.UserRepository;
+import util.ModerationService;
+import util.WikipediaClient;
 import util.Session;
 import util.InputValidator;
+import java.awt.Desktop;
+import java.net.URI;
 import java.util.List;
 
 import java.time.format.DateTimeFormatter;
@@ -53,6 +59,19 @@ public class PostDetailsController {
     @FXML
     private FontIcon themeIcon;
 
+    @FXML
+    private TextField wikiQueryField;
+    @FXML
+    private Button wikiLoadBtn;
+    @FXML
+    private ProgressIndicator wikiLoading;
+    @FXML
+    private ScrollPane wikiScroll;
+    @FXML
+    private Label wikiSummaryLabel;
+    @FXML
+    private Hyperlink wikiLink;
+
     private double xOffset = 0;
     private double yOffset = 0;
     private boolean customMaximized = false;
@@ -64,12 +83,18 @@ public class PostDetailsController {
     private final ForumCommentRepository commentRepo = new ForumCommentRepository();
     private final ForumPostRepository postRepo = new ForumPostRepository();
     private final UserRepository userRepo = new UserRepository();
+    private final ModerationService moderationService = new ModerationService();
 
     private final ObservableList<ForumComment> comments = FXCollections.observableArrayList();
 
     private ForumPost post;
+    private String wikiUrl;
+    private boolean commentSubmissionBusy = false;
+    private boolean postSubmissionBusy = false;
 
     private static final DateTimeFormatter DT = DateTimeFormatter.ofPattern("dd MMM yyyy - HH:mm");
+    private static final double WIKI_MIN = 90;
+    private static final double WIKI_MAX = 240;
 
     @FXML
     private void initialize() {
@@ -116,6 +141,22 @@ public class PostDetailsController {
         applyPermissions();
         updateCommentUiState();
         refreshCommentActionVisibility();
+
+        String title = (post == null || post.getTitle() == null) ? "" : post.getTitle().trim();
+        if (wikiQueryField != null) {
+            wikiQueryField.setText(title);
+        }
+        if (wikiSummaryLabel != null) {
+            wikiSummaryLabel.setText("");
+        }
+        if (wikiLink != null) {
+            wikiLink.setVisible(false);
+            wikiLink.setManaged(false);
+        }
+        if (wikiScroll != null) {
+            wikiScroll.setPrefHeight(WIKI_MIN);
+        }
+        wikiUrl = null;
     }
 
     private void render() {
@@ -151,8 +192,10 @@ public class PostDetailsController {
         // USER flow: only post owner can edit/delete post content.
         editPostBtn.setVisible(isOwner);
         editPostBtn.setManaged(isOwner);
+        editPostBtn.setDisable(postSubmissionBusy);
         deletePostBtn.setVisible(isOwner);
         deletePostBtn.setManaged(isOwner);
+        deletePostBtn.setDisable(postSubmissionBusy);
     }
 
     private boolean isCommentingBlocked() {
@@ -161,7 +204,7 @@ public class PostDetailsController {
     }
 
     private void updateCommentUiState() {
-        boolean blocked = isCommentingBlocked();
+        boolean blocked = isCommentingBlocked() || commentSubmissionBusy;
 
         commentArea.setDisable(blocked);
         addCommentBtn.setDisable(blocked);
@@ -172,6 +215,8 @@ public class PostDetailsController {
 
         if (post == null) {
             lockHint.setText("");
+        } else if (commentSubmissionBusy) {
+            lockHint.setText("Checking comment...");
         } else if (post.isLocked()) {
             lockHint.setText("This post is locked. Comments are read-only.");
         } else if (Session.isAdmin()) {
@@ -195,12 +240,12 @@ public class PostDetailsController {
         boolean isOwnerOfSelected = hasSel && sel.getAuthorId() == currentUserId;
 
         // Add button: only users + not locked
-        boolean canAdd = !isAdmin && !locked;
+        boolean canAdd = !isAdmin && !locked && !commentSubmissionBusy;
         addCommentBtn.setVisible(canAdd);
         addCommentBtn.setManaged(canAdd);
 
         // Update/Delete: only if selected comment is mine + not locked + not admin
-        boolean canModifySelected = !isAdmin && !locked && hasSel && isOwnerOfSelected;
+        boolean canModifySelected = !isAdmin && !locked && hasSel && isOwnerOfSelected && !commentSubmissionBusy;
 
         updateCommentBtn.setVisible(canModifySelected);
         updateCommentBtn.setManaged(canModifySelected);
@@ -254,18 +299,7 @@ public class PostDetailsController {
         c.setPostId(post.getId());
         c.setAuthorId(Session.getCurrentUserId());
         c.setContent(InputValidator.norm(commentArea.getText()));
-
-        // User comments are submitted as pending moderation.
-        c.setStatus("PENDING");
-
-        try {
-            commentRepo.insert(c);
-            showInfo("Comment submitted for approval");
-            loadComments();
-            refreshCommentActionVisibility();
-        } catch (Exception ex) {
-            showError("Failed to add comment", ex);
-        }
+        submitCommentWithModeration(c, false);
     }
 
     @FXML
@@ -296,17 +330,13 @@ public class PostDetailsController {
             return;
         }
 
-        selected.setContent(InputValidator.norm(commentArea.getText()));
-        selected.setStatus("PENDING"); // resubmit after edit
-
-        try {
-            commentRepo.update(selected);
-            showInfo("Comment updated (pending approval)");
-            loadComments();
-            refreshCommentActionVisibility();
-        } catch (Exception ex) {
-            showError("Failed to update comment", ex);
-        }
+        ForumComment draft = new ForumComment();
+        draft.setId(selected.getId());
+        draft.setPostId(selected.getPostId());
+        draft.setAuthorId(selected.getAuthorId());
+        draft.setCreatedAt(selected.getCreatedAt());
+        draft.setContent(InputValidator.norm(commentArea.getText()));
+        submitCommentWithModeration(draft, true);
     }
 
     @FXML
@@ -378,24 +408,178 @@ public class PostDetailsController {
         dialog.setResultConverter(btn -> {
             if (btn != okType)
                 return null;
-            post.setTitle(InputValidator.norm(title.getText()));
-            post.setContent(InputValidator.norm(content.getText()));
-            post.setCategory(InputValidator.normalizeNullable(category.getText()));
-            post.setStatus("PENDING");
-            return post;
+
+            ForumPost draft = new ForumPost();
+            draft.setId(post.getId());
+            draft.setAuthorId(post.getAuthorId());
+            draft.setPinned(post.isPinned());
+            draft.setLocked(post.isLocked());
+            draft.setCreatedAt(post.getCreatedAt());
+            draft.setTitle(InputValidator.norm(title.getText()));
+            draft.setContent(InputValidator.norm(content.getText()));
+            draft.setCategory(InputValidator.normalizeNullable(category.getText()));
+            return draft;
         });
 
-        dialog.showAndWait().ifPresent(p -> {
-            try {
-                // Edited user posts are re-submitted for admin approval.
-                postRepo.update(p);
-                showInfo("Post updated (resubmitted for approval)");
-                render();
-                applyPermissions();
-            } catch (Exception ex) {
-                showError("Failed to update post", ex);
+        dialog.showAndWait().ifPresent(this::submitPostUpdateWithModeration);
+    }
+
+    private void submitCommentWithModeration(ForumComment commentDraft, boolean editing) {
+        setCommentSubmissionBusy(true);
+
+        Task<CommentSubmissionOutcome> task = new Task<>() {
+            @Override
+            protected CommentSubmissionOutcome call() throws Exception {
+                ModerationService.ModerationResult moderation =
+                        moderationService.decideStatus(commentDraft.getContent());
+
+                if (ModerationService.STATUS_REJECTED.equals(moderation.getStatus())) {
+                    return CommentSubmissionOutcome.rejected(moderation);
+                }
+
+                commentDraft.setStatus(moderation.getStatus());
+                if (editing) {
+                    commentRepo.update(commentDraft);
+                } else {
+                    long id = commentRepo.insert(commentDraft);
+                    commentDraft.setId(id);
+                }
+                return CommentSubmissionOutcome.saved(moderation, editing);
             }
+        };
+
+        task.setOnSucceeded(evt -> {
+            setCommentSubmissionBusy(false);
+            CommentSubmissionOutcome out = task.getValue();
+            if (out.rejected) {
+                showWarning("Rejected by automated moderation");
+                return;
+            }
+
+            showInfo(messageForCommentStatus(out.status, out.usedFallback, out.editing));
+            loadComments();
+            refreshCommentActionVisibility();
         });
+
+        task.setOnFailed(evt -> {
+            setCommentSubmissionBusy(false);
+            showError("Failed to save comment", asException(task.getException()));
+        });
+
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private void submitPostUpdateWithModeration(ForumPost draft) {
+        setPostSubmissionBusy(true);
+
+        Task<PostUpdateOutcome> task = new Task<>() {
+            @Override
+            protected PostUpdateOutcome call() throws Exception {
+                ModerationService.ModerationResult moderation =
+                        moderationService.decideStatus(buildPostModerationText(draft));
+
+                if (ModerationService.STATUS_REJECTED.equals(moderation.getStatus())) {
+                    return PostUpdateOutcome.rejected(moderation);
+                }
+
+                draft.setStatus(moderation.getStatus());
+                postRepo.update(draft);
+                return PostUpdateOutcome.saved(moderation);
+            }
+        };
+
+        task.setOnSucceeded(evt -> {
+            setPostSubmissionBusy(false);
+            PostUpdateOutcome out = task.getValue();
+            if (out.rejected) {
+                showWarning("Rejected by automated moderation");
+                return;
+            }
+
+            applyPostDraft(draft);
+            showInfo(messageForPostStatus(out.status, out.usedFallback));
+            render();
+            applyPermissions();
+        });
+
+        task.setOnFailed(evt -> {
+            setPostSubmissionBusy(false);
+            showError("Failed to update post", asException(task.getException()));
+        });
+
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private void applyPostDraft(ForumPost draft) {
+        if (post == null) {
+            post = draft;
+            return;
+        }
+        post.setTitle(draft.getTitle());
+        post.setContent(draft.getContent());
+        post.setCategory(draft.getCategory());
+        post.setStatus(draft.getStatus());
+    }
+
+    private String buildPostModerationText(ForumPost draft) {
+        StringBuilder sb = new StringBuilder();
+        if (draft.getTitle() != null && !draft.getTitle().isBlank()) {
+            sb.append(draft.getTitle().trim());
+        }
+        if (draft.getContent() != null && !draft.getContent().isBlank()) {
+            if (sb.length() > 0) {
+                sb.append('\n');
+            }
+            sb.append(draft.getContent().trim());
+        }
+        if (draft.getCategory() != null && !draft.getCategory().isBlank()) {
+            if (sb.length() > 0) {
+                sb.append('\n');
+            }
+            sb.append(draft.getCategory().trim());
+        }
+        return sb.toString();
+    }
+
+    private String messageForCommentStatus(String status, boolean usedFallback, boolean editing) {
+        if (usedFallback) {
+            return editing ? "Comment updated and submitted for review (moderation service unavailable)"
+                    : "Comment submitted for review (moderation service unavailable)";
+        }
+        if (ModerationService.STATUS_APPROVED.equals(status)) {
+            return editing ? "Comment updated and auto-approved" : "Comment posted (auto-approved)";
+        }
+        return editing ? "Comment updated and submitted for review" : "Submitted for review";
+    }
+
+    private String messageForPostStatus(String status, boolean usedFallback) {
+        if (usedFallback) {
+            return "Post updated and submitted for review (moderation service unavailable)";
+        }
+        if (ModerationService.STATUS_APPROVED.equals(status)) {
+            return "Post updated and auto-approved";
+        }
+        return "Post updated and submitted for review";
+    }
+
+    private void setCommentSubmissionBusy(boolean busy) {
+        commentSubmissionBusy = busy;
+        updateCommentUiState();
+        refreshCommentActionVisibility();
+    }
+
+    private void setPostSubmissionBusy(boolean busy) {
+        postSubmissionBusy = busy;
+        editPostBtn.setDisable(busy);
+        deletePostBtn.setDisable(busy);
+    }
+
+    private Exception asException(Throwable ex) {
+        return ex instanceof Exception e ? e : new Exception(ex == null ? "Unknown error" : ex.getMessage(), ex);
     }
 
     @FXML
@@ -419,6 +603,48 @@ public class PostDetailsController {
             editPostBtn.getScene().getWindow().hide();
         } catch (Exception ex) {
             showError("Failed to delete post", ex);
+        }
+    }
+
+    private static final class CommentSubmissionOutcome {
+        private final String status;
+        private final boolean usedFallback;
+        private final boolean rejected;
+        private final boolean editing;
+
+        private CommentSubmissionOutcome(String status, boolean usedFallback, boolean rejected, boolean editing) {
+            this.status = status;
+            this.usedFallback = usedFallback;
+            this.rejected = rejected;
+            this.editing = editing;
+        }
+
+        private static CommentSubmissionOutcome saved(ModerationService.ModerationResult result, boolean editing) {
+            return new CommentSubmissionOutcome(result.getStatus(), result.isUsedFallback(), false, editing);
+        }
+
+        private static CommentSubmissionOutcome rejected(ModerationService.ModerationResult result) {
+            return new CommentSubmissionOutcome(result.getStatus(), result.isUsedFallback(), true, false);
+        }
+    }
+
+    private static final class PostUpdateOutcome {
+        private final String status;
+        private final boolean usedFallback;
+        private final boolean rejected;
+
+        private PostUpdateOutcome(String status, boolean usedFallback, boolean rejected) {
+            this.status = status;
+            this.usedFallback = usedFallback;
+            this.rejected = rejected;
+        }
+
+        private static PostUpdateOutcome saved(ModerationService.ModerationResult result) {
+            return new PostUpdateOutcome(result.getStatus(), result.isUsedFallback(), false);
+        }
+
+        private static PostUpdateOutcome rejected(ModerationService.ModerationResult result) {
+            return new PostUpdateOutcome(result.getStatus(), result.isUsedFallback(), true);
         }
     }
 
@@ -476,6 +702,133 @@ public class PostDetailsController {
         a.setContentText(ex.getMessage());
         a.showAndWait();
         ex.printStackTrace();
+    }
+
+    @FXML
+    private void onLoadWikipedia() {
+        String query = wikiQueryField == null ? "" : wikiQueryField.getText();
+        query = query == null ? "" : query.trim();
+
+        if (query.isBlank()) {
+            String fallback = post == null ? "" : post.getTitle();
+            fallback = fallback == null ? "" : fallback.trim();
+            if (fallback.isBlank()) {
+                showWarning("Type something to search.");
+                return;
+            }
+            query = fallback;
+            wikiQueryField.setText(query);
+        }
+
+        setWikiLoading(true);
+        if (wikiSummaryLabel != null) {
+            wikiSummaryLabel.setText("");
+        }
+        wikiLink.setVisible(false);
+        wikiLink.setManaged(false);
+        wikiUrl = null;
+
+        String finalQuery = query;
+        Task<WikipediaClient.WikiSummary> task = new Task<>() {
+            @Override
+            protected WikipediaClient.WikiSummary call() throws Exception {
+                return WikipediaClient.fetchSummary(finalQuery);
+            }
+        };
+
+        task.setOnSucceeded(evt -> {
+            WikipediaClient.WikiSummary summary = task.getValue();
+            wikiSummaryLabel.setText(summary.extract);
+            wikiUrl = summary.url;
+            if (wikiUrl != null && !wikiUrl.isBlank()) {
+                wikiLink.setText("Open on Wikipedia");
+                wikiLink.setVisible(true);
+                wikiLink.setManaged(true);
+            }
+            Platform.runLater(this::updateWikiBoxHeight);
+            setWikiLoading(false);
+        });
+
+        task.setOnFailed(evt -> {
+            Throwable ex = task.getException();
+            wikiSummaryLabel.setText(getWikiErrorMessage(ex));
+            wikiUrl = null;
+            wikiLink.setVisible(false);
+            wikiLink.setManaged(false);
+            Platform.runLater(this::updateWikiBoxHeight);
+            setWikiLoading(false);
+        });
+
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();
+    }
+
+    @FXML
+    private void onOpenWiki() {
+        if (wikiUrl == null || wikiUrl.isBlank()) {
+            showWarning("No Wikipedia link available.");
+            return;
+        }
+        if (!Desktop.isDesktopSupported()) {
+            showWarning("Opening links is not supported on this system.");
+            return;
+        }
+        try {
+            Desktop.getDesktop().browse(URI.create(wikiUrl));
+        } catch (Exception ex) {
+            showError("Failed to open link", ex);
+        }
+    }
+
+    private void setWikiLoading(boolean loading) {
+        wikiLoadBtn.setDisable(loading);
+        wikiLoading.setVisible(loading);
+        wikiLoading.setManaged(loading);
+    }
+
+    private void updateWikiBoxHeight() {
+        if (wikiSummaryLabel == null || wikiScroll == null) {
+            return;
+        }
+        wikiSummaryLabel.applyCss();
+        wikiSummaryLabel.layout();
+        double width = wikiScroll.getWidth();
+        if (width <= 0) {
+            width = 600;
+        }
+        double textHeight = wikiSummaryLabel.prefHeight(width - 20);
+        double target = Math.min(WIKI_MAX, Math.max(WIKI_MIN, textHeight + 20));
+        wikiScroll.setPrefHeight(target);
+    }
+
+    private String getWikiErrorMessage(Throwable ex) {
+        if (ex instanceof WikipediaClient.NotFoundException) {
+            return "No Wikipedia summary found.";
+        }
+        if (isNetworkError(ex)) {
+            return "Couldn't reach Wikipedia (offline?).";
+        }
+        return "Failed to load Wikipedia summary.";
+    }
+
+    private boolean isNetworkError(Throwable ex) {
+        if (ex == null) {
+            return false;
+        }
+        if (ex instanceof java.net.http.HttpTimeoutException) {
+            return true;
+        }
+        if (ex instanceof java.net.UnknownHostException) {
+            return true;
+        }
+        if (ex instanceof java.net.ConnectException) {
+            return true;
+        }
+        if (ex instanceof java.io.IOException) {
+            return true;
+        }
+        return isNetworkError(ex.getCause());
     }
 
     @FXML

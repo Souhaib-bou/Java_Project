@@ -495,3 +495,18 @@
     -fx-background-color: #d63f44;
     -fx-translate-y: 1;
 }
+
+.wiki-scroll {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+
+.wiki-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.wiki-summary {
+    -fx-padding: 10;
+    -fx-text-fill: -text;
+    -fx-opacity: 0.95;
+}

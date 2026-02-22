@@ -83,6 +83,34 @@
                     <Label fx:id="lockHint" text="" styleClass="muted"/>
                 </VBox>
 
+                <!-- WIKIPEDIA PANEL -->
+                <VBox spacing="12" styleClass="section-card">
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <Label text="Wikipedia" styleClass="section-title"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <ProgressIndicator fx:id="wikiLoading" visible="false" managed="false" prefWidth="22" prefHeight="22"/>
+                    </HBox>
+
+                    <HBox spacing="10" alignment="CENTER_LEFT">
+                        <TextField fx:id="wikiQueryField" promptText="Search Wikipedia..." HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="wikiLoadBtn" text="Wiki" onAction="#onLoadWikipedia" styleClass="secondary"/>
+                    </HBox>
+
+                    <ScrollPane fx:id="wikiScroll"
+                                fitToWidth="true"
+                                hbarPolicy="NEVER"
+                                vbarPolicy="AS_NEEDED"
+                                prefHeight="110"
+                                maxHeight="240"
+                                minHeight="80"
+                                styleClass="wiki-scroll">
+                        <content>
+                            <Label fx:id="wikiSummaryLabel" wrapText="true" styleClass="wiki-summary"/>
+                        </content>
+                    </ScrollPane>
+                    <Hyperlink fx:id="wikiLink" text="" onAction="#onOpenWiki" visible="false" managed="false"/>
+                </VBox>
+
             </VBox>
         </VBox>
     </center>
