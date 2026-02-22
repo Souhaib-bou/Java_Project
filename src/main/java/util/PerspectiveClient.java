@@ -29,6 +29,8 @@ public final class PerspectiveClient {
         }
 
         String payload = buildPayload(text);
+        DebugLog.info("Perspective", "Sending analyze request, textLen=" + safeLength(text)
+                + ", key=" + maskKey(apiKey));
 
         HttpRequest request = HttpRequest.newBuilder(URI.create(ENDPOINT + apiKey))
                 .timeout(Duration.ofSeconds(5))
@@ -38,11 +40,16 @@ public final class PerspectiveClient {
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        DebugLog.info("Perspective", "Response status=" + response.statusCode()
+                + ", bodyLen=" + safeLength(response.body()));
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            DebugLog.info("Perspective", "Non-success response body preview: " + preview(response.body()));
             throw new IOException("Perspective request failed (" + response.statusCode() + ")");
         }
 
-        return parseToxicity(response.body());
+        double toxicity = parseToxicity(response.body());
+        DebugLog.info("Perspective", "Parsed TOXICITY summaryScore.value=" + toxicity);
+        return toxicity;
     }
 
     private String buildPayload(String text) {
@@ -81,7 +88,33 @@ public final class PerspectiveClient {
             }
             return value;
         } catch (RuntimeException ex) {
+            DebugLog.error("Perspective", "Failed to parse response body: " + preview(body), ex);
             throw new IOException("Failed to parse Perspective response", ex);
         }
+    }
+
+    private String maskKey(String key) {
+        if (key == null || key.isBlank()) {
+            return "<empty>";
+        }
+        if (key.length() <= 8) {
+            return "****";
+        }
+        return key.substring(0, 4) + "..." + key.substring(key.length() - 4);
+    }
+
+    private int safeLength(String value) {
+        return value == null ? 0 : value.length();
+    }
+
+    private String preview(String value) {
+        if (value == null) {
+            return "<null>";
+        }
+        String compact = value.replace('\n', ' ').replace('\r', ' ');
+        if (compact.length() <= 220) {
+            return compact;
+        }
+        return compact.substring(0, 220) + "...";
     }
 }

@@ -5,6 +5,9 @@ public final class ModerationService {
     public static final String STATUS_PENDING = "PENDING";
     public static final String STATUS_REJECTED = "REJECTED";
 
+    // Optional local key fallback.
+    private static final String API_KEY = "AIzaSyBOoSB89x4BWPwjI4gR7gSKcJl87nIvTHQ";
+
     private static final double APPROVE_THRESHOLD = 0.20;
     private static final double REJECT_THRESHOLD = 0.80;
 
@@ -19,15 +22,19 @@ public final class ModerationService {
     }
 
     public ModerationResult decideStatus(String text) {
-        String apiKey = System.getenv("PERSPECTIVE_API_KEY");
+        String apiKey = API_KEY == null ? "" : API_KEY.trim();
         if (apiKey == null || apiKey.isBlank()) {
+            DebugLog.info("Moderation", "API key is missing; falling back to PENDING");
             return ModerationResult.fallbackPending();
         }
 
         try {
             double toxicity = perspectiveClient.analyzeToxicity(text, apiKey);
-            return new ModerationResult(statusFromScore(toxicity), toxicity, false);
-        } catch (Exception ignored) {
+            String status = statusFromScore(toxicity);
+            DebugLog.info("Moderation", "Toxicity=" + toxicity + " => status=" + status);
+            return new ModerationResult(status, toxicity, false);
+        } catch (Exception ex) {
+            DebugLog.error("Moderation", "Perspective call failed; falling back to PENDING", ex);
             return ModerationResult.fallbackPending();
         }
     }
