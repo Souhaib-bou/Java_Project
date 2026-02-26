@@ -6,8 +6,10 @@ import java.util.List;
 public class ModerationReport {
     private double toxicity;
     private double relevance;
-    private String category;
+    private String predictedCategory;
     private double duplicateSimilarity;
+    private double duplicateScore;
+    private Long duplicateOfPostId;
     private double qualityScore;
     private String decision;
     private List<String> reasons = new ArrayList<>();
@@ -34,20 +36,46 @@ public class ModerationReport {
         this.relevance = relevance;
     }
 
+    public String getPredictedCategory() {
+        return predictedCategory;
+    }
+
+    public void setPredictedCategory(String predictedCategory) {
+        this.predictedCategory = predictedCategory;
+    }
+
     public String getCategory() {
-        return category;
+        return getPredictedCategory();
     }
 
     public void setCategory(String category) {
-        this.category = category;
+        setPredictedCategory(category);
     }
 
     public double getDuplicateSimilarity() {
-        return duplicateSimilarity;
+        return duplicateScore;
     }
 
     public void setDuplicateSimilarity(double duplicateSimilarity) {
         this.duplicateSimilarity = duplicateSimilarity;
+        this.duplicateScore = duplicateSimilarity;
+    }
+
+    public double getDuplicateScore() {
+        return duplicateScore;
+    }
+
+    public void setDuplicateScore(double duplicateScore) {
+        this.duplicateScore = duplicateScore;
+        this.duplicateSimilarity = duplicateScore;
+    }
+
+    public Long getDuplicateOfPostId() {
+        return duplicateOfPostId;
+    }
+
+    public void setDuplicateOfPostId(Long duplicateOfPostId) {
+        this.duplicateOfPostId = duplicateOfPostId;
     }
 
     public double getQualityScore() {

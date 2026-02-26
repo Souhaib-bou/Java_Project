@@ -63,9 +63,17 @@ public final class PythonScoreClient {
 
         JsonObject root = JsonParser.parseString(response.body()).getAsJsonObject();
         double relevance = readDouble(root, "relevance", 0.50);
-        String category = readString(root, "category", "General");
+        String predictedCategory = readString(
+                root,
+                "predictedCategory",
+                readString(root, "predicted_category", readString(root, "category", "General")));
         double quality = readDouble(root, "quality", 0.50);
-        double duplicateSimilarity = readDouble(root, "duplicate_similarity", 0.00);
+        double duplicateScore = readDouble(root, "duplicate_score",
+                readDouble(root, "duplicate_similarity", 0.00));
+        Long duplicateOfPostId = readOptionalLong(root, "duplicate_of_post_id");
+        if (duplicateOfPostId == null) {
+            duplicateOfPostId = readOptionalLong(root, "duplicateOfPostId");
+        }
 
         JsonObject reasonsObj = root.has("reasons") && root.get("reasons").isJsonObject()
                 ? root.getAsJsonObject("reasons")
@@ -76,9 +84,10 @@ public final class PythonScoreClient {
 
         return new ScoreResult(
                 relevance,
-                category,
+                predictedCategory,
                 quality,
-                duplicateSimilarity,
+                duplicateScore,
+                duplicateOfPostId,
                 relevanceReasons,
                 qualityReasons,
                 duplicateReasons,
@@ -134,6 +143,13 @@ public final class PythonScoreClient {
         return values;
     }
 
+    private static Long readOptionalLong(JsonObject root, String field) {
+        if (!root.has(field) || root.get(field).isJsonNull()) {
+            return null;
+        }
+        return root.get(field).getAsLong();
+    }
+
     private static String trimRaw(String raw) {
         if (raw == null) {
             return "";
@@ -166,22 +182,25 @@ public final class PythonScoreClient {
 
     public static final class ScoreResult {
         private final double relevance;
-        private final String category;
+        private final String predictedCategory;
         private final double quality;
-        private final double duplicateSimilarity;
+        private final double duplicateScore;
+        private final Long duplicateOfPostId;
         private final List<String> relevanceReasons;
         private final List<String> qualityReasons;
         private final List<String> duplicateReasons;
         private final String raw;
         private final long latencyMs;
 
-        public ScoreResult(double relevance, String category, double quality, double duplicateSimilarity,
+        public ScoreResult(double relevance, String predictedCategory, double quality, double duplicateScore,
+                Long duplicateOfPostId,
                 List<String> relevanceReasons, List<String> qualityReasons, List<String> duplicateReasons,
                 String raw, long latencyMs) {
             this.relevance = relevance;
-            this.category = category;
+            this.predictedCategory = predictedCategory;
             this.quality = quality;
-            this.duplicateSimilarity = duplicateSimilarity;
+            this.duplicateScore = duplicateScore;
+            this.duplicateOfPostId = duplicateOfPostId;
             this.relevanceReasons = relevanceReasons == null ? List.of() : List.copyOf(relevanceReasons);
             this.qualityReasons = qualityReasons == null ? List.of() : List.copyOf(qualityReasons);
             this.duplicateReasons = duplicateReasons == null ? List.of() : List.copyOf(duplicateReasons);
@@ -193,16 +212,28 @@ public final class PythonScoreClient {
             return relevance;
         }
 
+        public String getPredictedCategory() {
+            return predictedCategory;
+        }
+
         public String getCategory() {
-            return category;
+            return predictedCategory;
         }
 
         public double getQuality() {
             return quality;
         }
 
+        public double getDuplicateScore() {
+            return duplicateScore;
+        }
+
         public double getDuplicateSimilarity() {
-            return duplicateSimilarity;
+            return duplicateScore;
+        }
+
+        public Long getDuplicateOfPostId() {
+            return duplicateOfPostId;
         }
 
         public List<String> getRelevanceReasons() {

@@ -14,8 +14,10 @@ import model.ForumComment;
 import model.ForumPost;
 import org.kordamp.ikonli.javafx.FontIcon;
 import repo.ForumCommentRepository;
+import repo.ForumPostInteractionRepository;
 import repo.ForumPostRepository;
 import repo.UserRepository;
+import util.DebugLog;
 import util.Session;
 
 /**
@@ -46,6 +48,7 @@ public class UserProfileController {
     private double restoreHeight = 0;
 
     private final ForumPostRepository postRepo = new ForumPostRepository();
+    private final ForumPostInteractionRepository interactionRepo = new ForumPostInteractionRepository();
     private final ForumCommentRepository commentRepo = new ForumCommentRepository();
     private final UserRepository userRepo = new UserRepository();
 
@@ -98,10 +101,23 @@ public class UserProfileController {
             // Keep profile data scoped to the logged-in user.
             // Includes READ queries for both authored posts and comments.
             long uid = Session.getCurrentUserId();
-            myPosts.setAll(postRepo.findByAuthorId(uid));
+            java.util.List<ForumPost> posts = postRepo.findByAuthorId(uid);
+            hydrateLikeState(posts, uid);
+            myPosts.setAll(posts);
             myComments.setAll(commentRepo.findByAuthorId(uid));
         } catch (Exception ex) {
             showError("Failed to load profile", ex);
+        }
+    }
+
+    private void hydrateLikeState(java.util.List<ForumPost> posts, long userId) {
+        for (ForumPost post : posts) {
+            try {
+                post.setLikedByCurrentUser(interactionRepo.isLiked(post.getId(), userId));
+            } catch (Exception ex) {
+                post.setLikedByCurrentUser(false);
+                DebugLog.error("UserProfileController", "Failed loading like state for post #" + post.getId(), ex);
+            }
         }
     }
 

@@ -27,8 +27,8 @@ public final class ModerationDialog {
         summary.getChildren().addAll(
                 new Label("Decision: " + safe(report.getDecision())),
                 new Label(String.format("Toxicity: %.3f", report.getToxicity())),
-                new Label(String.format("Relevance: %.3f  (%s)", report.getRelevance(), safe(report.getCategory()))),
-                new Label(String.format("Duplicate Similarity: %.3f", report.getDuplicateSimilarity())),
+                new Label(String.format("Relevance: %.3f  (%s)", report.getRelevance(), safe(report.getPredictedCategory()))),
+                new Label(String.format("Duplicate Score: %.3f", report.getDuplicateScore())),
                 new Label(String.format("Quality Score: %.3f", report.getQualityScore())),
                 new Label(String.format("Latency: total=%dms, perspective=%dms, python=%dms",
                         report.getTotalLatencyMs(),

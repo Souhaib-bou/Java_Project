@@ -31,4 +31,23 @@ public class UserRepository {
 
         return "User #" + userId;
     }
+
+    public long findUserIdByEmail(String email) {
+        String sql = "SELECT user_id FROM user WHERE email = ? LIMIT 1";
+        if (email == null || email.isBlank()) {
+            return -1;
+        }
+        try (Connection con = DB.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, email.trim());
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong("user_id");
+                }
+            }
+        } catch (Exception ignored) {
+            // UI should still work if optional lookup fails.
+        }
+        return -1;
+    }
 }

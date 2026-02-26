@@ -17,6 +17,14 @@
             <HBox spacing="10" alignment="CENTER_RIGHT">
                 <Button fx:id="editPostBtn" text="Edit" onAction="#onEditPost" styleClass="secondary"/>
                 <Button fx:id="deletePostBtn" text="Delete" onAction="#onDeletePost" styleClass="danger"/>
+                <HBox spacing="6" alignment="CENTER">
+                    <Button fx:id="notificationsBtn" text="Notifications" onAction="#onOpenNotifications" styleClass="secondary">
+                        <graphic>
+                            <FontIcon iconLiteral="fas-bell"/>
+                        </graphic>
+                    </Button>
+                    <Label fx:id="notificationBadge" text="0" styleClass="chip" visible="false" managed="false"/>
+                </HBox>
                 <ToggleButton fx:id="themeToggle" onAction="#onToggleTheme" styleClass="icon-btn" contentDisplay="GRAPHIC_ONLY">
                     <graphic>
                         <FontIcon fx:id="themeIcon" iconLiteral="fas-moon"/>
@@ -35,10 +43,9 @@
 
     <center>
         <VBox alignment="TOP_CENTER" fillWidth="true" styleClass="page">
-            <VBox spacing="16" maxWidth="980" prefWidth="980" VBox.vgrow="ALWAYS">
+            <VBox spacing="16" maxWidth="980" VBox.vgrow="ALWAYS">
 
-                <!-- FULL POST CARD -->
-                <VBox styleClass="section-card" spacing="14" minHeight="200" maxHeight="450">
+                <VBox styleClass="section-card details-shell" spacing="12" VBox.vgrow="ALWAYS">
                     <HBox spacing="10" alignment="CENTER_LEFT">
                         <Label fx:id="categoryChip" styleClass="chip"/>
                         <Label fx:id="statusChip" styleClass="chip"/>
@@ -47,16 +54,29 @@
                         <Label fx:id="lockedChip" text="&#x1F512; LOCKED" styleClass="chip chip-danger" visible="false" managed="false"/>
                     </HBox>
 
-                    <Label fx:id="titleLabel" styleClass="post-title" wrapText="true"/>
-                    <Label fx:id="metaLabel" styleClass="muted"/>
-                    <Separator/>
-                    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
-                        <Label fx:id="contentLabel" styleClass="post-body" wrapText="true"/>
+                    <Label fx:id="titleLabel" styleClass="post-title details-title" wrapText="true"/>
+                    <Label fx:id="metaLabel" styleClass="post-meta"/>
+
+                    <HBox spacing="10" alignment="CENTER_LEFT" styleClass="action-bar">
+                        <Button fx:id="likePostBtn" text="Like" onAction="#onToggleLikePost" styleClass="secondary"/>
+                        <Label fx:id="likeCountLabel" text="Likes: 0" styleClass="post-meta"/>
+                        <Button fx:id="sharePostBtn" text="Share (0)" onAction="#onSharePost" styleClass="secondary"/>
+                        <Label fx:id="shareHintLabel" text="" styleClass="post-meta" visible="false" managed="false"/>
+                    </HBox>
+
+                    <ScrollPane fitToWidth="true"
+                                hbarPolicy="NEVER"
+                                style="-fx-background-color: transparent; -fx-background: transparent; -fx-border-color: transparent;"
+                                VBox.vgrow="ALWAYS">
+                        <content>
+                            <VBox spacing="8" styleClass="details-content-wrap">
+                                <Label fx:id="contentLabel" styleClass="post-body details-body" wrapText="true"/>
+                            </VBox>
+                        </content>
                     </ScrollPane>
                 </VBox>
 
-                <!-- COMMENT COMPOSER -->
-                <VBox spacing="10" VBox.vgrow="ALWAYS" styleClass="section-card">
+                <VBox spacing="12" VBox.vgrow="ALWAYS" styleClass="section-card comments-shell">
                     <HBox alignment="CENTER_LEFT">
                         <Label text="Comments" styleClass="section-title"/>
                         <Region HBox.hgrow="ALWAYS"/>
@@ -67,9 +87,13 @@
                         </Button>
                     </HBox>
 
-                    <HBox spacing="12">
-                        <TextArea fx:id="commentArea" promptText="Write a comment..." wrapText="true"
-                                  prefRowCount="4" HBox.hgrow="ALWAYS"/>
+                    <HBox spacing="12" styleClass="comment-input-row">
+                        <TextArea fx:id="commentArea"
+                                  promptText="Write a comment..."
+                                  wrapText="true"
+                                  prefRowCount="5"
+                                  minHeight="110"
+                                  HBox.hgrow="ALWAYS"/>
 
                         <VBox spacing="10" minWidth="180">
                             <ComboBox fx:id="commentStatusBox" maxWidth="Infinity" visible="false" managed="false"/>
@@ -82,35 +106,6 @@
                     <ListView fx:id="commentListView" VBox.vgrow="ALWAYS"/>
                     <Label fx:id="lockHint" text="" styleClass="muted"/>
                 </VBox>
-
-                <!-- WIKIPEDIA PANEL -->
-                <VBox spacing="12" styleClass="section-card">
-                    <HBox spacing="10" alignment="CENTER_LEFT">
-                        <Label text="Wikipedia" styleClass="section-title"/>
-                        <Region HBox.hgrow="ALWAYS"/>
-                        <ProgressIndicator fx:id="wikiLoading" visible="false" managed="false" prefWidth="22" prefHeight="22"/>
-                    </HBox>
-
-                    <HBox spacing="10" alignment="CENTER_LEFT">
-                        <TextField fx:id="wikiQueryField" promptText="Search Wikipedia..." HBox.hgrow="ALWAYS"/>
-                        <Button fx:id="wikiLoadBtn" text="Wiki" onAction="#onLoadWikipedia" styleClass="secondary"/>
-                    </HBox>
-
-                    <ScrollPane fx:id="wikiScroll"
-                                fitToWidth="true"
-                                hbarPolicy="NEVER"
-                                vbarPolicy="AS_NEEDED"
-                                prefHeight="110"
-                                maxHeight="240"
-                                minHeight="80"
-                                styleClass="wiki-scroll">
-                        <content>
-                            <Label fx:id="wikiSummaryLabel" wrapText="true" styleClass="wiki-summary"/>
-                        </content>
-                    </ScrollPane>
-                    <Hyperlink fx:id="wikiLink" text="" onAction="#onOpenWiki" visible="false" managed="false"/>
-                </VBox>
-
             </VBox>
         </VBox>
     </center>

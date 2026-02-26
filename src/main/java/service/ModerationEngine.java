@@ -1,18 +1,24 @@
 package service;
 
+import model.ForumPost;
 import model.ModerationReport;
+import repo.ForumPostRepository;
 import util.PerspectiveClient;
 import util.PythonScoreClient;
 import util.Secrets;
 
 import java.net.ConnectException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class ModerationEngine {
     public enum ContentType {
@@ -23,18 +29,27 @@ public final class ModerationEngine {
     private static final String STATUS_APPROVED = "APPROVED";
     private static final String STATUS_PENDING = "PENDING";
     private static final String STATUS_REJECTED = "REJECTED";
+    private static final double DUPLICATE_PENDING_THRESHOLD = 0.80;
+    private static final Pattern TOKEN_PATTERN = Pattern.compile("[a-z0-9]{2,}");
 
     private final PerspectiveClient perspectiveClient;
     private final PythonScoreClient pythonScoreClient;
+    private final ForumPostRepository forumPostRepository;
     private final ExecutorService executor;
 
     public ModerationEngine() {
-        this(new PerspectiveClient(), new PythonScoreClient());
+        this(new PerspectiveClient(), new PythonScoreClient(), new ForumPostRepository());
     }
 
     public ModerationEngine(PerspectiveClient perspectiveClient, PythonScoreClient pythonScoreClient) {
+        this(perspectiveClient, pythonScoreClient, new ForumPostRepository());
+    }
+
+    public ModerationEngine(PerspectiveClient perspectiveClient, PythonScoreClient pythonScoreClient,
+            ForumPostRepository forumPostRepository) {
         this.perspectiveClient = perspectiveClient;
         this.pythonScoreClient = pythonScoreClient;
+        this.forumPostRepository = forumPostRepository;
         this.executor = Executors.newFixedThreadPool(4);
     }
 
@@ -53,19 +68,29 @@ public final class ModerationEngine {
                         .handle(ScoreOutcome::from);
 
         return perspectiveFuture.thenCombine(scoreFuture, (perspective, score) ->
-                buildReport(type, startNs, perspective, score));
+                buildReport(type, safeText, startNs, perspective, score));
+    }
+
+    public CompletableFuture<ModerationReport> analyzePostAsync(String text) {
+        return analyzeAsync(ContentType.POST, text);
+    }
+
+    public CompletableFuture<ModerationReport> analyzeCommentAsync(String text) {
+        return analyzeAsync(ContentType.COMMENT, text);
     }
 
     public void shutdown() {
         executor.shutdown();
     }
 
-    private ModerationReport buildReport(ContentType type, long startNs,
+    private ModerationReport buildReport(ContentType type, String submittedText, long startNs,
             PerspectiveOutcome perspectiveOutcome, ScoreOutcome scoreOutcome) {
         ModerationReport report = new ModerationReport();
         List<String> reasons = new ArrayList<>();
         report.setReasons(reasons);
-        report.setCategory("General");
+        report.setPredictedCategory("General");
+        report.setDuplicateScore(0.00);
+        report.setDuplicateOfPostId(null);
 
         boolean fallback = false;
 
@@ -90,17 +115,36 @@ public final class ModerationEngine {
         if (scoreOutcome.failed()) {
             fallback = true;
             report.setRelevance(0.50);
-            report.setCategory("General");
+            report.setPredictedCategory("General");
             report.setQualityScore(0.50);
-            report.setDuplicateSimilarity(0.00);
+            report.setDuplicateScore(0.00);
+            report.setDuplicateOfPostId(null);
             report.setPythonRaw("Python services unavailable");
             reasons.add("Python scoring service unavailable: " + scoreOutcome.errorDetail());
+
+            if (type == ContentType.POST) {
+                DuplicateFallback offlineDuplicate = computeOfflineDuplicate(submittedText);
+                report.setDuplicateScore(offlineDuplicate.score());
+                report.setDuplicateOfPostId(offlineDuplicate.postId());
+                if (offlineDuplicate.score() >= DUPLICATE_PENDING_THRESHOLD) {
+                    if (offlineDuplicate.postId() != null) {
+                        reasons.add(String.format(
+                                "Offline duplicate check found strong overlap (%.2f) with post #%d",
+                                offlineDuplicate.score(),
+                                offlineDuplicate.postId()));
+                    } else {
+                        reasons.add(String.format(
+                                "Offline duplicate check found strong overlap (%.2f)", offlineDuplicate.score()));
+                    }
+                }
+            }
         } else {
             PythonScoreClient.ScoreResult score = scoreOutcome.result();
             report.setRelevance(score.getRelevance());
-            report.setCategory(score.getCategory());
+            report.setPredictedCategory(normalizeCategory(score.getPredictedCategory()));
             report.setQualityScore(score.getQuality());
-            report.setDuplicateSimilarity(score.getDuplicateSimilarity());
+            report.setDuplicateScore(score.getDuplicateScore());
+            report.setDuplicateOfPostId(score.getDuplicateOfPostId());
             report.setPythonRaw("score=" + score.getRaw());
             report.setPythonLatencyMs(score.getLatencyMs());
             reasons.addAll(score.getRelevanceReasons());
@@ -148,12 +192,16 @@ public final class ModerationEngine {
         double toxicity = report.getToxicity();
         double relevance = report.getRelevance();
         double quality = report.getQualityScore();
-        double duplicate = report.getDuplicateSimilarity();
+        double duplicate = report.getDuplicateScore();
 
         if (type == ContentType.POST) {
             if (toxicity >= 0.80) {
                 reasons.add("High toxicity score");
                 return STATUS_REJECTED;
+            }
+            if (duplicate >= DUPLICATE_PENDING_THRESHOLD) {
+                reasons.add(String.format("Possible duplicate content (score %.2f)", duplicate));
+                return STATUS_PENDING;
             }
             if (toxicity <= 0.20 && relevance >= 0.70 && quality >= 0.55 && duplicate <= 0.90) {
                 reasons.add("Passed post auto-approval policy");
@@ -200,6 +248,69 @@ public final class ModerationEngine {
     private String cacheKey(String text, ContentType type) {
         String normalizedType = type == null ? "post" : type.name().toLowerCase(Locale.ROOT);
         return normalizedType + ":" + Integer.toHexString(text.hashCode()) + ":" + System.currentTimeMillis();
+    }
+
+    private String normalizeCategory(String category) {
+        if (category == null) {
+            return "General";
+        }
+        String normalized = category.trim();
+        return normalized.isEmpty() ? "General" : normalized;
+    }
+
+    private DuplicateFallback computeOfflineDuplicate(String submittedText) {
+        try {
+            Set<String> submittedTokens = tokenize(submittedText);
+            if (submittedTokens.isEmpty()) {
+                return DuplicateFallback.none();
+            }
+
+            double maxScore = 0.0;
+            Long matchedPostId = null;
+
+            for (ForumPost existingPost : forumPostRepository.findAll()) {
+                String candidateText = (existingPost.getTitle() == null ? "" : existingPost.getTitle()) + " "
+                        + (existingPost.getContent() == null ? "" : existingPost.getContent());
+                double score = tokenOverlap(submittedTokens, tokenize(candidateText));
+                if (score > maxScore) {
+                    maxScore = score;
+                    matchedPostId = existingPost.getId();
+                }
+            }
+
+            return new DuplicateFallback(maxScore, matchedPostId);
+        } catch (Exception ex) {
+            return DuplicateFallback.none();
+        }
+    }
+
+    private static Set<String> tokenize(String text) {
+        Set<String> out = new HashSet<>();
+        if (text == null || text.isBlank()) {
+            return out;
+        }
+        Matcher matcher = TOKEN_PATTERN.matcher(text.toLowerCase(Locale.ROOT));
+        while (matcher.find()) {
+            out.add(matcher.group());
+        }
+        return out;
+    }
+
+    private static double tokenOverlap(Set<String> left, Set<String> right) {
+        if (left == null || right == null || left.isEmpty() || right.isEmpty()) {
+            return 0.0;
+        }
+        int intersection = 0;
+        for (String token : left) {
+            if (right.contains(token)) {
+                intersection++;
+            }
+        }
+        int union = left.size() + right.size() - intersection;
+        if (union <= 0) {
+            return 0.0;
+        }
+        return (double) intersection / union;
     }
 
     private static String safeErrorDetail(Throwable error) {
@@ -287,6 +398,12 @@ public final class ModerationEngine {
 
         private String errorDetail() {
             return errorDetail;
+        }
+    }
+
+    private record DuplicateFallback(double score, Long postId) {
+        private static DuplicateFallback none() {
+            return new DuplicateFallback(0.0, null);
         }
     }
 }

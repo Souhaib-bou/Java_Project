@@ -24,6 +24,7 @@
             <TextField fx:id="searchField" promptText="Search posts..." prefWidth="320"/>
             <ComboBox fx:id="sortBox" styleClass="combo-small"/>
             <Button fx:id="newPostBtn" text="New Post" onAction="#onNewPost" styleClass="primary"/>
+            <Button fx:id="btnAiAuditLast50" text="AI Audit (Last 50)" onAction="#onAiAuditLast50" styleClass="secondary"/>
             <Button fx:id="userForumBtn" text="User Forum" onAction="#onOpenUserForum" styleClass="secondary">
                 <graphic>
                     <FontIcon iconLiteral="fas-users"/>
@@ -88,7 +89,8 @@
                                         <Region HBox.hgrow="ALWAYS"/>
                                         <Button fx:id="editPostBtn" text="Edit" onAction="#onEditPost" styleClass="secondary"/>
                                         <Button fx:id="deletePostBtn" text="Delete" onAction="#onDeletePost" styleClass="danger"/>
-                                        <Button fx:id="btnAiAnalyzePost" text="AI Analyze Post" onAction="#onAiAnalyzePost" styleClass="secondary"/>
+                                        <Button fx:id="btnAiReclassify" text="AI Reclassify" onAction="#onAiReclassify" styleClass="secondary"/>
+                                        <Button fx:id="btnAiAnalyzePost" text="Analyze Post (AI)" onAction="#onAiAnalyzePost" styleClass="secondary"/>
                                     </HBox>
                                     <Label fx:id="postMetaLabel" styleClass="muted"/>
                                 </VBox>
@@ -155,7 +157,7 @@
                                             <Button fx:id="addCommentBtn2" text="Add Comment" onAction="#onAddComment2" styleClass="primary" maxWidth="Infinity"/>
                                             <Button fx:id="updateCommentBtn2" text="Update" onAction="#onUpdateComment2" styleClass="secondary" maxWidth="Infinity"/>
                                             <Button fx:id="deleteCommentBtn2" text="Delete" onAction="#onDeleteComment2" styleClass="danger" maxWidth="Infinity"/>
-                                            <Button fx:id="btnAiAnalyzeComment" text="AI Analyze Comment" onAction="#onAiAnalyzeComment" styleClass="secondary" maxWidth="Infinity"/>
+                                            <Button fx:id="btnAiAnalyzeComment" text="Analyze Comment (AI)" onAction="#onAiAnalyzeComment" styleClass="secondary" maxWidth="Infinity"/>
                                         </VBox>
                                     </HBox>
                                 </VBox>

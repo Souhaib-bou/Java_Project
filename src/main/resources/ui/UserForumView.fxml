@@ -41,6 +41,14 @@
                         <FontIcon iconLiteral="fas-shield-alt"/>
                     </graphic>
                 </Button>
+                <HBox spacing="6" alignment="CENTER">
+                    <Button fx:id="notificationsBtn" text="Notifications" onAction="#onOpenNotifications" styleClass="secondary">
+                        <graphic>
+                            <FontIcon iconLiteral="fas-bell"/>
+                        </graphic>
+                    </Button>
+                    <Label fx:id="notificationBadge" text="0" styleClass="chip" visible="false" managed="false"/>
+                </HBox>
                 <Button fx:id="becomeAdminBtn" text="Dev: Admin" onAction="#onBecomeAdmin" styleClass="secondary" />
                 <ToggleButton fx:id="themeToggle" onAction="#onToggleTheme" styleClass="icon-btn" contentDisplay="GRAPHIC_ONLY">
                     <graphic>

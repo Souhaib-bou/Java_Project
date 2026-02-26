@@ -22,15 +22,22 @@ import javafx.stage.Stage;
 import model.ForumPost;
 import model.ModerationReport;
 import org.kordamp.ikonli.javafx.FontIcon;
+import repo.ForumPostInteractionRepository;
 import repo.ForumPostRepository;
+import repo.NotificationRepository;
 import repo.UserRepository;
 import service.ModerationEngine;
+import service.NotificationService;
+import util.DebugLog;
 import util.Session;
 import util.InputValidator;
 import ui.components.ModerationDialog;
+import ui.components.NotificationsDialog;
 import java.util.List;
 
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Main user-facing forum feed controller.
@@ -59,6 +66,10 @@ public class UserForumController {
     private ToggleButton themeToggle;
     @FXML
     private FontIcon themeIcon;
+    @FXML
+    private Button notificationsBtn;
+    @FXML
+    private Label notificationBadge;
 
     @FXML
     private ListView<ForumPost> postListView;
@@ -78,14 +89,19 @@ public class UserForumController {
     private double restoreHeight = 0;
 
     private final ForumPostRepository postRepo = new ForumPostRepository();
+    private final ForumPostInteractionRepository interactionRepo = new ForumPostInteractionRepository();
+    private final NotificationRepository notificationRepo = new NotificationRepository();
     private final UserRepository userRepo = new UserRepository();
     private final ModerationEngine moderationEngine = new ModerationEngine();
+    private final NotificationService notificationService = new NotificationService(notificationRepo, userRepo);
 
     private final ObservableList<ForumPost> allApproved = FXCollections.observableArrayList();
+    private final Set<Long> likeToggleInProgress = new HashSet<>();
     private FilteredList<ForumPost> filtered;
     private SortedList<ForumPost> sorted;
     private boolean postSubmissionBusy = false;
     private static final String DEFAULT_HINT = "Tip: Double-click a post to open it.";
+    private static final double DUPLICATE_PENDING_THRESHOLD = 0.80;
 
     @FXML
     private void initialize() {
@@ -98,6 +114,7 @@ public class UserForumController {
 
         refreshSessionUI();
         syncThemeToggle();
+        refreshNotificationBadge();
 
         // Dev-only quick identity switcher for local testing.
         devUserBox.setItems(FXCollections.observableArrayList(
@@ -127,11 +144,12 @@ public class UserForumController {
         });
 
         // Sorting options for feed chronology.
-        sortBox.setItems(FXCollections.observableArrayList("New", "Old"));
+        sortBox.setItems(FXCollections.observableArrayList("New", "Old", "Most liked"));
         sortBox.getSelectionModel().select("New");
 
         // Post cards in user mode hide moderation status chip.
-        postListView.setCellFactory(lv -> new ui.components.PostCardCell(userRepo, false));
+        postListView.setCellFactory(
+                lv -> new ui.components.PostCardCell(userRepo, false, this::onToggleLikeFromFeed, this::onShareFromFeed));
 
         // Feed pipeline: source list -> filter by query -> sorted view.
         filtered = new FilteredList<>(allApproved, p -> true);
@@ -141,7 +159,7 @@ public class UserForumController {
 
         sortBox.valueProperty().addListener((obs, o, v) -> sorted.setComparator(postComparator(v)));
 
-        // Live search across title/content/category.
+        // Live search across title/content/tag.
         searchField.textProperty().addListener((obs, o, v) -> {
             String q = (v == null ? "" : v.trim().toLowerCase());
             filtered.setPredicate(p -> {
@@ -149,8 +167,8 @@ public class UserForumController {
                     return true;
                 String t = safe(p.getTitle()).toLowerCase();
                 String c = safe(p.getContent()).toLowerCase();
-                String cat = safe(p.getCategory()).toLowerCase();
-                return t.contains(q) || c.contains(q) || cat.contains(q);
+                String tag = safe(p.getTag()).toLowerCase();
+                return t.contains(q) || c.contains(q) || tag.contains(q);
             });
         });
 
@@ -174,20 +192,131 @@ public class UserForumController {
                 Comparator.nullsLast(Comparator.naturalOrder()));
 
         Comparator<ForumPost> byCreatedDesc = byCreatedAsc.reversed();
+        Comparator<ForumPost> byLikes = Comparator.comparingInt(ForumPost::getLikeCount).reversed()
+                .thenComparing(byCreatedDesc);
 
-        Comparator<ForumPost> byDate = "Old".equalsIgnoreCase(mode) ? byCreatedAsc : byCreatedDesc;
+        Comparator<ForumPost> byDateOrLikes = "Most liked".equalsIgnoreCase(mode)
+                ? byLikes
+                : ("Old".equalsIgnoreCase(mode) ? byCreatedAsc : byCreatedDesc);
 
         // pinned always stays on top, then apply New/Old sorting inside each group
-        return pinnedFirst.thenComparing(byDate);
+        return pinnedFirst.thenComparing(byDateOrLikes);
     }
 
     @FXML
     private void onRefresh() {
         try {
             // READ (posts): user feed only shows admin-approved posts.
-            allApproved.setAll(postRepo.findApproved());
+            java.util.List<ForumPost> approved = postRepo.findApproved();
+            hydrateLikeState(approved);
+            allApproved.setAll(approved);
+            refreshSortOrder();
+            refreshNotificationBadge();
         } catch (Exception ex) {
             showError("Failed to load feed", ex);
+        }
+    }
+
+    private void hydrateLikeState(java.util.List<ForumPost> posts) {
+        long uid = Session.getCurrentUserId();
+        for (ForumPost post : posts) {
+            try {
+                post.setLikedByCurrentUser(interactionRepo.isLiked(post.getId(), uid));
+            } catch (Exception ex) {
+                post.setLikedByCurrentUser(false);
+                DebugLog.error("UserForumController", "Failed loading like state for post #" + post.getId(), ex);
+            }
+        }
+    }
+
+    private void onToggleLikeFromFeed(ForumPost post) {
+        if (post == null) {
+            return;
+        }
+        long postId = post.getId();
+        if (likeToggleInProgress.contains(postId)) {
+            return;
+        }
+
+        boolean oldLiked = post.isLikedByCurrentUser();
+        int oldCount = post.getLikeCount();
+
+        boolean optimisticLiked = !oldLiked;
+        int optimisticCount = Math.max(0, oldCount + (optimisticLiked ? 1 : -1));
+        post.setLikedByCurrentUser(optimisticLiked);
+        post.setLikeCount(optimisticCount);
+        likeToggleInProgress.add(postId);
+        postListView.refresh();
+        refreshSortOrder();
+
+        Task<LikeToggleOutcome> task = new Task<>() {
+            @Override
+            protected LikeToggleOutcome call() throws Exception {
+                long uid = Session.getCurrentUserId();
+                boolean nowLiked;
+                if (oldLiked) {
+                    interactionRepo.removeLike(postId, uid);
+                    nowLiked = false;
+                } else {
+                    interactionRepo.addLike(postId, uid);
+                    nowLiked = true;
+                }
+                int latestCount = interactionRepo.countLikes(postId);
+                return new LikeToggleOutcome(nowLiked, latestCount);
+            }
+        };
+
+        task.setOnSucceeded(evt -> {
+            likeToggleInProgress.remove(postId);
+            LikeToggleOutcome out = task.getValue();
+            post.setLikedByCurrentUser(out.nowLiked);
+            post.setLikeCount(out.likeCount);
+
+            if (out.nowLiked) {
+                notificationService.notifyPostLiked(post.getId(), Session.getCurrentUserId(), post.getAuthorId());
+            }
+
+            postListView.refresh();
+            refreshSortOrder();
+        });
+
+        task.setOnFailed(evt -> {
+            likeToggleInProgress.remove(postId);
+            post.setLikedByCurrentUser(oldLiked);
+            post.setLikeCount(oldCount);
+            postListView.refresh();
+            refreshSortOrder();
+            Throwable err = task.getException();
+            DebugLog.error("UserForumController", "Failed toggling like for post #" + postId, err);
+            showError("Failed to update like", asException(err));
+        });
+
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private String onShareFromFeed(ForumPost post) {
+        if (!isShareAllowed(post)) {
+            return "Copied";
+        }
+        try {
+            long postId = post.getId();
+            long actorUserId = Session.getCurrentUserId();
+            boolean firstShare = interactionRepo.addShare(postId, actorUserId);
+            post.setShareCount(interactionRepo.countShares(postId));
+            postListView.refresh();
+
+            boolean shouldNotifyAuthor = firstShare && post.getAuthorId() != Session.getCurrentUserId();
+            if (shouldNotifyAuthor) {
+                notificationService.notifyPostShared(post.getId(), Session.getCurrentUserId(), post.getAuthorId());
+                refreshNotificationBadge();
+                return "Copied + author notified";
+            }
+            return "Copied";
+        } catch (Exception ex) {
+            DebugLog.error("UserForumController", "Failed recording share for post #" + post.getId(), ex);
+            return "Copied";
         }
     }
 
@@ -237,7 +366,7 @@ public class UserForumController {
         TextArea content = new TextArea(editing ? existing.getContent() : "");
         content.setWrapText(true);
 
-        TextField category = new TextField(editing ? safe(existing.getCategory()) : "");
+        TextField tag = new TextField(editing ? safe(existing.getTag()) : "");
 
         GridPane gp = new GridPane();
         gp.setHgap(10);
@@ -245,10 +374,10 @@ public class UserForumController {
         gp.setPadding(new javafx.geometry.Insets(12));
         gp.addRow(0, new Label("Title"), title);
         gp.addRow(1, new Label("Content"), content);
-        gp.addRow(2, new Label("Category"), category);
+        gp.addRow(2, new Label("Tag"), tag);
 
         GridPane.setHgrow(title, Priority.ALWAYS);
-        GridPane.setHgrow(category, Priority.ALWAYS);
+        GridPane.setHgrow(tag, Priority.ALWAYS);
         GridPane.setHgrow(content, Priority.ALWAYS);
 
         ScrollPane sp = new ScrollPane(gp);
@@ -261,7 +390,7 @@ public class UserForumController {
 
         // Block submit and show validation messages before closing dialog.
         okBtn.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
-            List<String> errors = InputValidator.validatePost(title.getText(), content.getText(), category.getText());
+            List<String> errors = InputValidator.validatePost(title.getText(), content.getText(), tag.getText());
             if (!errors.isEmpty()) {
                 ev.consume(); // prevent dialog from closing
                 showValidation(errors);
@@ -286,12 +415,12 @@ public class UserForumController {
 
             String t = InputValidator.norm(title.getText());
             String c = InputValidator.norm(content.getText());
-            String cat = InputValidator.normalizeNullable(category.getText());
+            String normalizedTag = InputValidator.normalizeNullable(tag.getText());
 
             // Safe because we block with validation above
             p.setTitle(t);
             p.setContent(c);
-            p.setCategory(cat);
+            p.setTag(normalizedTag);
             return p;
         });
 
@@ -305,16 +434,28 @@ public class UserForumController {
             @Override
             protected PostSubmissionOutcome call() throws Exception {
                 ModerationReport report = moderationEngine
-                        .analyzeAsync(ModerationEngine.ContentType.POST, buildModerationText(postDraft))
+                        .analyzePostAsync(buildModerationText(postDraft))
                         .join();
-                postDraft.setStatus(report.getDecision());
+                postDraft.setTag(resolvePredictedCategory(report));
+                postDraft.setDuplicateScore(report.getDuplicateScore());
+                postDraft.setDuplicateOfPostId(report.getDuplicateOfPostId());
+
+                boolean forcedDuplicatePending = report.getDuplicateScore() >= DUPLICATE_PENDING_THRESHOLD;
+                if (forcedDuplicatePending) {
+                    postDraft.setStatus("PENDING");
+                    report.setDecision("PENDING");
+                    report.getReasons().add(String.format("Possible duplicate (score %.2f)", report.getDuplicateScore()));
+                } else {
+                    postDraft.setStatus(report.getDecision());
+                }
+
                 if (editing) {
                     postRepo.update(postDraft);
                 } else {
                     long newId = postRepo.insert(postDraft);
                     postDraft.setId(newId);
                 }
-                return new PostSubmissionOutcome(report, editing);
+                return new PostSubmissionOutcome(report, editing, forcedDuplicatePending);
             }
         };
 
@@ -322,7 +463,7 @@ public class UserForumController {
             setPostSubmissionBusy(false);
             PostSubmissionOutcome out = task.getValue();
             ModerationDialog.show(out.report);
-            showInfo(messageForPostStatus(out.report, out.editing));
+            showInfo(messageForPostStatus(out.report, out.editing, out.forcedDuplicatePending));
             onRefresh();
         });
 
@@ -347,16 +488,25 @@ public class UserForumController {
             }
             sb.append(p.getContent().trim());
         }
-        if (p.getCategory() != null && !p.getCategory().isBlank()) {
-            if (sb.length() > 0) {
-                sb.append('\n');
-            }
-            sb.append(p.getCategory().trim());
-        }
         return sb.toString();
     }
 
-    private String messageForPostStatus(ModerationReport report, boolean editing) {
+    private String resolvePredictedCategory(ModerationReport report) {
+        if (report == null) {
+            return "General";
+        }
+        String predicted = report.getPredictedCategory();
+        if (predicted == null || predicted.isBlank()) {
+            return "General";
+        }
+        return predicted.trim();
+    }
+
+    private String messageForPostStatus(ModerationReport report, boolean editing, boolean forcedDuplicatePending) {
+        if (forcedDuplicatePending) {
+            return editing ? "Possible duplicate: post updated and sent for manual review"
+                    : "Possible duplicate: post submitted for manual review";
+        }
         if (report == null) {
             return editing ? "Post updated" : "Post submitted";
         }
@@ -384,13 +534,37 @@ public class UserForumController {
         return ex instanceof Exception e ? e : new Exception(ex == null ? "Unknown error" : ex.getMessage(), ex);
     }
 
+    private void refreshSortOrder() {
+        if (sorted == null) {
+            return;
+        }
+        String mode = sortBox == null ? "New" : sortBox.getValue();
+        sorted.setComparator(postComparator(mode));
+    }
+
+    private boolean isShareAllowed(ForumPost post) {
+        return post != null && "APPROVED".equalsIgnoreCase(safe(post.getStatus()));
+    }
+
     private static final class PostSubmissionOutcome {
         private final ModerationReport report;
         private final boolean editing;
+        private final boolean forcedDuplicatePending;
 
-        private PostSubmissionOutcome(ModerationReport report, boolean editing) {
+        private PostSubmissionOutcome(ModerationReport report, boolean editing, boolean forcedDuplicatePending) {
             this.report = report;
             this.editing = editing;
+            this.forcedDuplicatePending = forcedDuplicatePending;
+        }
+    }
+
+    private static final class LikeToggleOutcome {
+        private final boolean nowLiked;
+        private final int likeCount;
+
+        private LikeToggleOutcome(boolean nowLiked, int likeCount) {
+            this.nowLiked = nowLiked;
+            this.likeCount = likeCount;
         }
     }
 
@@ -455,6 +629,7 @@ public class UserForumController {
 
         devUserBox.setVisible(dev);
         devUserBox.setManaged(dev);
+        refreshNotificationBadge();
     }
 
     private void showValidation(java.util.List<String> errors) {
@@ -506,6 +681,15 @@ public class UserForumController {
     }
 
     @FXML
+    private void onOpenNotifications() {
+        NotificationsDialog.show(
+                Session.getCurrentUserId(),
+                notificationRepo,
+                this::refreshNotificationBadge,
+                this::openPostFromNotification);
+    }
+
+    @FXML
     private void onToggleTheme() {
         Session.LIGHT_MODE = themeToggle.isSelected();
         syncThemeToggle();
@@ -532,6 +716,40 @@ public class UserForumController {
         }
         scene.getStylesheets().clear();
         scene.getStylesheets().add(getClass().getResource(Session.getThemeStylesheetPath()).toExternalForm());
+    }
+
+    private void refreshNotificationBadge() {
+        if (notificationBadge == null) {
+            return;
+        }
+        try {
+            int unread = notificationRepo.countUnread(Session.getCurrentUserId());
+            notificationBadge.setText(Integer.toString(unread));
+            boolean show = unread > 0;
+            notificationBadge.setVisible(show);
+            notificationBadge.setManaged(show);
+        } catch (Exception ex) {
+            notificationBadge.setVisible(false);
+            notificationBadge.setManaged(false);
+            DebugLog.error("UserForumController", "Failed loading notification badge", ex);
+        }
+    }
+
+    private void openPostFromNotification(Long postId) {
+        if (postId == null) {
+            return;
+        }
+        try {
+            ForumPost post = postRepo.findById(postId);
+            if (post == null) {
+                showInfo("Post #" + postId + " is no longer available.");
+                return;
+            }
+            openPostDetails(post);
+        } catch (Exception ex) {
+            DebugLog.error("UserForumController", "Failed opening post from notification #" + postId, ex);
+            showError("Failed to open post from notification", ex);
+        }
     }
 
     private static class DevUser {

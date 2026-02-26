@@ -20,10 +20,10 @@ import java.util.List;
  * - Content is required
  * - Content must be between 10 and 5000 characters
  *
- * - Category is optional
- * - If provided, category must be between 2 and 30 characters
- * - Category must start with '#'
- * - Category may contain letters, numbers, spaces, '_' or '-'
+ * - Tag is optional
+ * - If provided, tag must be between 2 and 30 characters
+ * - Tag must start with '#'
+ * - Tag may contain letters, numbers, spaces, '_' or '-'
  *
  */
 /*
@@ -47,23 +47,23 @@ public final class InputValidator {
     public static final int POST_CONTENT_MIN = 10;
     public static final int POST_CONTENT_MAX = 5000;
 
-    public static final int CAT_MIN = 2;
-    public static final int CAT_MAX = 30;
+    public static final int TAG_MIN = 2;
+    public static final int TAG_MAX = 30;
 
     // # + 1..29 allowed chars = total 2..30
-    private static final String CATEGORY_REGEX = "^#[A-Za-z0-9 _-]{1,29}$";
+    private static final String TAG_REGEX = "^#[A-Za-z0-9 _-]{1,29}$";
 
     // Comment rules
     public static final int COMMENT_MIN = 2;
     public static final int COMMENT_MAX = 1000;
 
     // Validation path for post create/update actions across user/admin CRUD screens.
-    public static List<String> validatePost(String title, String content, String category) {
+    public static List<String> validatePost(String title, String content, String tag) {
         List<String> errors = new ArrayList<>();
 
         String t = norm(title);
         String c = norm(content);
-        String cat = norm(category);
+        String normalizedTag = norm(tag);
 
         // title
         if (t == null) {
@@ -84,12 +84,12 @@ public final class InputValidator {
             errors.add("Content must be between " + POST_CONTENT_MIN + " and " + POST_CONTENT_MAX + " characters.");
         }
 
-        // category optional
-        if (cat != null) {
-            if (cat.length() < CAT_MIN || cat.length() > CAT_MAX) {
-                errors.add("Category must be between " + CAT_MIN + " and " + CAT_MAX + " characters.");
-            } else if (!cat.matches(CATEGORY_REGEX)) {
-                errors.add("Category must start with # and contain only letters, numbers, spaces, _ or -");
+        // tag optional
+        if (normalizedTag != null) {
+            if (normalizedTag.length() < TAG_MIN || normalizedTag.length() > TAG_MAX) {
+                errors.add("Tag must be between " + TAG_MIN + " and " + TAG_MAX + " characters.");
+            } else if (!normalizedTag.matches(TAG_REGEX)) {
+                errors.add("Tag must start with # and contain only letters, numbers, spaces, _ or -");
             }
         }
 

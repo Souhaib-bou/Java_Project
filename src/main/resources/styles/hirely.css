@@ -63,25 +63,26 @@
 }
 
 .post-title {
-    -fx-font-size: 30px;
+    -fx-font-size: 32px;
     -fx-font-weight: 800;
     -fx-text-fill: #ffffff;
 }
 
 .post-body {
     -fx-text-fill: #d7dce3;
-    -fx-font-size: 18px;
-    -fx-line-spacing: 4px;
-}
-
-.post-card-title {
     -fx-font-size: 19px;
-    -fx-font-weight: 800;
-    -fx-text-fill: #ffffff;
+    -fx-line-spacing: 6px;
 }
 
-.post-card-preview {
+.post-meta {
     -fx-text-fill: -muted;
+    -fx-font-size: 15px;
+}
+
+.post-preview {
+    -fx-text-fill: -muted;
+    -fx-font-size: 16px;
+    -fx-line-spacing: 3px;
 }
 
 /* =========================================================
@@ -547,17 +548,101 @@
     -fx-translate-y: 1;
 }
 
-.wiki-scroll {
-    -fx-background-color: transparent;
-    -fx-padding: 0;
+.post-card {
+    -fx-background-color: #141c2a;
+    -fx-border-color: #2b3750;
+    -fx-border-width: 1;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-padding: 14 16 14 16;
+    -fx-spacing: 9;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.40), 16, 0, 0, 6);
 }
 
-.wiki-scroll > .viewport {
-    -fx-background-color: transparent;
+.post-card .post-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: 800;
 }
 
-.wiki-summary {
-    -fx-padding: 10;
-    -fx-text-fill: -text;
-    -fx-opacity: 0.95;
+.post-card:hover {
+    -fx-border-color: rgba(255, 106, 0, 0.55);
+}
+
+.post-card:selected {
+    -fx-border-color: -hirely-orange;
+    -fx-background-color: -surface-3;
+}
+
+.tag-badge {
+    -fx-padding: 4 12;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-background-color: rgba(255, 106, 0, 0.15);
+    -fx-border-color: rgba(255, 106, 0, 0.45);
+    -fx-text-fill: #ff9d5c;
+    -fx-font-weight: 800;
+    -fx-font-size: 14px;
+}
+
+.action-bar {
+    -fx-spacing: 10;
+    -fx-padding: 2 0 2 0;
+}
+
+.details-shell {
+    -fx-padding: 16 18 16 18;
+    -fx-spacing: 12;
+}
+
+.details-title {
+    -fx-font-size: 34px;
+}
+
+.details-content-wrap {
+    -fx-padding: 4 8 8 8;
+    -fx-max-width: 860;
+}
+
+.details-body {
+    -fx-max-width: 860;
+}
+
+.comments-shell {
+    -fx-padding: 14 16 14 16;
+}
+
+.comment-input-row {
+    -fx-spacing: 12;
+    -fx-padding: 2 0 2 0;
+}
+
+.comment-card {
+    -fx-background-color: #141c2a;
+    -fx-border-color: #2b3750;
+    -fx-border-width: 1;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-padding: 12 14 12 14;
+    -fx-spacing: 8;
+}
+
+.comment-card-gemini {
+    -fx-background-color: #1a2438;
+    -fx-border-color: rgba(255, 106, 0, 0.45);
+}
+
+.comment-author {
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+}
+
+.gemini-badge {
+    -fx-padding: 3 10;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-background-color: rgba(255, 106, 0, 0.18);
+    -fx-border-color: rgba(255, 106, 0, 0.45);
+    -fx-text-fill: #ffb27a;
+    -fx-font-weight: 800;
+    -fx-font-size: 13px;
 }

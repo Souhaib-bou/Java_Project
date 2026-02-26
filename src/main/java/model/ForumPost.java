@@ -13,9 +13,15 @@ public class ForumPost {
     // Main content fields entered from JavaFX post editor dialogs.
     private String title;
     private String content;
-    private String category;
+    private String tag;
     // Moderation and behavior flags managed from admin/user flows.
     private String status;
+    private double duplicateScore;
+    private Long duplicateOfPostId;
+    // Transient engagement fields for UI/feed operations.
+    private int likeCount;
+    private int shareCount;
+    private boolean likedByCurrentUser;
     private boolean pinned;
     private boolean locked;
     // Audit timestamp from database.
@@ -33,11 +39,34 @@ public class ForumPost {
     public String getContent() { return content; }
     public void setContent(String content) { this.content = content; }
 
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
+    public String getTag() { return tag; }
+    public void setTag(String tag) { this.tag = tag; }
+
+    /** @deprecated use {@link #getTag()} */
+    @Deprecated
+    public String getCategory() { return tag; }
+
+    /** @deprecated use {@link #setTag(String)} */
+    @Deprecated
+    public void setCategory(String category) { this.tag = category; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public double getDuplicateScore() { return duplicateScore; }
+    public void setDuplicateScore(double duplicateScore) { this.duplicateScore = duplicateScore; }
+
+    public Long getDuplicateOfPostId() { return duplicateOfPostId; }
+    public void setDuplicateOfPostId(Long duplicateOfPostId) { this.duplicateOfPostId = duplicateOfPostId; }
+
+    public int getLikeCount() { return likeCount; }
+    public void setLikeCount(int likeCount) { this.likeCount = Math.max(0, likeCount); }
+
+    public int getShareCount() { return shareCount; }
+    public void setShareCount(int shareCount) { this.shareCount = Math.max(0, shareCount); }
+
+    public boolean isLikedByCurrentUser() { return likedByCurrentUser; }
+    public void setLikedByCurrentUser(boolean likedByCurrentUser) { this.likedByCurrentUser = likedByCurrentUser; }
 
     public boolean isPinned() { return pinned; }
     public void setPinned(boolean pinned) { this.pinned = pinned; }

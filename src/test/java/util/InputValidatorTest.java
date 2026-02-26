@@ -99,47 +99,47 @@ class InputValidatorTest {
         assertNoErrors(errors);
     }
 
-    // ---------- POST: Category ----------
+    // ---------- POST: Tag ----------
     @Test
-    void validatePost_categoryNull_ok() {
+    void validatePost_tagNull_ok() {
         List<String> errors = InputValidator.validatePost("Good title", "valid content here!", null);
         assertNoErrors(errors);
     }
 
     @Test
-    void validatePost_categoryEmpty_ok() {
+    void validatePost_tagEmpty_ok() {
         List<String> errors = InputValidator.validatePost("Good title", "valid content here!", "");
         // Depending on your validator, "" might be treated as invalid or normalized to
         // null.
         // If your validator expects normalization, keep this as OK.
-        // If it treats empty as invalid, change to assertHasError(errors, "category");
+        // If it treats empty as invalid, change to assertHasError(errors, "tag");
         assertNoErrors(errors);
     }
 
     @Test
-    void validatePost_categoryMustStartWithHash_fails() {
+    void validatePost_tagMustStartWithHash_fails() {
         List<String> errors = InputValidator.validatePost("Good title", "valid content here!", "investment");
-        assertHasError(errors, "category");
+        assertHasError(errors, "tag");
         assertHasError(errors, "#");
     }
 
     @Test
-    void validatePost_categoryTooShort_fails() {
+    void validatePost_tagTooShort_fails() {
         List<String> errors = InputValidator.validatePost("Good title", "valid content here!", "#"); // too short
-        assertHasError(errors, "category");
+        assertHasError(errors, "tag");
     }
 
     @Test
-    void validatePost_categoryTooLong_fails() {
-        // category length rule: 2–30 chars including '#'
+    void validatePost_tagTooLong_fails() {
+        // tag length rule: 2–30 chars including '#'
         String cat = "#" + repeat('a', 30); // 31 including '#'
         List<String> errors = InputValidator.validatePost("Good title", "valid content here!", cat);
-        assertHasError(errors, "category");
+        assertHasError(errors, "tag");
         assertHasError(errors, "30");
     }
 
     @Test
-    void validatePost_categoryValid_ok() {
+    void validatePost_tagValid_ok() {
         List<String> errors = InputValidator.validatePost("Good title", "valid content here!", "#investment");
         assertNoErrors(errors);
     }
@@ -179,11 +179,11 @@ class InputValidatorTest {
 
     // ---------- Normalization ----------
     @Test
-    void normalize_trimAndNullifyCategory() {
+    void normalize_trimAndNullifyTag() {
         // If your InputValidator has normalization helpers, test them here.
         // The method name may differ; adjust if needed.
         String normalized = InputValidator.normalizeNullable("   ");
-        assertNull(normalized, "Expected whitespace-only category to normalize to null");
+        assertNull(normalized, "Expected whitespace-only tag to normalize to null");
 
         String normalized2 = InputValidator.normalizeNullable("  #investment  ");
         assertEquals("#investment", normalized2);

@@ -1,31 +1,37 @@
 package ui;
 
+import javafx.animation.PauseTransition;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.FXML;
-import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import model.ForumComment;
 import model.ForumPost;
 import model.ModerationReport;
 import org.kordamp.ikonli.javafx.FontIcon;
 import repo.ForumCommentRepository;
+import repo.ForumPostInteractionRepository;
 import repo.ForumPostRepository;
+import repo.NotificationRepository;
 import repo.UserRepository;
 import service.ModerationEngine;
-import util.WikipediaClient;
+import service.NotificationService;
+import util.DebugLog;
 import util.Session;
 import util.InputValidator;
 import ui.components.ModerationDialog;
-import java.awt.Desktop;
-import java.net.URI;
+import ui.components.NotificationsDialog;
 import java.util.List;
 
 import java.time.format.DateTimeFormatter;
@@ -43,6 +49,14 @@ public class PostDetailsController {
 
     @FXML
     private Button editPostBtn, deletePostBtn;
+    @FXML
+    private Button likePostBtn, sharePostBtn;
+    @FXML
+    private Label likeCountLabel, shareHintLabel;
+    @FXML
+    private Button notificationsBtn;
+    @FXML
+    private Label notificationBadge;
 
     @FXML
     private ListView<ForumComment> commentListView;
@@ -61,19 +75,6 @@ public class PostDetailsController {
     @FXML
     private FontIcon themeIcon;
 
-    @FXML
-    private TextField wikiQueryField;
-    @FXML
-    private Button wikiLoadBtn;
-    @FXML
-    private ProgressIndicator wikiLoading;
-    @FXML
-    private ScrollPane wikiScroll;
-    @FXML
-    private Label wikiSummaryLabel;
-    @FXML
-    private Hyperlink wikiLink;
-
     private double xOffset = 0;
     private double yOffset = 0;
     private boolean customMaximized = false;
@@ -84,19 +85,21 @@ public class PostDetailsController {
 
     private final ForumCommentRepository commentRepo = new ForumCommentRepository();
     private final ForumPostRepository postRepo = new ForumPostRepository();
+    private final ForumPostInteractionRepository interactionRepo = new ForumPostInteractionRepository();
+    private final NotificationRepository notificationRepo = new NotificationRepository();
     private final UserRepository userRepo = new UserRepository();
     private final ModerationEngine moderationEngine = new ModerationEngine();
+    private final NotificationService notificationService = new NotificationService(notificationRepo, userRepo);
+    private final long geminiUserId = userRepo.findUserIdByEmail("gemini@hirely.local");
 
     private final ObservableList<ForumComment> comments = FXCollections.observableArrayList();
 
     private ForumPost post;
-    private String wikiUrl;
     private boolean commentSubmissionBusy = false;
     private boolean postSubmissionBusy = false;
+    private boolean postLikeBusy = false;
 
     private static final DateTimeFormatter DT = DateTimeFormatter.ofPattern("dd MMM yyyy - HH:mm");
-    private static final double WIKI_MIN = 90;
-    private static final double WIKI_MAX = 240;
 
     @FXML
     private void initialize() {
@@ -106,7 +109,7 @@ public class PostDetailsController {
 
         // JavaFX observable list binding for on-screen comments.
         commentListView.setItems(comments);
-        commentListView.setCellFactory(lv -> new CommentCardCell(userRepo));
+        commentListView.setCellFactory(lv -> new CommentCardCell(userRepo, geminiUserId));
 
         commentListView.getSelectionModel().selectedItemProperty().addListener((obs, o, c) -> {
             if (c == null) {
@@ -133,32 +136,20 @@ public class PostDetailsController {
         });
 
         syncThemeToggle();
+        refreshNotificationBadge();
     }
 
     public void setPost(ForumPost p) {
         // Called by parent screens immediately after loading this view.
         this.post = p;
+        refreshLikeStateFromDb();
+        refreshShareStateFromDb();
+        refreshNotificationBadge();
         render();
         loadComments();
         applyPermissions();
         updateCommentUiState();
         refreshCommentActionVisibility();
-
-        String title = (post == null || post.getTitle() == null) ? "" : post.getTitle().trim();
-        if (wikiQueryField != null) {
-            wikiQueryField.setText(title);
-        }
-        if (wikiSummaryLabel != null) {
-            wikiSummaryLabel.setText("");
-        }
-        if (wikiLink != null) {
-            wikiLink.setVisible(false);
-            wikiLink.setManaged(false);
-        }
-        if (wikiScroll != null) {
-            wikiScroll.setPrefHeight(WIKI_MIN);
-        }
-        wikiUrl = null;
     }
 
     private void render() {
@@ -174,7 +165,7 @@ public class PostDetailsController {
                 (author == null ? ("User #" + post.getAuthorId()) : author) + (when.isBlank() ? "" : " - " + when));
 
         categoryChip
-                .setText((post.getCategory() == null || post.getCategory().isBlank()) ? "General" : post.getCategory());
+                .setText((post.getTag() == null || post.getTag().isBlank()) ? "General" : post.getTag());
         statusChip.setText(post.getStatus());
 
         pinnedChip.setVisible(post.isPinned());
@@ -182,6 +173,7 @@ public class PostDetailsController {
 
         lockedChip.setVisible(post.isLocked());
         lockedChip.setManaged(post.isLocked());
+        refreshLikeUi();
     }
 
     private void applyPermissions() {
@@ -198,6 +190,7 @@ public class PostDetailsController {
         deletePostBtn.setVisible(isOwner);
         deletePostBtn.setManaged(isOwner);
         deletePostBtn.setDisable(postSubmissionBusy);
+        refreshLikeUi();
     }
 
     private boolean isCommentingBlocked() {
@@ -386,7 +379,7 @@ public class PostDetailsController {
         TextField title = new TextField(post.getTitle());
         TextArea content = new TextArea(post.getContent());
         content.setWrapText(true);
-        TextField category = new TextField(post.getCategory() == null ? "" : post.getCategory());
+        TextField tag = new TextField(post.getTag() == null ? "" : post.getTag());
 
         GridPane gp = new GridPane();
         gp.setHgap(10);
@@ -394,13 +387,13 @@ public class PostDetailsController {
         gp.setPadding(new javafx.geometry.Insets(12));
         gp.addRow(0, new Label("Title"), title);
         gp.addRow(1, new Label("Content"), content);
-        gp.addRow(2, new Label("Category"), category);
+        gp.addRow(2, new Label("Tag"), tag);
 
         dialog.getDialogPane().setContent(gp);
 
         Node okBtn = dialog.getDialogPane().lookupButton(okType);
         okBtn.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
-            List<String> errors = InputValidator.validatePost(title.getText(), content.getText(), category.getText());
+            List<String> errors = InputValidator.validatePost(title.getText(), content.getText(), tag.getText());
             if (!errors.isEmpty()) {
                 ev.consume();
                 showWarning("- " + String.join("\n- ", errors));
@@ -419,7 +412,7 @@ public class PostDetailsController {
             draft.setCreatedAt(post.getCreatedAt());
             draft.setTitle(InputValidator.norm(title.getText()));
             draft.setContent(InputValidator.norm(content.getText()));
-            draft.setCategory(InputValidator.normalizeNullable(category.getText()));
+            draft.setTag(InputValidator.normalizeNullable(tag.getText()));
             return draft;
         });
 
@@ -449,10 +442,20 @@ public class PostDetailsController {
         task.setOnSucceeded(evt -> {
             setCommentSubmissionBusy(false);
             CommentSubmissionOutcome out = task.getValue();
+
+            if (!editing && post != null) {
+                notificationService.notifyPostCommented(
+                        commentDraft.getPostId(),
+                        commentDraft.getId(),
+                        commentDraft.getAuthorId(),
+                        post.getAuthorId());
+            }
+
             ModerationDialog.show(out.report);
             showInfo(messageForCommentStatus(out.report, out.editing));
             loadComments();
             refreshCommentActionVisibility();
+            refreshNotificationBadge();
         });
 
         task.setOnFailed(evt -> {
@@ -475,6 +478,8 @@ public class PostDetailsController {
                         .analyzeAsync(ModerationEngine.ContentType.POST, buildPostModerationText(draft))
                         .join();
                 draft.setStatus(report.getDecision());
+                draft.setDuplicateScore(report.getDuplicateScore());
+                draft.setDuplicateOfPostId(report.getDuplicateOfPostId());
                 postRepo.update(draft);
                 return new PostUpdateOutcome(report);
             }
@@ -507,8 +512,11 @@ public class PostDetailsController {
         }
         post.setTitle(draft.getTitle());
         post.setContent(draft.getContent());
-        post.setCategory(draft.getCategory());
+        post.setTag(draft.getTag());
         post.setStatus(draft.getStatus());
+        post.setDuplicateScore(draft.getDuplicateScore());
+        post.setDuplicateOfPostId(draft.getDuplicateOfPostId());
+        refreshLikeUi();
     }
 
     private String buildPostModerationText(ForumPost draft) {
@@ -522,11 +530,11 @@ public class PostDetailsController {
             }
             sb.append(draft.getContent().trim());
         }
-        if (draft.getCategory() != null && !draft.getCategory().isBlank()) {
+        if (draft.getTag() != null && !draft.getTag().isBlank()) {
             if (sb.length() > 0) {
                 sb.append('\n');
             }
-            sb.append(draft.getCategory().trim());
+            sb.append(draft.getTag().trim());
         }
         return sb.toString();
     }
@@ -583,6 +591,227 @@ public class PostDetailsController {
     }
 
     @FXML
+    private void onToggleLikePost() {
+        if (post == null || postLikeBusy || !isLikeAllowed()) {
+            return;
+        }
+
+        boolean oldLiked = post.isLikedByCurrentUser();
+        int oldCount = post.getLikeCount();
+
+        boolean optimisticLiked = !oldLiked;
+        int optimisticCount = Math.max(0, oldCount + (optimisticLiked ? 1 : -1));
+        post.setLikedByCurrentUser(optimisticLiked);
+        post.setLikeCount(optimisticCount);
+        postLikeBusy = true;
+        refreshLikeUi();
+
+        Task<LikeToggleOutcome> task = new Task<>() {
+            @Override
+            protected LikeToggleOutcome call() throws Exception {
+                long postId = post.getId();
+                long userId = Session.getCurrentUserId();
+                boolean nowLiked;
+                if (oldLiked) {
+                    interactionRepo.removeLike(postId, userId);
+                    nowLiked = false;
+                } else {
+                    interactionRepo.addLike(postId, userId);
+                    nowLiked = true;
+                }
+                int likes = interactionRepo.countLikes(postId);
+                return new LikeToggleOutcome(nowLiked, likes);
+            }
+        };
+
+        task.setOnSucceeded(evt -> {
+            postLikeBusy = false;
+            LikeToggleOutcome out = task.getValue();
+            post.setLikedByCurrentUser(out.nowLiked);
+            post.setLikeCount(out.likeCount);
+            if (out.nowLiked) {
+                notificationService.notifyPostLiked(post.getId(), Session.getCurrentUserId(), post.getAuthorId());
+            }
+            refreshLikeUi();
+            refreshNotificationBadge();
+        });
+
+        task.setOnFailed(evt -> {
+            postLikeBusy = false;
+            post.setLikedByCurrentUser(oldLiked);
+            post.setLikeCount(oldCount);
+            refreshLikeUi();
+            Throwable ex = task.getException();
+            DebugLog.error("PostDetailsController", "Failed toggling like for post #" + post.getId(), ex);
+            showError("Failed to update like", asException(ex));
+        });
+
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();
+    }
+
+    @FXML
+    private void onSharePost() {
+        if (post == null) {
+            return;
+        }
+        if (!isShareAllowed()) {
+            showWarning("Only approved posts can be shared.");
+            return;
+        }
+        ClipboardContent content = new ClipboardContent();
+        content.putString(buildShareText(post));
+        Clipboard.getSystemClipboard().setContent(content);
+
+        String hint = "Copied";
+        try {
+            long postId = post.getId();
+            long actorUserId = Session.getCurrentUserId();
+            boolean firstShare = interactionRepo.addShare(postId, actorUserId);
+            post.setShareCount(interactionRepo.countShares(postId));
+            boolean shouldNotifyAuthor = firstShare && post.getAuthorId() != Session.getCurrentUserId();
+            if (shouldNotifyAuthor) {
+                notificationService.notifyPostShared(post.getId(), Session.getCurrentUserId(), post.getAuthorId());
+                hint = "Copied + author notified";
+                refreshNotificationBadge();
+            }
+        } catch (Exception ex) {
+            DebugLog.error("PostDetailsController", "Failed recording share for post #" + post.getId(), ex);
+        }
+
+        refreshLikeUi();
+        showShareHint(hint);
+    }
+
+    private void refreshLikeStateFromDb() {
+        if (post == null) {
+            return;
+        }
+        try {
+            long postId = post.getId();
+            long userId = Session.getCurrentUserId();
+            post.setLikeCount(interactionRepo.countLikes(postId));
+            post.setLikedByCurrentUser(interactionRepo.isLiked(postId, userId));
+        } catch (Exception ex) {
+            post.setLikeCount(Math.max(0, post.getLikeCount()));
+            post.setLikedByCurrentUser(false);
+            DebugLog.error("PostDetailsController", "Failed loading like state for post #" + post.getId(), ex);
+        }
+    }
+
+    private void refreshShareStateFromDb() {
+        if (post == null) {
+            return;
+        }
+        try {
+            long postId = post.getId();
+            post.setShareCount(interactionRepo.countShares(postId));
+        } catch (Exception ex) {
+            post.setShareCount(Math.max(0, post.getShareCount()));
+            DebugLog.error("PostDetailsController", "Failed loading share state for post #" + post.getId(), ex);
+        }
+    }
+
+    private void refreshLikeUi() {
+        if (likeCountLabel != null) {
+            likeCountLabel.setText("Likes: " + (post == null ? 0 : Math.max(0, post.getLikeCount())));
+        }
+        if (likePostBtn != null) {
+            likePostBtn.setText(post != null && post.isLikedByCurrentUser() ? "Unlike" : "Like");
+            likePostBtn.setDisable(postLikeBusy || !isLikeAllowed());
+        }
+        if (sharePostBtn != null) {
+            int shareCount = post == null ? 0 : Math.max(0, post.getShareCount());
+            sharePostBtn.setText("Share (" + shareCount + ")");
+            sharePostBtn.setDisable(!isShareAllowed());
+        }
+    }
+
+    private boolean isLikeAllowed() {
+        return post != null && "APPROVED".equalsIgnoreCase(post.getStatus());
+    }
+
+    private boolean isShareAllowed() {
+        return post != null && "APPROVED".equalsIgnoreCase(post.getStatus());
+    }
+
+    private String buildShareText(ForumPost p) {
+        String title = p.getTitle() == null ? "" : p.getTitle();
+        String body = p.getContent() == null ? "" : p.getContent().replace('\n', ' ').trim();
+        String snippet = body.length() <= 120 ? body : body.substring(0, 120) + "...";
+        return "[" + title + "] (Post #" + p.getId() + ")\n" + snippet;
+    }
+
+    private void showShareHint(String text) {
+        shareHintLabel.setText(text == null || text.isBlank() ? "Copied" : text);
+        shareHintLabel.setVisible(true);
+        shareHintLabel.setManaged(true);
+        PauseTransition pause = new PauseTransition(Duration.seconds(1.2));
+        pause.setOnFinished(evt -> {
+            shareHintLabel.setVisible(false);
+            shareHintLabel.setManaged(false);
+            shareHintLabel.setText("");
+        });
+        pause.playFromStart();
+    }
+
+    @FXML
+    private void onOpenNotifications() {
+        NotificationsDialog.show(
+                Session.getCurrentUserId(),
+                notificationRepo,
+                this::refreshNotificationBadge,
+                this::openPostFromNotification);
+    }
+
+    private void refreshNotificationBadge() {
+        if (notificationBadge == null) {
+            return;
+        }
+        try {
+            int unread = notificationRepo.countUnread(Session.getCurrentUserId());
+            notificationBadge.setText(Integer.toString(unread));
+            boolean show = unread > 0;
+            notificationBadge.setVisible(show);
+            notificationBadge.setManaged(show);
+        } catch (Exception ex) {
+            notificationBadge.setVisible(false);
+            notificationBadge.setManaged(false);
+            DebugLog.error("PostDetailsController", "Failed loading notification badge", ex);
+        }
+    }
+
+    private void openPostFromNotification(Long postId) {
+        if (postId == null) {
+            return;
+        }
+        try {
+            ForumPost target = postRepo.findById(postId);
+            if (target == null) {
+                showWarning("Post #" + postId + " is no longer available.");
+                return;
+            }
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/ui/PostDetailsView.fxml"));
+            Scene scene = new Scene(loader.load(), 1200, 850);
+            scene.getStylesheets().add(getClass().getResource(Session.getThemeStylesheetPath()).toExternalForm());
+            PostDetailsController ctrl = loader.getController();
+            ctrl.setPost(target);
+
+            Stage st = new Stage();
+            st.initStyle(javafx.stage.StageStyle.UNDECORATED);
+            st.setTitle("Hirely - Post #" + target.getId());
+            st.setScene(scene);
+            st.sizeToScene();
+            st.centerOnScreen();
+            st.show();
+        } catch (Exception ex) {
+            DebugLog.error("PostDetailsController", "Failed opening post from notification #" + postId, ex);
+            showError("Failed to open post", ex);
+        }
+    }
+
+    @FXML
     private void onDeletePost() {
         // DELETE (posts): removes this post and closes details window.
         if (post == null)
@@ -624,19 +853,42 @@ public class PostDetailsController {
         }
     }
 
+    private static final class LikeToggleOutcome {
+        private final boolean nowLiked;
+        private final int likeCount;
+
+        private LikeToggleOutcome(boolean nowLiked, int likeCount) {
+            this.nowLiked = nowLiked;
+            this.likeCount = likeCount;
+        }
+    }
+
     // Shared comment card
     private static class CommentCardCell extends ListCell<ForumComment> {
         private final UserRepository userRepo;
-        private final VBox card = new VBox(6);
+        private final long geminiUserId;
+        private final VBox card = new VBox(8);
+        private final HBox topRow = new HBox(8);
+        private final Label author = new Label();
+        private final Label badge = new Label("Gemini");
+        private final Label when = new Label();
         private final Label content = new Label();
-        private final Label meta = new Label();
 
-        CommentCardCell(UserRepository userRepo) {
+        CommentCardCell(UserRepository userRepo, long geminiUserId) {
             this.userRepo = userRepo;
-            card.getStyleClass().add("card");
+            this.geminiUserId = geminiUserId;
+            card.getStyleClass().add("comment-card");
+            author.getStyleClass().add("comment-author");
+            when.getStyleClass().add("post-meta");
+            badge.getStyleClass().add("gemini-badge");
+            badge.setVisible(false);
+            badge.setManaged(false);
             content.setWrapText(true);
-            meta.getStyleClass().add("muted");
-            card.getChildren().addAll(content, meta);
+
+            javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
+            HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
+            topRow.getChildren().addAll(author, badge, spacer, when);
+            card.getChildren().addAll(topRow, content);
         }
 
         @Override
@@ -648,8 +900,20 @@ public class PostDetailsController {
             }
             content.setText(c.getContent() == null ? "" : c.getContent());
 
-            String author = userRepo.getDisplayNameById(c.getAuthorId());
-            meta.setText((author == null ? ("User #" + c.getAuthorId()) : author) + " - " + c.getStatus());
+            String displayName = userRepo.getDisplayNameById(c.getAuthorId());
+            author.setText((displayName == null || displayName.isBlank()) ? ("User #" + c.getAuthorId()) : displayName);
+            when.setText(c.getCreatedAt() == null ? "" : DT.format(c.getCreatedAt()));
+
+            boolean isGemini = geminiUserId > 0 && c.getAuthorId() == geminiUserId;
+            badge.setVisible(isGemini);
+            badge.setManaged(isGemini);
+            if (isGemini) {
+                if (!card.getStyleClass().contains("comment-card-gemini")) {
+                    card.getStyleClass().add("comment-card-gemini");
+                }
+            } else {
+                card.getStyleClass().remove("comment-card-gemini");
+            }
 
             setGraphic(card);
         }
@@ -678,133 +942,6 @@ public class PostDetailsController {
         a.setContentText(ex.getMessage());
         a.showAndWait();
         ex.printStackTrace();
-    }
-
-    @FXML
-    private void onLoadWikipedia() {
-        String query = wikiQueryField == null ? "" : wikiQueryField.getText();
-        query = query == null ? "" : query.trim();
-
-        if (query.isBlank()) {
-            String fallback = post == null ? "" : post.getTitle();
-            fallback = fallback == null ? "" : fallback.trim();
-            if (fallback.isBlank()) {
-                showWarning("Type something to search.");
-                return;
-            }
-            query = fallback;
-            wikiQueryField.setText(query);
-        }
-
-        setWikiLoading(true);
-        if (wikiSummaryLabel != null) {
-            wikiSummaryLabel.setText("");
-        }
-        wikiLink.setVisible(false);
-        wikiLink.setManaged(false);
-        wikiUrl = null;
-
-        String finalQuery = query;
-        Task<WikipediaClient.WikiSummary> task = new Task<>() {
-            @Override
-            protected WikipediaClient.WikiSummary call() throws Exception {
-                return WikipediaClient.fetchSummary(finalQuery);
-            }
-        };
-
-        task.setOnSucceeded(evt -> {
-            WikipediaClient.WikiSummary summary = task.getValue();
-            wikiSummaryLabel.setText(summary.extract);
-            wikiUrl = summary.url;
-            if (wikiUrl != null && !wikiUrl.isBlank()) {
-                wikiLink.setText("Open on Wikipedia");
-                wikiLink.setVisible(true);
-                wikiLink.setManaged(true);
-            }
-            Platform.runLater(this::updateWikiBoxHeight);
-            setWikiLoading(false);
-        });
-
-        task.setOnFailed(evt -> {
-            Throwable ex = task.getException();
-            wikiSummaryLabel.setText(getWikiErrorMessage(ex));
-            wikiUrl = null;
-            wikiLink.setVisible(false);
-            wikiLink.setManaged(false);
-            Platform.runLater(this::updateWikiBoxHeight);
-            setWikiLoading(false);
-        });
-
-        Thread t = new Thread(task);
-        t.setDaemon(true);
-        t.start();
-    }
-
-    @FXML
-    private void onOpenWiki() {
-        if (wikiUrl == null || wikiUrl.isBlank()) {
-            showWarning("No Wikipedia link available.");
-            return;
-        }
-        if (!Desktop.isDesktopSupported()) {
-            showWarning("Opening links is not supported on this system.");
-            return;
-        }
-        try {
-            Desktop.getDesktop().browse(URI.create(wikiUrl));
-        } catch (Exception ex) {
-            showError("Failed to open link", ex);
-        }
-    }
-
-    private void setWikiLoading(boolean loading) {
-        wikiLoadBtn.setDisable(loading);
-        wikiLoading.setVisible(loading);
-        wikiLoading.setManaged(loading);
-    }
-
-    private void updateWikiBoxHeight() {
-        if (wikiSummaryLabel == null || wikiScroll == null) {
-            return;
-        }
-        wikiSummaryLabel.applyCss();
-        wikiSummaryLabel.layout();
-        double width = wikiScroll.getWidth();
-        if (width <= 0) {
-            width = 600;
-        }
-        double textHeight = wikiSummaryLabel.prefHeight(width - 20);
-        double target = Math.min(WIKI_MAX, Math.max(WIKI_MIN, textHeight + 20));
-        wikiScroll.setPrefHeight(target);
-    }
-
-    private String getWikiErrorMessage(Throwable ex) {
-        if (ex instanceof WikipediaClient.NotFoundException) {
-            return "No Wikipedia summary found.";
-        }
-        if (isNetworkError(ex)) {
-            return "Couldn't reach Wikipedia (offline?).";
-        }
-        return "Failed to load Wikipedia summary.";
-    }
-
-    private boolean isNetworkError(Throwable ex) {
-        if (ex == null) {
-            return false;
-        }
-        if (ex instanceof java.net.http.HttpTimeoutException) {
-            return true;
-        }
-        if (ex instanceof java.net.UnknownHostException) {
-            return true;
-        }
-        if (ex instanceof java.net.ConnectException) {
-            return true;
-        }
-        if (ex instanceof java.io.IOException) {
-            return true;
-        }
-        return isNetworkError(ex.getCause());
     }
 
     @FXML
