@@ -1,6 +1,7 @@
 package ui;
 
 import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
@@ -16,23 +17,38 @@ import javafx.scene.layout.VBox;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import model.CommentSort;
 import model.ForumComment;
 import model.ForumPost;
+import model.InteractionType;
 import model.ModerationReport;
+import model.TargetType;
 import org.kordamp.ikonli.javafx.FontIcon;
 import repo.ForumCommentRepository;
-import repo.ForumPostInteractionRepository;
 import repo.ForumPostRepository;
+import repo.InteractionRepository;
 import repo.NotificationRepository;
 import repo.UserRepository;
 import service.ModerationEngine;
 import service.NotificationService;
 import util.DebugLog;
+import util.GeminiClient;
 import util.Session;
 import util.InputValidator;
 import ui.components.ModerationDialog;
 import ui.components.NotificationsDialog;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.ToIntFunction;
 
 import java.time.format.DateTimeFormatter;
 
@@ -52,7 +68,7 @@ public class PostDetailsController {
     @FXML
     private Button likePostBtn, sharePostBtn;
     @FXML
-    private Label likeCountLabel, shareHintLabel;
+    private Label likeCountLabel, shareCountLabel, shareHintLabel;
     @FXML
     private Button notificationsBtn;
     @FXML
@@ -65,15 +81,19 @@ public class PostDetailsController {
     @FXML
     private ComboBox<String> commentStatusBox;
     @FXML
+    private ComboBox<String> commentSortBox;
+    @FXML
     private Button addCommentBtn, updateCommentBtn, deleteCommentBtn;
     @FXML
-    private Label lockHint;
+    private Label lockHint, geminiReplyingHint;
     @FXML
     private HBox appBar;
     @FXML
     private ToggleButton themeToggle;
     @FXML
     private FontIcon themeIcon;
+    @FXML
+    private FontIcon likePostIcon, sharePostIcon;
 
     private double xOffset = 0;
     private double yOffset = 0;
@@ -85,12 +105,13 @@ public class PostDetailsController {
 
     private final ForumCommentRepository commentRepo = new ForumCommentRepository();
     private final ForumPostRepository postRepo = new ForumPostRepository();
-    private final ForumPostInteractionRepository interactionRepo = new ForumPostInteractionRepository();
+    private final InteractionRepository interactionRepo = new InteractionRepository();
     private final NotificationRepository notificationRepo = new NotificationRepository();
     private final UserRepository userRepo = new UserRepository();
     private final ModerationEngine moderationEngine = new ModerationEngine();
     private final NotificationService notificationService = new NotificationService(notificationRepo, userRepo);
-    private final long geminiUserId = userRepo.findUserIdByEmail("gemini@hirely.local");
+    private final GeminiClient geminiClient = new GeminiClient();
+    private final long geminiUserId = userRepo.findOrCreateSystemUserId("gemini@hirely.local", "Gemini", "Assistant");
 
     private final ObservableList<ForumComment> comments = FXCollections.observableArrayList();
 
@@ -98,6 +119,12 @@ public class PostDetailsController {
     private boolean commentSubmissionBusy = false;
     private boolean postSubmissionBusy = false;
     private boolean postLikeBusy = false;
+    private CommentSort currentCommentSort = CommentSort.NEWEST;
+    private Map<Long, Integer> commentLikeCounts = new HashMap<>();
+    private Set<Long> likedCommentIds = new HashSet<>();
+    private final Set<Long> commentLikeBusyIds = new HashSet<>();
+    private final Set<Long> commentPinBusyIds = new HashSet<>();
+    private final AtomicInteger geminiRepliesInFlight = new AtomicInteger(0);
 
     private static final DateTimeFormatter DT = DateTimeFormatter.ofPattern("dd MMM yyyy - HH:mm");
 
@@ -106,10 +133,24 @@ public class PostDetailsController {
         // Status choices visible in the comment editor controls.
         commentStatusBox.setItems(FXCollections.observableArrayList("PENDING", "APPROVED", "REJECTED"));
         commentStatusBox.getSelectionModel().select("PENDING");
+        if (commentSortBox != null) {
+            commentSortBox.setItems(FXCollections.observableArrayList("Newest", "Oldest", "Top"));
+            commentSortBox.getSelectionModel().select("Newest");
+            commentSortBox.valueProperty().addListener((obs, oldV, selected) -> {
+                currentCommentSort = parseCommentSort(selected);
+                loadComments();
+            });
+        }
 
         // JavaFX observable list binding for on-screen comments.
         commentListView.setItems(comments);
-        commentListView.setCellFactory(lv -> new CommentCardCell(userRepo, geminiUserId));
+        commentListView.setCellFactory(lv -> new CommentCardCell(
+                userRepo,
+                geminiUserId,
+                this::isCommentLikedByCurrentUser,
+                this::commentLikeCount,
+                this::toggleCommentLikeAsync,
+                this::toggleCommentPinAsync));
 
         commentListView.getSelectionModel().selectedItemProperty().addListener((obs, o, c) -> {
             if (c == null) {
@@ -256,20 +297,157 @@ public class PostDetailsController {
     }
 
     private void loadComments() {
-        try {
+        if (post == null) {
             comments.clear();
-            if (post == null)
-                return;
+            commentLikeCounts = new HashMap<>();
+            likedCommentIds = new HashSet<>();
+            return;
+        }
 
-            // READ (comments): user-facing details show approved comments only.
-            comments.setAll(commentRepo.findApprovedByPostId(post.getId()));
+        long postId = post.getId();
+        CommentSort sort = currentCommentSort;
 
+        Task<CommentLoadOutcome> task = new Task<>() {
+            @Override
+            protected CommentLoadOutcome call() throws Exception {
+                List<ForumComment> loaded = commentRepo.findVisibleByPostIdSorted(postId, sort);
+                Map<Long, Integer> likeCounts = interactionRepo.countLikesForComments(postId);
+                Set<Long> likedIds = interactionRepo.likedCommentIdsByUser(postId, Session.getCurrentUserId());
+                return new CommentLoadOutcome(loaded, likeCounts, likedIds);
+            }
+        };
+
+        task.setOnSucceeded(evt -> {
+            CommentLoadOutcome out = task.getValue();
+            commentLikeCounts = out.likeCounts == null ? new HashMap<>() : new HashMap<>(out.likeCounts);
+            likedCommentIds = out.likedIds == null ? new HashSet<>() : new HashSet<>(out.likedIds);
+            comments.setAll(out.comments == null ? Collections.emptyList() : out.comments);
             commentListView.getSelectionModel().clearSelection();
             commentArea.clear();
             commentStatusBox.setValue("PENDING");
-        } catch (Exception ex) {
-            showError("Failed to load comments", ex);
+        });
+
+        task.setOnFailed(evt -> showError("Failed to load comments", asException(task.getException())));
+
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private CommentSort parseCommentSort(String value) {
+        if (value == null) {
+            return CommentSort.NEWEST;
         }
+        if ("Oldest".equalsIgnoreCase(value)) {
+            return CommentSort.OLDEST;
+        }
+        if ("Top".equalsIgnoreCase(value)) {
+            return CommentSort.TOP;
+        }
+        return CommentSort.NEWEST;
+    }
+
+    private int commentLikeCount(ForumComment comment) {
+        if (comment == null) {
+            return 0;
+        }
+        return Math.max(0, commentLikeCounts.getOrDefault(comment.getId(), 0));
+    }
+
+    private boolean isCommentLikedByCurrentUser(ForumComment comment) {
+        return comment != null && likedCommentIds.contains(comment.getId());
+    }
+
+    private void toggleCommentLikeAsync(ForumComment comment) {
+        if (comment == null || post == null) {
+            return;
+        }
+        long commentId = comment.getId();
+        if (commentLikeBusyIds.contains(commentId)) {
+            return;
+        }
+        commentLikeBusyIds.add(commentId);
+
+        Task<LikeToggleOutcome> task = new Task<>() {
+            @Override
+            protected LikeToggleOutcome call() throws Exception {
+                long userId = Session.getCurrentUserId();
+                boolean nowLiked = interactionRepo.toggleInteraction(
+                        TargetType.COMMENT,
+                        commentId,
+                        userId,
+                        InteractionType.LIKE);
+                int likeCount = interactionRepo.countInteractions(TargetType.COMMENT, commentId, InteractionType.LIKE);
+                return new LikeToggleOutcome(nowLiked, likeCount);
+            }
+        };
+
+        task.setOnSucceeded(evt -> {
+            commentLikeBusyIds.remove(commentId);
+            LikeToggleOutcome out = task.getValue();
+            if (out.nowLiked) {
+                likedCommentIds.add(commentId);
+            } else {
+                likedCommentIds.remove(commentId);
+            }
+            commentLikeCounts.put(commentId, out.likeCount);
+            if (currentCommentSort == CommentSort.TOP) {
+                loadComments();
+            } else {
+                commentListView.refresh();
+            }
+            if (out.nowLiked) {
+                notificationService.notifyCommentLiked(
+                        post.getId(),
+                        commentId,
+                        Session.getCurrentUserId(),
+                        comment.getAuthorId());
+                refreshNotificationBadge();
+            }
+        });
+
+        task.setOnFailed(evt -> {
+            commentLikeBusyIds.remove(commentId);
+            showError("Failed to update comment like", asException(task.getException()));
+        });
+
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();
+    }
+
+    private void toggleCommentPinAsync(ForumComment comment) {
+        if (comment == null || post == null || !Session.isAdmin()) {
+            return;
+        }
+        long commentId = comment.getId();
+        if (commentPinBusyIds.contains(commentId)) {
+            return;
+        }
+        commentPinBusyIds.add(commentId);
+        boolean nextPinned = !comment.isPinned();
+
+        Task<Void> task = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                commentRepo.setPinned(commentId, nextPinned);
+                return null;
+            }
+        };
+
+        task.setOnSucceeded(evt -> {
+            commentPinBusyIds.remove(commentId);
+            loadComments();
+        });
+
+        task.setOnFailed(evt -> {
+            commentPinBusyIds.remove(commentId);
+            showError("Failed to update comment pin", asException(task.getException()));
+        });
+
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();
     }
 
     @FXML
@@ -412,7 +590,7 @@ public class PostDetailsController {
             draft.setCreatedAt(post.getCreatedAt());
             draft.setTitle(InputValidator.norm(title.getText()));
             draft.setContent(InputValidator.norm(content.getText()));
-            draft.setTag(InputValidator.normalizeNullable(tag.getText()));
+            draft.setTag(InputValidator.normalizeSingleTag(tag.getText()));
             return draft;
         });
 
@@ -442,6 +620,7 @@ public class PostDetailsController {
         task.setOnSucceeded(evt -> {
             setCommentSubmissionBusy(false);
             CommentSubmissionOutcome out = task.getValue();
+            boolean shouldTriggerGemini = !editing && post != null && containsGeminiTrigger(commentDraft.getContent());
 
             if (!editing && post != null) {
                 notificationService.notifyPostCommented(
@@ -456,6 +635,10 @@ public class PostDetailsController {
             loadComments();
             refreshCommentActionVisibility();
             refreshNotificationBadge();
+
+            if (shouldTriggerGemini) {
+                requestGeminiReplyAsync(commentDraft.getContent());
+            }
         });
 
         task.setOnFailed(evt -> {
@@ -466,6 +649,92 @@ public class PostDetailsController {
         Thread t = new Thread(task);
         t.setDaemon(true);
         t.start();
+    }
+
+    private boolean containsGeminiTrigger(String commentText) {
+        return commentText != null && commentText.toLowerCase(Locale.ROOT).contains("@gemini");
+    }
+
+    private void requestGeminiReplyAsync(String userCommentText) {
+        if (post == null) {
+            return;
+        }
+        if (geminiUserId <= 0) {
+            DebugLog.error("PostDetailsController",
+                    "Gemini bot user not found (expected email gemini@hirely.local)", null);
+            showWarning("Gemini bot user is missing. Create user with email gemini@hirely.local.");
+            return;
+        }
+
+        long postId = post.getId();
+        String titleSnapshot = post.getTitle();
+        String contentSnapshot = post.getContent();
+        String tagSnapshot = post.getTag();
+        String cleanedUserComment = GeminiClient.cleanTriggerToken(userCommentText);
+
+        setGeminiReplyingVisible(true);
+        CompletableFuture
+                .supplyAsync(() -> geminiClient.generateReply(
+                        titleSnapshot,
+                        contentSnapshot,
+                        cleanedUserComment,
+                        tagSnapshot))
+                .whenComplete((replyText, ex) -> Platform.runLater(() -> {
+                    try {
+                        String text = replyText;
+                        if (ex != null) {
+                            DebugLog.error("PostDetailsController", "Gemini async generation failed", ex);
+                            text = "Gemini is unavailable right now (missing key or service error). Please try again later.";
+                        }
+                        insertGeminiComment(postId, text);
+                    } finally {
+                        setGeminiReplyingVisible(false);
+                    }
+                }));
+    }
+
+    private void insertGeminiComment(long postId, String content) {
+        try {
+            ForumComment bot = new ForumComment();
+            bot.setPostId(postId);
+            bot.setAuthorId(geminiUserId);
+            bot.setStatus("APPROVED");
+            bot.setContent(trimToCommentLimit(content));
+            long id = commentRepo.insert(bot);
+            bot.setId(id);
+
+            // Append immediately without resetting the user's current draft text.
+            if (post != null && post.getId() == postId) {
+                bot.setCreatedAt(java.time.LocalDateTime.now());
+                commentLikeCounts.put(bot.getId(), 0);
+                likedCommentIds.remove(bot.getId());
+                comments.add(0, bot);
+                commentListView.refresh();
+            }
+        } catch (Exception ex) {
+            DebugLog.error("PostDetailsController", "Failed inserting Gemini reply for post #" + postId, ex);
+        }
+    }
+
+    private String trimToCommentLimit(String text) {
+        String normalized = (text == null || text.isBlank())
+                ? "Gemini is unavailable right now (missing key or service error). Please try again later."
+                : text.trim();
+        int max = InputValidator.COMMENT_MAX;
+        if (normalized.length() <= max) {
+            return normalized;
+        }
+        return normalized.substring(0, max - 3) + "...";
+    }
+
+    private void setGeminiReplyingVisible(boolean busy) {
+        int pending = geminiRepliesInFlight.updateAndGet(v -> busy ? v + 1 : Math.max(0, v - 1));
+        boolean show = pending > 0;
+        if (geminiReplyingHint != null) {
+            geminiReplyingHint.setText("Gemini is replying...");
+            geminiReplyingHint.setVisible(show);
+            geminiReplyingHint.setManaged(show);
+        }
     }
 
     private void submitPostUpdateWithModeration(ForumPost draft) {
@@ -611,15 +880,8 @@ public class PostDetailsController {
             protected LikeToggleOutcome call() throws Exception {
                 long postId = post.getId();
                 long userId = Session.getCurrentUserId();
-                boolean nowLiked;
-                if (oldLiked) {
-                    interactionRepo.removeLike(postId, userId);
-                    nowLiked = false;
-                } else {
-                    interactionRepo.addLike(postId, userId);
-                    nowLiked = true;
-                }
-                int likes = interactionRepo.countLikes(postId);
+                boolean nowLiked = interactionRepo.toggleInteraction(TargetType.POST, postId, userId, InteractionType.LIKE);
+                int likes = interactionRepo.countInteractions(TargetType.POST, postId, InteractionType.LIKE);
                 return new LikeToggleOutcome(nowLiked, likes);
             }
         };
@@ -668,8 +930,11 @@ public class PostDetailsController {
         try {
             long postId = post.getId();
             long actorUserId = Session.getCurrentUserId();
-            boolean firstShare = interactionRepo.addShare(postId, actorUserId);
-            post.setShareCount(interactionRepo.countShares(postId));
+            boolean firstShare = false;
+            if (!interactionRepo.hasInteraction(TargetType.POST, postId, actorUserId, InteractionType.SHARE)) {
+                firstShare = interactionRepo.toggleInteraction(TargetType.POST, postId, actorUserId, InteractionType.SHARE);
+            }
+            post.setShareCount(interactionRepo.countInteractions(TargetType.POST, postId, InteractionType.SHARE));
             boolean shouldNotifyAuthor = firstShare && post.getAuthorId() != Session.getCurrentUserId();
             if (shouldNotifyAuthor) {
                 notificationService.notifyPostShared(post.getId(), Session.getCurrentUserId(), post.getAuthorId());
@@ -691,8 +956,8 @@ public class PostDetailsController {
         try {
             long postId = post.getId();
             long userId = Session.getCurrentUserId();
-            post.setLikeCount(interactionRepo.countLikes(postId));
-            post.setLikedByCurrentUser(interactionRepo.isLiked(postId, userId));
+            post.setLikeCount(interactionRepo.countInteractions(TargetType.POST, postId, InteractionType.LIKE));
+            post.setLikedByCurrentUser(interactionRepo.hasInteraction(TargetType.POST, postId, userId, InteractionType.LIKE));
         } catch (Exception ex) {
             post.setLikeCount(Math.max(0, post.getLikeCount()));
             post.setLikedByCurrentUser(false);
@@ -706,7 +971,7 @@ public class PostDetailsController {
         }
         try {
             long postId = post.getId();
-            post.setShareCount(interactionRepo.countShares(postId));
+            post.setShareCount(interactionRepo.countInteractions(TargetType.POST, postId, InteractionType.SHARE));
         } catch (Exception ex) {
             post.setShareCount(Math.max(0, post.getShareCount()));
             DebugLog.error("PostDetailsController", "Failed loading share state for post #" + post.getId(), ex);
@@ -715,16 +980,26 @@ public class PostDetailsController {
 
     private void refreshLikeUi() {
         if (likeCountLabel != null) {
-            likeCountLabel.setText("Likes: " + (post == null ? 0 : Math.max(0, post.getLikeCount())));
+            likeCountLabel.setText(Integer.toString(post == null ? 0 : Math.max(0, post.getLikeCount())));
+        }
+        if (shareCountLabel != null) {
+            shareCountLabel.setText(Integer.toString(post == null ? 0 : Math.max(0, post.getShareCount())));
         }
         if (likePostBtn != null) {
-            likePostBtn.setText(post != null && post.isLikedByCurrentUser() ? "Unlike" : "Like");
+            likePostBtn.getStyleClass().remove("liked");
+            if (post != null && post.isLikedByCurrentUser()) {
+                likePostBtn.getStyleClass().add("liked");
+            }
             likePostBtn.setDisable(postLikeBusy || !isLikeAllowed());
         }
+        if (likePostIcon != null) {
+            likePostIcon.setIconLiteral(post != null && post.isLikedByCurrentUser() ? "fas-heart" : "far-heart");
+        }
         if (sharePostBtn != null) {
-            int shareCount = post == null ? 0 : Math.max(0, post.getShareCount());
-            sharePostBtn.setText("Share (" + shareCount + ")");
             sharePostBtn.setDisable(!isShareAllowed());
+        }
+        if (sharePostIcon != null) {
+            sharePostIcon.setIconLiteral("fas-share-alt");
         }
     }
 
@@ -845,6 +1120,18 @@ public class PostDetailsController {
         }
     }
 
+    private static final class CommentLoadOutcome {
+        private final List<ForumComment> comments;
+        private final Map<Long, Integer> likeCounts;
+        private final Set<Long> likedIds;
+
+        private CommentLoadOutcome(List<ForumComment> comments, Map<Long, Integer> likeCounts, Set<Long> likedIds) {
+            this.comments = comments;
+            this.likeCounts = likeCounts;
+            this.likedIds = likedIds;
+        }
+    }
+
     private static final class PostUpdateOutcome {
         private final ModerationReport report;
 
@@ -867,28 +1154,54 @@ public class PostDetailsController {
     private static class CommentCardCell extends ListCell<ForumComment> {
         private final UserRepository userRepo;
         private final long geminiUserId;
+        private final Function<ForumComment, Boolean> likedByCurrentUser;
+        private final ToIntFunction<ForumComment> likeCountProvider;
+        private final Consumer<ForumComment> onToggleLike;
+        private final Consumer<ForumComment> onTogglePin;
         private final VBox card = new VBox(8);
         private final HBox topRow = new HBox(8);
+        private final HBox actionsRow = new HBox(10);
         private final Label author = new Label();
         private final Label badge = new Label("Gemini");
+        private final Label pinnedBadge = new Label("PINNED");
         private final Label when = new Label();
         private final Label content = new Label();
+        private final Button likeBtn = new Button("Like");
+        private final Label likeCountLabel = new Label("0");
+        private final Button pinBtn = new Button("Pin");
 
-        CommentCardCell(UserRepository userRepo, long geminiUserId) {
+        CommentCardCell(
+                UserRepository userRepo,
+                long geminiUserId,
+                Function<ForumComment, Boolean> likedByCurrentUser,
+                ToIntFunction<ForumComment> likeCountProvider,
+                Consumer<ForumComment> onToggleLike,
+                Consumer<ForumComment> onTogglePin) {
             this.userRepo = userRepo;
             this.geminiUserId = geminiUserId;
+            this.likedByCurrentUser = likedByCurrentUser;
+            this.likeCountProvider = likeCountProvider;
+            this.onToggleLike = onToggleLike;
+            this.onTogglePin = onTogglePin;
             card.getStyleClass().add("comment-card");
             author.getStyleClass().add("comment-author");
             when.getStyleClass().add("post-meta");
             badge.getStyleClass().add("gemini-badge");
+            pinnedBadge.getStyleClass().add("chip");
             badge.setVisible(false);
             badge.setManaged(false);
+            pinnedBadge.setVisible(false);
+            pinnedBadge.setManaged(false);
             content.setWrapText(true);
+            likeBtn.getStyleClass().addAll("secondary", "comment-like-btn");
+            likeCountLabel.getStyleClass().add("post-meta");
+            pinBtn.getStyleClass().add("secondary");
 
             javafx.scene.layout.Region spacer = new javafx.scene.layout.Region();
             HBox.setHgrow(spacer, javafx.scene.layout.Priority.ALWAYS);
-            topRow.getChildren().addAll(author, badge, spacer, when);
-            card.getChildren().addAll(topRow, content);
+            topRow.getChildren().addAll(author, badge, pinnedBadge, spacer, when);
+            actionsRow.getChildren().addAll(likeBtn, likeCountLabel, pinBtn);
+            card.getChildren().addAll(topRow, content, actionsRow);
         }
 
         @Override
@@ -907,6 +1220,9 @@ public class PostDetailsController {
             boolean isGemini = geminiUserId > 0 && c.getAuthorId() == geminiUserId;
             badge.setVisible(isGemini);
             badge.setManaged(isGemini);
+            boolean pinned = c.isPinned();
+            pinnedBadge.setVisible(pinned);
+            pinnedBadge.setManaged(pinned);
             if (isGemini) {
                 if (!card.getStyleClass().contains("comment-card-gemini")) {
                     card.getStyleClass().add("comment-card-gemini");
@@ -914,6 +1230,21 @@ public class PostDetailsController {
             } else {
                 card.getStyleClass().remove("comment-card-gemini");
             }
+            int likes = likeCountProvider.applyAsInt(c);
+            likeCountLabel.setText(Integer.toString(Math.max(0, likes)));
+            boolean liked = Boolean.TRUE.equals(likedByCurrentUser.apply(c));
+            likeBtn.setText(liked ? "Unlike" : "Like");
+            likeBtn.getStyleClass().remove("liked");
+            if (liked) {
+                likeBtn.getStyleClass().add("liked");
+            }
+            likeBtn.setOnAction(evt -> onToggleLike.accept(c));
+
+            boolean canPin = Session.isAdmin();
+            pinBtn.setVisible(canPin);
+            pinBtn.setManaged(canPin);
+            pinBtn.setText(pinned ? "Unpin" : "Pin");
+            pinBtn.setOnAction(evt -> onTogglePin.accept(c));
 
             setGraphic(card);
         }

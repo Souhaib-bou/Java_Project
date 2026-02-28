@@ -190,6 +190,24 @@ class InputValidatorTest {
     }
 
     @Test
+    void normalizeSingleTag_addsHashForGeneral() {
+        String normalized = InputValidator.normalizeSingleTag("General");
+        assertEquals("#General", normalized);
+    }
+
+    @Test
+    void normalizeSingleTag_keepsHashTag() {
+        String normalized = InputValidator.normalizeSingleTag("#Internship");
+        assertEquals("#Internship", normalized);
+    }
+
+    @Test
+    void normalizeSingleTag_trimsAndPrefixes() {
+        String normalized = InputValidator.normalizeSingleTag("  internship ");
+        assertEquals("#internship", normalized);
+    }
+
+    @Test
     void normalize_trimTitleAndContent() {
         // Again, adjust method names if your class exposes different helpers.
         assertEquals("Hello", InputValidator.normalize("  Hello  "));

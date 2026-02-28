@@ -57,6 +57,7 @@ public final class NotificationsDialog {
         markAllBtn.getStyleClass().add("secondary");
         Button openBtn = new Button("Open");
         openBtn.getStyleClass().add("primary");
+        openBtn.setDisable(true);
 
         ListView<Notification> listView = new ListView<>(items);
         listView.setCellFactory(lv -> new NotificationCell());
@@ -112,6 +113,10 @@ public final class NotificationsDialog {
             }
         });
 
+        listView.getSelectionModel().selectedItemProperty().addListener((obs, oldV, selected) -> {
+            openBtn.setDisable(selected == null || selected.getPostId() == null);
+        });
+
         openBtn.setOnAction(evt -> {
             Notification n = listView.getSelectionModel().getSelectedItem();
             if (n == null || n.getPostId() == null) {
@@ -126,6 +131,12 @@ public final class NotificationsDialog {
             reload.run();
             if (onOpenPost != null) {
                 onOpenPost.accept(n.getPostId());
+            }
+        });
+
+        listView.setOnMouseClicked(evt -> {
+            if (evt.getClickCount() == 2 && !openBtn.isDisabled()) {
+                openBtn.fire();
             }
         });
 
@@ -151,6 +162,7 @@ public final class NotificationsDialog {
             message.setWrapText(true);
             meta.getStyleClass().add("muted");
             card.getChildren().addAll(message, meta);
+            selectedProperty().addListener((obs, wasSelected, isSelected) -> applyCardStyle(getItem()));
         }
 
         @Override
@@ -164,12 +176,27 @@ public final class NotificationsDialog {
             String when = item.getCreatedAt() == null ? "" : DT.format(item.getCreatedAt());
             String status = item.isRead() ? "Read" : "Unread";
             meta.setText(status + (when.isBlank() ? "" : " - " + when));
-            if (!item.isRead()) {
-                card.setStyle("-fx-border-color: -hirely-orange; -fx-border-width: 1.4;");
-            } else {
-                card.setStyle("");
-            }
+
+            applyCardStyle(item);
             setGraphic(card);
+        }
+
+        private void applyCardStyle(Notification item) {
+            if (item == null) {
+                card.setStyle("");
+                return;
+            }
+            boolean selected = isSelected();
+            String borderColor = item.isRead() ? "rgba(0,0,0,0.14)" : "-hirely-orange";
+            String borderWidth = item.isRead() ? "1.0" : "1.4";
+            String background = selected ? "rgba(255, 166, 77, 0.16)" : "transparent";
+            card.setStyle(
+                    "-fx-background-color: " + background + ";" +
+                            "-fx-border-color: " + borderColor + ";" +
+                            "-fx-border-width: " + borderWidth + ";" +
+                            "-fx-border-radius: 10;" +
+                            "-fx-background-radius: 10;" +
+                            "-fx-padding: 8 10 8 10;");
         }
     }
 }

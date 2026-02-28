@@ -54,11 +54,17 @@ public final class ModerationEngine {
     }
 
     public CompletableFuture<ModerationReport> analyzeAsync(ContentType type, String text) {
+        return analyzeAsync(type, text, null);
+    }
+
+    public CompletableFuture<ModerationReport> analyzeAsync(ContentType type, String text, String contentKeyOverride) {
         String safeText = text == null ? "" : text.trim();
         long startNs = System.nanoTime();
         String perspectiveKey = readPerspectiveApiKey();
         String wireType = toWireType(type);
-        String contentKey = cacheKey(safeText, type);
+        String contentKey = (contentKeyOverride == null || contentKeyOverride.isBlank())
+                ? cacheKey(safeText, type)
+                : contentKeyOverride.trim();
 
         CompletableFuture<PerspectiveOutcome> perspectiveFuture =
                 CompletableFuture.supplyAsync(() -> callPerspective(safeText, perspectiveKey), executor)
@@ -75,8 +81,16 @@ public final class ModerationEngine {
         return analyzeAsync(ContentType.POST, text);
     }
 
+    public CompletableFuture<ModerationReport> analyzePostAsync(String text, String contentKeyOverride) {
+        return analyzeAsync(ContentType.POST, text, contentKeyOverride);
+    }
+
     public CompletableFuture<ModerationReport> analyzeCommentAsync(String text) {
         return analyzeAsync(ContentType.COMMENT, text);
+    }
+
+    public CompletableFuture<ModerationReport> analyzeCommentAsync(String text, String contentKeyOverride) {
+        return analyzeAsync(ContentType.COMMENT, text, contentKeyOverride);
     }
 
     public void shutdown() {
@@ -225,7 +239,7 @@ public final class ModerationEngine {
     }
 
     private String readPerspectiveApiKey() {
-        // Dev constant (replace YOUR_KEY_HERE locally).
+        // Constant (replace YOUR_KEY_HERE locally).
         if (Secrets.PERSPECTIVE_API_KEY == null) {
             return "";
         }

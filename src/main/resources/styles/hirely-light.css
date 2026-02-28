@@ -213,6 +213,11 @@
     -fx-font-size: 13px;
 }
 
+.button.comment-like-btn.liked {
+    -fx-border-color: rgba(255, 106, 0, 0.65);
+    -fx-background-color: rgba(255, 106, 0, 0.10);
+}
+
 .card:hover {
     -fx-border-color: rgba(255, 106, 0, 0.55);
     -fx-effect: dropshadow(three-pass-box, rgba(255, 106, 0, 0.10), 22, 0, 0, 10);
@@ -397,6 +402,55 @@
     -fx-icon-color: -hirely-orange;
 }
 
+.social-icon-btn {
+    -fx-background-color: rgba(16, 24, 40, 0.02);
+    -fx-border-color: -border;
+    -fx-border-width: 1;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-padding: 0;
+    -fx-min-width: 44px;
+    -fx-min-height: 44px;
+    -fx-pref-width: 44px;
+    -fx-pref-height: 44px;
+}
+
+.social-icon-btn .ikonli-font-icon {
+    -fx-icon-size: 22px;
+    -fx-icon-color: -muted;
+}
+
+.social-icon-btn:hover {
+    -fx-border-color: -hirely-orange;
+    -fx-background-color: rgba(255, 106, 0, 0.08);
+}
+
+.social-icon-btn:hover .ikonli-font-icon {
+    -fx-icon-color: -text;
+}
+
+.like-btn.liked {
+    -fx-border-color: rgba(255, 106, 0, 0.65);
+    -fx-background-color: rgba(255, 106, 0, 0.12);
+}
+
+.like-btn.liked .ikonli-font-icon {
+    -fx-icon-color: -hirely-orange;
+}
+
+.share-btn .ikonli-font-icon {
+    -fx-icon-color: #1570ef;
+}
+
+.notification-btn .ikonli-font-icon {
+    -fx-icon-color: #b54708;
+}
+
+.social-count {
+    -fx-font-size: 16px;
+    -fx-font-weight: 800;
+}
+
 .list-view {
     -fx-background-color: transparent;
     -fx-control-inner-background: transparent;
@@ -576,9 +630,30 @@
     -fx-background-radius: 6;
 }
 
+.win-icon-btn {
+    -fx-border-color: -border;
+    -fx-border-width: 1;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-min-width: 38px;
+    -fx-min-height: 38px;
+    -fx-pref-width: 38px;
+    -fx-pref-height: 38px;
+    -fx-padding: 0;
+}
+
+.win-icon-btn .ikonli-font-icon {
+    -fx-icon-size: 16px;
+    -fx-icon-color: -muted;
+}
+
 .win-btn:hover {
     -fx-background-color: rgba(16, 24, 40, 0.06);
     -fx-text-fill: -text;
+}
+
+.win-btn:hover .ikonli-font-icon {
+    -fx-icon-color: -text;
 }
 
 .win-btn:pressed {
@@ -589,6 +664,10 @@
 .win-close:hover {
     -fx-background-color: -danger;
     -fx-text-fill: white;
+}
+
+.win-close:hover .ikonli-font-icon {
+    -fx-icon-color: white;
 }
 
 .win-close:pressed {

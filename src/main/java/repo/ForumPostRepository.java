@@ -23,8 +23,8 @@ public class ForumPostRepository {
         ensureDuplicateColumns();
         String sql = """
                 SELECT p.id, p.author_id, p.title, p.content, p.tag, p.status, p.is_pinned, p.is_locked, p.created_at,
-                       (SELECT COUNT(*) FROM forum_post_interaction i WHERE i.post_id = p.id AND i.type='LIKE') AS like_count,
-                       (SELECT COUNT(*) FROM forum_post_interaction i WHERE i.post_id = p.id AND i.type='SHARE') AS share_count
+                       (SELECT COUNT(*) FROM forum_interaction i WHERE i.target_type='POST' AND i.target_id = p.id AND i.interaction_type='LIKE') AS like_count,
+                       (SELECT COUNT(*) FROM forum_interaction i WHERE i.target_type='POST' AND i.target_id = p.id AND i.interaction_type='SHARE') AS share_count
                 """
                 + selectDuplicateColumnsSql()
                 + """
@@ -48,8 +48,9 @@ public class ForumPostRepository {
 
     // CREATE: inserts a new post row and returns generated id.
     public long insert(ForumPost p) throws SQLException {
+        String normalizedTag = InputValidator.normalizeSingleTag(p.getTag());
         // Validate at repository boundary so all callers enforce the same rules.
-        List<String> errors = InputValidator.validatePost(p.getTitle(), p.getContent(), p.getTag());
+        List<String> errors = InputValidator.validatePost(p.getTitle(), p.getContent(), normalizedTag);
         if (!errors.isEmpty()) {
             throw new IllegalArgumentException(String.join(" | ", errors));
         }
@@ -74,7 +75,7 @@ public class ForumPostRepository {
             ps.setLong(1, p.getAuthorId());
             ps.setString(2, p.getTitle());
             ps.setString(3, p.getContent());
-            ps.setString(4, p.getTag());
+            ps.setString(4, normalizedTag);
             ps.setString(5, p.getStatus());
             ps.setBoolean(6, p.isPinned());
             ps.setBoolean(7, p.isLocked());
@@ -102,8 +103,9 @@ public class ForumPostRepository {
 
     // UPDATE: applies content/moderation changes to an existing post.
     public void update(ForumPost p) throws SQLException {
+        String normalizedTag = InputValidator.normalizeSingleTag(p.getTag());
         // Re-validate on update to prevent invalid edits from any UI path.
-        List<String> errors = InputValidator.validatePost(p.getTitle(), p.getContent(), p.getTag());
+        List<String> errors = InputValidator.validatePost(p.getTitle(), p.getContent(), normalizedTag);
         if (!errors.isEmpty()) {
             throw new IllegalArgumentException(String.join(" | ", errors));
         }
@@ -125,7 +127,7 @@ public class ForumPostRepository {
 
             ps.setString(1, p.getTitle());
             ps.setString(2, p.getContent());
-            ps.setString(3, p.getTag());
+            ps.setString(3, normalizedTag);
             ps.setString(4, p.getStatus());
             ps.setBoolean(5, p.isPinned());
             ps.setBoolean(6, p.isLocked());
@@ -161,8 +163,8 @@ public class ForumPostRepository {
         ensureDuplicateColumns();
         String sql = """
                 SELECT p.id, p.author_id, p.title, p.content, p.tag, p.status, p.is_pinned, p.is_locked, p.created_at,
-                       (SELECT COUNT(*) FROM forum_post_interaction i WHERE i.post_id = p.id AND i.type='LIKE') AS like_count,
-                       (SELECT COUNT(*) FROM forum_post_interaction i WHERE i.post_id = p.id AND i.type='SHARE') AS share_count
+                       (SELECT COUNT(*) FROM forum_interaction i WHERE i.target_type='POST' AND i.target_id = p.id AND i.interaction_type='LIKE') AS like_count,
+                       (SELECT COUNT(*) FROM forum_interaction i WHERE i.target_type='POST' AND i.target_id = p.id AND i.interaction_type='SHARE') AS share_count
                 """
                 + selectDuplicateColumnsSql()
                 + """
@@ -190,8 +192,8 @@ public class ForumPostRepository {
         ensureDuplicateColumns();
         String sql = """
                 SELECT p.id, p.author_id, p.title, p.content, p.tag, p.status, p.is_pinned, p.is_locked, p.created_at,
-                       (SELECT COUNT(*) FROM forum_post_interaction i WHERE i.post_id = p.id AND i.type='LIKE') AS like_count,
-                       (SELECT COUNT(*) FROM forum_post_interaction i WHERE i.post_id = p.id AND i.type='SHARE') AS share_count
+                       (SELECT COUNT(*) FROM forum_interaction i WHERE i.target_type='POST' AND i.target_id = p.id AND i.interaction_type='LIKE') AS like_count,
+                       (SELECT COUNT(*) FROM forum_interaction i WHERE i.target_type='POST' AND i.target_id = p.id AND i.interaction_type='SHARE') AS share_count
                 """
                 + selectDuplicateColumnsSql()
                 + """
@@ -221,8 +223,8 @@ public class ForumPostRepository {
         int safeLimit = Math.max(1, limit);
         String sql = """
                 SELECT p.id, p.author_id, p.title, p.content, p.tag, p.status, p.is_pinned, p.is_locked, p.created_at,
-                       (SELECT COUNT(*) FROM forum_post_interaction i WHERE i.post_id = p.id AND i.type='LIKE') AS like_count,
-                       (SELECT COUNT(*) FROM forum_post_interaction i WHERE i.post_id = p.id AND i.type='SHARE') AS share_count
+                       (SELECT COUNT(*) FROM forum_interaction i WHERE i.target_type='POST' AND i.target_id = p.id AND i.interaction_type='LIKE') AS like_count,
+                       (SELECT COUNT(*) FROM forum_interaction i WHERE i.target_type='POST' AND i.target_id = p.id AND i.interaction_type='SHARE') AS share_count
                 """
                 + selectDuplicateColumnsSql()
                 + """
@@ -248,8 +250,8 @@ public class ForumPostRepository {
         ensureDuplicateColumns();
         String sql = """
                 SELECT p.id, p.author_id, p.title, p.content, p.tag, p.status, p.is_pinned, p.is_locked, p.created_at,
-                       (SELECT COUNT(*) FROM forum_post_interaction i WHERE i.post_id = p.id AND i.type='LIKE') AS like_count,
-                       (SELECT COUNT(*) FROM forum_post_interaction i WHERE i.post_id = p.id AND i.type='SHARE') AS share_count
+                       (SELECT COUNT(*) FROM forum_interaction i WHERE i.target_type='POST' AND i.target_id = p.id AND i.interaction_type='LIKE') AS like_count,
+                       (SELECT COUNT(*) FROM forum_interaction i WHERE i.target_type='POST' AND i.target_id = p.id AND i.interaction_type='SHARE') AS share_count
                 """
                 + selectDuplicateColumnsSql()
                 + """
@@ -292,9 +294,9 @@ public class ForumPostRepository {
     }
 
     public void updateTag(long postId, String tag) throws SQLException {
-        String normalized = InputValidator.normalizeNullable(tag);
+        String normalized = InputValidator.normalizeSingleTag(tag);
         if (normalized == null || normalized.isBlank()) {
-            normalized = "General";
+            normalized = "#General";
         }
         String sql = """
                 UPDATE forum_post

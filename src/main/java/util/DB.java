@@ -33,7 +33,7 @@ public class DB {
                 return;
             }
             try {
-                runSanityQuery(connection, "SELECT 1 FROM forum_post_interaction LIMIT 1", "forum_post_interaction");
+                runSanityQuery(connection, "SELECT 1 FROM forum_interaction LIMIT 1", "forum_interaction");
                 runSanityQuery(connection, "SELECT 1 FROM forum_notification LIMIT 1", "forum_notification");
                 runSanityQuery(connection, "SELECT user_id FROM user LIMIT 1", "user.user_id");
                 schemaValidated = true;
@@ -41,7 +41,7 @@ public class DB {
             } catch (SQLException ex) {
                 DebugLog.error("DB", "Schema compatibility check failed. Required tables/columns are missing.", ex);
                 throw new SQLException(
-                        "Schema mismatch: expected forum_post_interaction, forum_notification, and user.user_id",
+                        "Schema mismatch: expected forum_interaction, forum_notification, and user.user_id",
                         ex);
             }
         }

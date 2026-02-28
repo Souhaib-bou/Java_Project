@@ -23,8 +23,8 @@
 
             <TextField fx:id="searchField" promptText="Search posts..." prefWidth="320"/>
             <ComboBox fx:id="sortBox" styleClass="combo-small"/>
+            <ComboBox fx:id="statusFilterBox" prefWidth="150"/>
             <Button fx:id="newPostBtn" text="New Post" onAction="#onNewPost" styleClass="primary"/>
-            <Button fx:id="btnAiAuditLast50" text="AI Audit (Last 50)" onAction="#onAiAuditLast50" styleClass="secondary"/>
             <Button fx:id="userForumBtn" text="User Forum" onAction="#onOpenUserForum" styleClass="secondary">
                 <graphic>
                     <FontIcon iconLiteral="fas-users"/>
@@ -40,9 +40,21 @@
 
             <HBox spacing="8" alignment="CENTER_RIGHT">
                  <padding><Insets left="16"/></padding>
-                 <Button text="_" onAction="#onMinimize" styleClass="win-btn"/>
-                 <Button text="□" onAction="#onMaximize" styleClass="win-btn"/>
-                 <Button text="X" onAction="#onClose" styleClass="win-btn, win-close"/>
+                 <Button onAction="#onMinimize" styleClass="win-btn win-icon-btn" contentDisplay="GRAPHIC_ONLY">
+                     <graphic>
+                         <FontIcon iconLiteral="fas-window-minimize"/>
+                     </graphic>
+                 </Button>
+                 <Button onAction="#onMaximize" styleClass="win-btn win-icon-btn" contentDisplay="GRAPHIC_ONLY">
+                     <graphic>
+                         <FontIcon iconLiteral="fas-square"/>
+                     </graphic>
+                 </Button>
+                 <Button onAction="#onClose" styleClass="win-btn win-close win-icon-btn" contentDisplay="GRAPHIC_ONLY">
+                     <graphic>
+                         <FontIcon iconLiteral="fas-times"/>
+                     </graphic>
+                 </Button>
             </HBox>
 
         </HBox>
@@ -84,9 +96,8 @@
                             </padding>
                             <top>
                                 <VBox spacing="10">
+                                    <Label fx:id="postTitleLabel" text="Select a post" styleClass="post-title" wrapText="true"/>
                                     <HBox alignment="CENTER_LEFT" spacing="10">
-                                        <Label fx:id="postTitleLabel" text="Select a post" styleClass="post-title" wrapText="true"/>
-                                        <Region HBox.hgrow="ALWAYS"/>
                                         <Button fx:id="editPostBtn" text="Edit" onAction="#onEditPost" styleClass="secondary"/>
                                         <Button fx:id="deletePostBtn" text="Delete" onAction="#onDeletePost" styleClass="danger"/>
                                         <Button fx:id="btnAiReclassify" text="AI Reclassify" onAction="#onAiReclassify" styleClass="secondary"/>
@@ -166,6 +177,9 @@
                                 <VBox spacing="12" VBox.vgrow="ALWAYS" styleClass="section-card">
                                     <HBox alignment="CENTER_LEFT">
                                         <Label text="Comments" styleClass="section-title"/>
+                                        <ComboBox fx:id="commentStatusFilterBox2" prefWidth="140"/>
+                                        <ComboBox fx:id="commentSortBox2" prefWidth="140"/>
+                                        <Button fx:id="seeCommentPostBtn2" text="See Post" onAction="#onSeeCommentPost2" styleClass="secondary"/>
                                         <Region HBox.hgrow="ALWAYS"/>
                                         <Button text="Refresh Comments" onAction="#onRefreshComments2" styleClass="secondary">
                                             <graphic>
@@ -174,6 +188,63 @@
                                         </Button>
                                     </HBox>
                                     <ListView fx:id="commentListView2" VBox.vgrow="ALWAYS" />
+                                </VBox>
+                            </VBox>
+                        </content>
+                    </ScrollPane>
+                </Tab>
+
+                <!-- FEEDBACK TAB -->
+                <Tab text="Feedback">
+                    <ScrollPane fitToWidth="true" hbarPolicy="NEVER" pannable="true">
+                        <content>
+                            <VBox spacing="14" styleClass="page">
+                                <padding>
+                                    <Insets top="16" right="16" bottom="16" left="16"/>
+                                </padding>
+
+                                <HBox alignment="CENTER_LEFT" spacing="12">
+                                    <Label text="AI Feedback" styleClass="section-title"/>
+                                    <Region HBox.hgrow="ALWAYS"/>
+                                    <Button fx:id="btnAiAuditLast50" text="AI Audit (Last 50)" onAction="#onAiAuditLast50" styleClass="secondary"/>
+                                    <Label fx:id="feedbackLastUpdatedLabel" styleClass="muted" text="No AI analysis yet"/>
+                                </HBox>
+
+                                <HBox spacing="12">
+                                    <VBox styleClass="section-card" HBox.hgrow="ALWAYS" spacing="4">
+                                        <Label text="Total Analyses" styleClass="muted"/>
+                                        <Label fx:id="feedbackTotalLabel" text="0" styleClass="section-title"/>
+                                    </VBox>
+                                    <VBox styleClass="section-card" HBox.hgrow="ALWAYS" spacing="4">
+                                        <Label text="Posts" styleClass="muted"/>
+                                        <Label fx:id="feedbackPostLabel" text="0" styleClass="section-title"/>
+                                    </VBox>
+                                    <VBox styleClass="section-card" HBox.hgrow="ALWAYS" spacing="4">
+                                        <Label text="Comments" styleClass="muted"/>
+                                        <Label fx:id="feedbackCommentLabel" text="0" styleClass="section-title"/>
+                                    </VBox>
+                                    <VBox styleClass="section-card" HBox.hgrow="ALWAYS" spacing="4">
+                                        <Label text="Fallback Used" styleClass="muted"/>
+                                        <Label fx:id="feedbackFallbackLabel" text="0" styleClass="section-title"/>
+                                    </VBox>
+                                </HBox>
+
+                                <VBox styleClass="section-card" VBox.vgrow="ALWAYS" spacing="10">
+                                    <Label text="Recent AI Results" styleClass="section-title"/>
+                                    <TableView fx:id="feedbackTable" prefHeight="560" maxWidth="Infinity" VBox.vgrow="ALWAYS">
+                                        <columns>
+                                            <TableColumn fx:id="feedbackTimeCol" text="Time" minWidth="115" prefWidth="130"/>
+                                            <TableColumn fx:id="feedbackTypeCol" text="Type" minWidth="70" prefWidth="80"/>
+                                            <TableColumn fx:id="feedbackTargetCol" text="Target" minWidth="130" prefWidth="145"/>
+                                            <TableColumn fx:id="feedbackDecisionCol" text="Decision" minWidth="90" prefWidth="95"/>
+                                            <TableColumn fx:id="feedbackCategoryCol" text="Category" minWidth="100" prefWidth="110"/>
+                                            <TableColumn fx:id="feedbackToxicityCol" text="Toxicity" minWidth="75" prefWidth="80"/>
+                                            <TableColumn fx:id="feedbackQualityCol" text="Quality" minWidth="75" prefWidth="80"/>
+                                            <TableColumn fx:id="feedbackDuplicateCol" text="Duplicate" minWidth="75" prefWidth="80"/>
+                                            <TableColumn fx:id="feedbackFallbackCol" text="Fallback" minWidth="75" prefWidth="80"/>
+                                            <TableColumn fx:id="feedbackSourceCol" text="Source" minWidth="100" prefWidth="110"/>
+                                        </columns>
+                                    </TableView>
                                 </VBox>
                             </VBox>
                         </content>

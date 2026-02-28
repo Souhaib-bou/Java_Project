@@ -208,9 +208,16 @@ def score_duplicate_and_remember(
     cache = RECENT_COMMENT_EMBEDDINGS if content_type == "comment" else RECENT_POST_EMBEDDINGS
     max_size = MAX_COMMENT_CACHE if content_type == "comment" else MAX_POST_CACHE
     max_similarity = 0.0
+    key = (content_key or "").strip()
+    if not key:
+        stable_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
+        key = f"{content_type}:{stable_hash}"
 
     with DUPLICATE_CACHE_LOCK:
-        for existing in cache.values():
+        for existing_key, existing in cache.items():
+            # Avoid self-comparison when the caller provides a stable entity key.
+            if existing_key == key:
+                continue
             similarity = cosine(embedding, existing)
             if similarity > max_similarity:
                 max_similarity = similarity
@@ -221,10 +228,6 @@ def score_duplicate_and_remember(
         elif max_similarity >= 0.88:
             reasons.append(f"Possible duplicate detected ({max_similarity:.2f} similarity)")
 
-        key = (content_key or "").strip()
-        if not key:
-            stable_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
-            key = f"{content_type}:{stable_hash}"
         if key in cache:
             cache.move_to_end(key)
         cache[key] = embedding

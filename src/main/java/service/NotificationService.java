@@ -16,6 +16,7 @@ public class NotificationService {
     private static final String TYPE_POST_APPROVED = "POST_APPROVED";
     private static final String TYPE_POST_REJECTED = "POST_REJECTED";
     private static final String TYPE_POST_SHARED = "POST_SHARED";
+    private static final String TYPE_COMMENT_LIKED = "COMMENT_LIKED";
     private static final String TYPE_COMMENT_APPROVED = "COMMENT_APPROVED";
     private static final String TYPE_COMMENT_REJECTED = "COMMENT_REJECTED";
 
@@ -79,6 +80,15 @@ public class NotificationService {
     public void notifyCommentApproved(long postId, long commentId, long receiverUserId) {
         createSafe(build(receiverUserId, null, TYPE_COMMENT_APPROVED,
                 "Your comment (#" + commentId + ") on post #" + postId + " was approved by admin.", postId, commentId));
+    }
+
+    public void notifyCommentLiked(long postId, long commentId, long actorUserId, long receiverUserId) {
+        if (shouldSkip(actorUserId, receiverUserId)) {
+            return;
+        }
+        String actorName = safeName(actorUserId);
+        createSafe(build(receiverUserId, actorUserId, TYPE_COMMENT_LIKED,
+                actorName + " liked your comment (#" + commentId + ") on post #" + postId + ".", postId, commentId));
     }
 
     public void notifyCommentRejected(long postId, long commentId, long receiverUserId) {

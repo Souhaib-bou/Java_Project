@@ -20,10 +20,12 @@ import javafx.scene.layout.Priority;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import model.ForumPost;
+import model.InteractionType;
 import model.ModerationReport;
+import model.TargetType;
 import org.kordamp.ikonli.javafx.FontIcon;
-import repo.ForumPostInteractionRepository;
 import repo.ForumPostRepository;
+import repo.InteractionRepository;
 import repo.NotificationRepository;
 import repo.UserRepository;
 import service.ModerationEngine;
@@ -89,7 +91,7 @@ public class UserForumController {
     private double restoreHeight = 0;
 
     private final ForumPostRepository postRepo = new ForumPostRepository();
-    private final ForumPostInteractionRepository interactionRepo = new ForumPostInteractionRepository();
+    private final InteractionRepository interactionRepo = new InteractionRepository();
     private final NotificationRepository notificationRepo = new NotificationRepository();
     private final UserRepository userRepo = new UserRepository();
     private final ModerationEngine moderationEngine = new ModerationEngine();
@@ -221,7 +223,11 @@ public class UserForumController {
         long uid = Session.getCurrentUserId();
         for (ForumPost post : posts) {
             try {
-                post.setLikedByCurrentUser(interactionRepo.isLiked(post.getId(), uid));
+                post.setLikedByCurrentUser(interactionRepo.hasInteraction(
+                        TargetType.POST,
+                        post.getId(),
+                        uid,
+                        InteractionType.LIKE));
             } catch (Exception ex) {
                 post.setLikedByCurrentUser(false);
                 DebugLog.error("UserForumController", "Failed loading like state for post #" + post.getId(), ex);
@@ -253,15 +259,8 @@ public class UserForumController {
             @Override
             protected LikeToggleOutcome call() throws Exception {
                 long uid = Session.getCurrentUserId();
-                boolean nowLiked;
-                if (oldLiked) {
-                    interactionRepo.removeLike(postId, uid);
-                    nowLiked = false;
-                } else {
-                    interactionRepo.addLike(postId, uid);
-                    nowLiked = true;
-                }
-                int latestCount = interactionRepo.countLikes(postId);
+                boolean nowLiked = interactionRepo.toggleInteraction(TargetType.POST, postId, uid, InteractionType.LIKE);
+                int latestCount = interactionRepo.countInteractions(TargetType.POST, postId, InteractionType.LIKE);
                 return new LikeToggleOutcome(nowLiked, latestCount);
             }
         };
@@ -303,8 +302,11 @@ public class UserForumController {
         try {
             long postId = post.getId();
             long actorUserId = Session.getCurrentUserId();
-            boolean firstShare = interactionRepo.addShare(postId, actorUserId);
-            post.setShareCount(interactionRepo.countShares(postId));
+            boolean firstShare = false;
+            if (!interactionRepo.hasInteraction(TargetType.POST, postId, actorUserId, InteractionType.SHARE)) {
+                firstShare = interactionRepo.toggleInteraction(TargetType.POST, postId, actorUserId, InteractionType.SHARE);
+            }
+            post.setShareCount(interactionRepo.countInteractions(TargetType.POST, postId, InteractionType.SHARE));
             postListView.refresh();
 
             boolean shouldNotifyAuthor = firstShare && post.getAuthorId() != Session.getCurrentUserId();
@@ -415,7 +417,7 @@ public class UserForumController {
 
             String t = InputValidator.norm(title.getText());
             String c = InputValidator.norm(content.getText());
-            String normalizedTag = InputValidator.normalizeNullable(tag.getText());
+            String normalizedTag = InputValidator.normalizeSingleTag(tag.getText());
 
             // Safe because we block with validation above
             p.setTitle(t);
@@ -436,7 +438,9 @@ public class UserForumController {
                 ModerationReport report = moderationEngine
                         .analyzePostAsync(buildModerationText(postDraft))
                         .join();
-                postDraft.setTag(resolvePredictedCategory(report));
+                String userTag = InputValidator.normalizeSingleTag(postDraft.getTag());
+                String predictedTag = InputValidator.normalizeSingleTag(resolvePredictedCategory(report));
+                postDraft.setTag(userTag != null ? userTag : (predictedTag != null ? predictedTag : "#General"));
                 postDraft.setDuplicateScore(report.getDuplicateScore());
                 postDraft.setDuplicateOfPostId(report.getDuplicateOfPostId());
 

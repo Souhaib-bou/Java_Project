@@ -16,6 +16,7 @@ public class ForumComment {
     private String status;
     // Audit timestamp from database.
     private LocalDateTime createdAt;
+    private boolean pinned;
 
     public long getId() { return id; }
     public void setId(long id) { this.id = id; }
@@ -34,4 +35,7 @@ public class ForumComment {
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public boolean isPinned() { return pinned; }
+    public void setPinned(boolean pinned) { this.pinned = pinned; }
 }

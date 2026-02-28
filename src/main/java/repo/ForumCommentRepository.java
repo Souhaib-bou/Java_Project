@@ -1,5 +1,6 @@
 package repo;
 
+import model.CommentSort;
 import model.ForumComment;
 import util.DB;
 import util.InputValidator;
@@ -18,10 +19,10 @@ public class ForumCommentRepository {
     // READ: comments for a post (admin/internal view includes all statuses).
     public List<ForumComment> findByPostId(long postId) throws SQLException {
         String sql = """
-                SELECT id, post_id, author_id, content, status, created_at
+                SELECT id, post_id, author_id, content, status, created_at, is_pinned
                 FROM forum_comment
                 WHERE post_id = ?
-                ORDER BY created_at DESC
+                ORDER BY is_pinned DESC, created_at DESC
                 """;
 
         List<ForumComment> out = new ArrayList<>();
@@ -40,6 +41,7 @@ public class ForumCommentRepository {
                     c.setAuthorId(rs.getLong("author_id"));
                     c.setContent(rs.getString("content"));
                     c.setStatus(rs.getString("status"));
+                    c.setPinned(rs.getBoolean("is_pinned"));
 
                     Timestamp ts = rs.getTimestamp("created_at");
                     if (ts != null)
@@ -71,7 +73,7 @@ public class ForumCommentRepository {
             ps.setLong(1, c.getPostId());
             ps.setLong(2, c.getAuthorId());
             ps.setString(3, c.getContent());
-            ps.setString(4, c.getStatus());
+            ps.setString(4, normalizeModerationStatus(c.getStatus()));
 
             ps.executeUpdate();
 
@@ -101,7 +103,7 @@ public class ForumCommentRepository {
                 PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setString(1, c.getContent());
-            ps.setString(2, c.getStatus());
+            ps.setString(2, normalizeModerationStatus(c.getStatus()));
             ps.setLong(3, c.getId());
 
             ps.executeUpdate();
@@ -119,21 +121,13 @@ public class ForumCommentRepository {
     }
 
     public List<ForumComment> findApprovedByPostId(long postId) throws SQLException {
-        // READ: user-facing comments restricted to approved moderation state.
-        String sql = """
-                SELECT id, post_id, author_id, content, status, created_at
-                FROM forum_comment
-                WHERE post_id = ?
-                  AND status = 'APPROVED'
-                ORDER BY created_at DESC
-                """;
-        return fetchList(sql, postId);
+        return findApprovedByPostIdSorted(postId, CommentSort.NEWEST);
     }
 
     public List<ForumComment> findByAuthorId(long authorId) throws SQLException {
         // READ: profile query for comments written by one user.
         String sql = """
-                SELECT id, post_id, author_id, content, status, created_at
+                SELECT id, post_id, author_id, content, status, created_at, is_pinned
                 FROM forum_comment
                 WHERE author_id = ?
                 ORDER BY created_at DESC
@@ -144,7 +138,7 @@ public class ForumCommentRepository {
     public List<ForumComment> findLatest(int limit) throws SQLException {
         int safeLimit = Math.max(1, limit);
         String sql = """
-                SELECT id, post_id, author_id, content, status, created_at
+                SELECT id, post_id, author_id, content, status, created_at, is_pinned
                 FROM forum_comment
                 ORDER BY created_at DESC
                 LIMIT ?
@@ -177,6 +171,38 @@ public class ForumCommentRepository {
         }
     }
 
+    public List<ForumComment> findByPostIdSorted(long postId, CommentSort sort) throws SQLException {
+        return findByPostIdSortedInternal(postId, sort, "WHERE c.post_id=?");
+    }
+
+    public List<ForumComment> findApprovedByPostIdSorted(long postId, CommentSort sort) throws SQLException {
+        return findByPostIdSortedInternal(
+                postId,
+                sort,
+                "WHERE c.post_id=? AND UPPER(TRIM(COALESCE(c.status, 'PENDING'))) IN ('APPROVED','APPROVE')");
+    }
+
+    public List<ForumComment> findVisibleByPostIdSorted(long postId, CommentSort sort) throws SQLException {
+        return findByPostIdSortedInternal(
+                postId,
+                sort,
+                "WHERE c.post_id=? AND UPPER(TRIM(COALESCE(c.status, 'PENDING'))) <> 'REJECTED'");
+    }
+
+    public void setPinned(long commentId, boolean pinned) throws SQLException {
+        String sql = """
+                UPDATE forum_comment
+                SET is_pinned=?, updated_at=CURRENT_TIMESTAMP
+                WHERE id=?
+                """;
+        try (Connection con = DB.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setBoolean(1, pinned);
+            ps.setLong(2, commentId);
+            ps.executeUpdate();
+        }
+    }
+
     private List<ForumComment> fetchList(String sql, long idParam) throws SQLException {
         // Shared executor for queries that vary only by SQL and one id parameter.
         List<ForumComment> out = new ArrayList<>();
@@ -199,11 +225,55 @@ public class ForumCommentRepository {
         c.setAuthorId(rs.getLong("author_id"));
         c.setContent(rs.getString("content"));
         c.setStatus(rs.getString("status"));
+        c.setPinned(rs.getBoolean("is_pinned"));
         Timestamp ts = rs.getTimestamp("created_at");
         if (ts != null) {
             c.setCreatedAt(ts.toLocalDateTime());
         }
         return c;
+    }
+
+    private List<ForumComment> findByPostIdSortedInternal(long postId, CommentSort sort, String whereClause)
+            throws SQLException {
+        CommentSort safeSort = sort == null ? CommentSort.NEWEST : sort;
+        String sql;
+        if (safeSort == CommentSort.TOP) {
+            sql = """
+                    SELECT c.id, c.post_id, c.author_id, c.content, c.status, c.created_at, c.is_pinned
+                    FROM forum_comment c
+                    LEFT JOIN forum_interaction i
+                      ON i.target_type='COMMENT'
+                     AND i.interaction_type='LIKE'
+                     AND i.target_id=c.id
+                    """
+                    + whereClause
+                    + """
+                    GROUP BY c.id, c.post_id, c.author_id, c.content, c.status, c.created_at, c.is_pinned
+                    ORDER BY c.is_pinned DESC, COUNT(i.id) DESC, c.created_at DESC
+                    """;
+        } else {
+            String createdOrder = safeSort == CommentSort.OLDEST ? "ASC" : "DESC";
+            sql = """
+                    SELECT c.id, c.post_id, c.author_id, c.content, c.status, c.created_at, c.is_pinned
+                    FROM forum_comment c
+                    """
+                    + whereClause
+                    + """
+                    ORDER BY c.is_pinned DESC, c.created_at
+                    """
+                    + createdOrder;
+        }
+        List<ForumComment> out = new ArrayList<>();
+        try (Connection con = DB.getConnection();
+                PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setLong(1, postId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    out.add(mapRow(rs));
+                }
+            }
+        }
+        return out;
     }
 
     private String normalizeModerationStatus(String status) {

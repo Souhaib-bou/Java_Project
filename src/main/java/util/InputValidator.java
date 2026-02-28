@@ -132,6 +132,22 @@ public final class InputValidator {
         return norm(s);
     }
 
+    /** returns normalized single tag like #Internship, or null if blank */
+    public static String normalizeSingleTag(String raw) {
+        String normalized = norm(raw);
+        if (normalized == null) {
+            return null;
+        }
+        String cleaned = normalized.replaceAll("\\s+", "");
+        if (cleaned.isEmpty()) {
+            return null;
+        }
+        if (!cleaned.startsWith("#")) {
+            cleaned = "#" + cleaned;
+        }
+        return cleaned;
+    }
+
     // Useful for UI bindings when null is less convenient than empty text.
     /** returns empty string if null; otherwise trimmed */
     public static String normalize(String s) {
@@ -139,4 +155,5 @@ public final class InputValidator {
             return "";
         return s.trim();
     }
+
 }

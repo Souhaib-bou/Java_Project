@@ -31,6 +31,7 @@ import repo.UserRepository;
 import service.ModerationEngine;
 import ui.components.AdminModerationDialog;
 import util.DebugLog;
+import util.GeminiClient;
 import util.Session;
 import util.InputValidator;
 import java.util.List;
@@ -43,6 +44,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -62,6 +64,8 @@ public class AdminForumController {
     private TextField searchField;
     @FXML
     private ComboBox<String> sortBox;
+    @FXML
+    private ComboBox<String> statusFilterBox;
     @FXML
     private Button newPostBtn;
     @FXML
@@ -91,6 +95,38 @@ public class AdminForumController {
     private TabPane mainTabs;
     @FXML
     private Tab postTab;
+    @FXML
+    private TableView<FeedbackRow> feedbackTable;
+    @FXML
+    private TableColumn<FeedbackRow, String> feedbackTimeCol;
+    @FXML
+    private TableColumn<FeedbackRow, String> feedbackTypeCol;
+    @FXML
+    private TableColumn<FeedbackRow, String> feedbackTargetCol;
+    @FXML
+    private TableColumn<FeedbackRow, String> feedbackDecisionCol;
+    @FXML
+    private TableColumn<FeedbackRow, String> feedbackCategoryCol;
+    @FXML
+    private TableColumn<FeedbackRow, String> feedbackToxicityCol;
+    @FXML
+    private TableColumn<FeedbackRow, String> feedbackQualityCol;
+    @FXML
+    private TableColumn<FeedbackRow, String> feedbackDuplicateCol;
+    @FXML
+    private TableColumn<FeedbackRow, String> feedbackFallbackCol;
+    @FXML
+    private TableColumn<FeedbackRow, String> feedbackSourceCol;
+    @FXML
+    private Label feedbackTotalLabel;
+    @FXML
+    private Label feedbackPostLabel;
+    @FXML
+    private Label feedbackCommentLabel;
+    @FXML
+    private Label feedbackFallbackLabel;
+    @FXML
+    private Label feedbackLastUpdatedLabel;
 
     // Posts feed (Tab 1)
     @FXML
@@ -132,11 +168,17 @@ public class AdminForumController {
     @FXML
     private ComboBox<String> commentStatusBox2;
     @FXML
+    private ComboBox<String> commentStatusFilterBox2;
+    @FXML
+    private ComboBox<String> commentSortBox2;
+    @FXML
     private Button addCommentBtn2;
     @FXML
     private Button updateCommentBtn2;
     @FXML
     private Button deleteCommentBtn2;
+    @FXML
+    private Button seeCommentPostBtn2;
     @FXML
     private Button btnAiAnalyzeComment;
 
@@ -144,11 +186,15 @@ public class AdminForumController {
     private final ForumCommentRepository commentRepo = new ForumCommentRepository();
     private final UserRepository userRepo = new UserRepository();
     private final ModerationEngine moderationEngine = new ModerationEngine();
+    private final GeminiClient geminiClient = new GeminiClient();
+    private final long geminiUserId = userRepo.findOrCreateSystemUserId("gemini@hirely.local", "Gemini", "Assistant");
 
     private final Map<Long, String> userNameCache = new HashMap<>();
 
     private final ObservableList<ForumPost> allPosts = FXCollections.observableArrayList();
     private final ObservableList<ForumComment> comments = FXCollections.observableArrayList();
+    private final ObservableList<FeedbackRow> feedbackRows = FXCollections.observableArrayList();
+    private final java.util.List<ForumComment> commentBuffer = new java.util.ArrayList<>();
 
     private FilteredList<ForumPost> filteredPosts;
     private SortedList<ForumPost> sortedPosts;
@@ -156,6 +202,7 @@ public class AdminForumController {
     private ForumPost selectedPost;
 
     private static final DateTimeFormatter DT = DateTimeFormatter.ofPattern("dd MMM yyyy - HH:mm");
+    private static final DateTimeFormatter FEEDBACK_TS = DateTimeFormatter.ofPattern("dd MMM HH:mm:ss");
     private static final String AI_POST_BUTTON_TEXT = "Analyze Post (AI)";
     private static final String AI_COMMENT_BUTTON_TEXT = "Analyze Comment (AI)";
     private static final String AI_RECLASSIFY_BUTTON_TEXT = "AI Reclassify";
@@ -193,10 +240,30 @@ public class AdminForumController {
         // Sort
         sortBox.setItems(FXCollections.observableArrayList("New", "Old"));
         sortBox.getSelectionModel().select("New");
+        statusFilterBox.setItems(FXCollections.observableArrayList("All", "PENDING", "REJECTED", "APPROVED"));
+        statusFilterBox.getSelectionModel().select("All");
+
+        // Keep top-bar controls readable when window width is tight.
+        HBox.setHgrow(searchField, Priority.ALWAYS);
+        searchField.setMaxWidth(Double.MAX_VALUE);
+        statusFilterBox.setMinWidth(Region.USE_PREF_SIZE);
+        newPostBtn.setMinWidth(Region.USE_PREF_SIZE);
+        btnAiAuditLast50.setMinWidth(Region.USE_PREF_SIZE);
+        userForumBtn.setMinWidth(Region.USE_PREF_SIZE);
 
         // Comment status
         commentStatusBox2.setItems(FXCollections.observableArrayList("PENDING", "APPROVED", "REJECTED"));
         commentStatusBox2.getSelectionModel().select("PENDING");
+        if (commentStatusFilterBox2 != null) {
+            commentStatusFilterBox2.setItems(FXCollections.observableArrayList("All", "PENDING", "APPROVED", "REJECTED"));
+            commentStatusFilterBox2.getSelectionModel().select("All");
+            commentStatusFilterBox2.valueProperty().addListener((obs, oldV, v) -> applyCommentFiltersAndSort());
+        }
+        if (commentSortBox2 != null) {
+            commentSortBox2.setItems(FXCollections.observableArrayList("Newest", "Oldest", "Status"));
+            commentSortBox2.getSelectionModel().select("Newest");
+            commentSortBox2.valueProperty().addListener((obs, oldV, v) -> applyCommentFiltersAndSort());
+        }
 
         refreshSessionUI();
         syncThemeToggle();
@@ -223,6 +290,7 @@ public class AdminForumController {
         // Admin post cards display status chip for moderation visibility.
         postListView.setCellFactory(lv -> new ui.components.PostCardCell(userRepo, true));
         commentListView2.setCellFactory(lv -> new CommentCardCell());
+        initFeedbackTable();
 
         // Filter + sort pipeline for large post feeds.
         filteredPosts = new FilteredList<>(allPosts, p -> true);
@@ -231,18 +299,10 @@ public class AdminForumController {
         postListView.setItems(sortedPosts);
 
         sortBox.valueProperty().addListener((obs, oldV, v) -> sortedPosts.setComparator(postComparator(v)));
+        statusFilterBox.valueProperty().addListener((obs, oldV, v) -> applyPostFilters());
 
         // Live search over title/tag/content.
-        searchField.textProperty().addListener((obs, oldV, v) -> {
-            String q = v == null ? "" : v.trim().toLowerCase();
-            filteredPosts.setPredicate(p -> {
-                if (q.isEmpty())
-                    return true;
-                return safe(p.getTitle()).toLowerCase().contains(q)
-                        || safe(p.getTag()).toLowerCase().contains(q)
-                        || safe(p.getContent()).toLowerCase().contains(q);
-            });
-        });
+        searchField.textProperty().addListener((obs, oldV, v) -> applyPostFilters());
 
         // Selection: Post -> updates both views
         postListView.getSelectionModel().selectedItemProperty().addListener((obs, oldV, p) -> {
@@ -268,25 +328,71 @@ public class AdminForumController {
         // Disable buttons depending on selection
         editPostBtn.disableProperty().bind(postListView.getSelectionModel().selectedItemProperty().isNull());
         deletePostBtn.disableProperty().bind(postListView.getSelectionModel().selectedItemProperty().isNull());
+        editPostBtn.setMinWidth(Region.USE_PREF_SIZE);
+        deletePostBtn.setMinWidth(Region.USE_PREF_SIZE);
+        btnAiReclassify.setMinWidth(Region.USE_PREF_SIZE);
+        btnAiAnalyzePost.setMinWidth(Region.USE_PREF_SIZE);
 
         BooleanBinding noPost = postListView.getSelectionModel().selectedItemProperty().isNull();
-        BooleanBinding postLocked = Bindings.createBooleanBinding(() -> {
-            ForumPost p = postListView.getSelectionModel().getSelectedItem();
-            return p != null && p.isLocked();
-        }, postListView.getSelectionModel().selectedItemProperty());
-
-        BooleanBinding cannotComment = noPost.or(postLocked);
+        // Admins can always moderate comments, even if a post is locked.
+        BooleanBinding cannotComment = noPost;
 
         commentArea2.disableProperty().bind(cannotComment);
         addCommentBtn2.disableProperty().bind(cannotComment);
 
         updateCommentBtn2.disableProperty().bind(commentListView2.getSelectionModel().selectedItemProperty().isNull());
         deleteCommentBtn2.disableProperty().bind(commentListView2.getSelectionModel().selectedItemProperty().isNull());
+        if (seeCommentPostBtn2 != null) {
+            seeCommentPostBtn2.disableProperty().bind(commentListView2.getSelectionModel().selectedItemProperty().isNull());
+        }
 
         refreshAiAnalyzeButtonState();
 
         // First load
         onRefreshPosts();
+    }
+
+    private void applyPostFilters() {
+        if (filteredPosts == null) {
+            return;
+        }
+        String q = searchField == null || searchField.getText() == null ? "" : searchField.getText().trim().toLowerCase();
+        String statusFilter = statusFilterBox == null ? "All" : safe(statusFilterBox.getValue()).trim().toUpperCase(Locale.ROOT);
+        filteredPosts.setPredicate(p -> {
+            if (p == null) {
+                return false;
+            }
+            boolean matchesText = q.isEmpty()
+                    || safe(p.getTitle()).toLowerCase().contains(q)
+                    || safe(p.getTag()).toLowerCase().contains(q)
+                    || safe(p.getContent()).toLowerCase().contains(q);
+            if (!matchesText) {
+                return false;
+            }
+            if ("ALL".equals(statusFilter) || statusFilter.isBlank()) {
+                return true;
+            }
+            return safe(p.getStatus()).trim().equalsIgnoreCase(statusFilter);
+        });
+    }
+
+    private void initFeedbackTable() {
+        if (feedbackTable == null) {
+            return;
+        }
+        feedbackTable.setStyle("-fx-font-size: 13px;");
+        feedbackTimeCol.setCellValueFactory(new PropertyValueFactory<>("time"));
+        feedbackTypeCol.setCellValueFactory(new PropertyValueFactory<>("type"));
+        feedbackTargetCol.setCellValueFactory(new PropertyValueFactory<>("target"));
+        feedbackDecisionCol.setCellValueFactory(new PropertyValueFactory<>("decision"));
+        feedbackCategoryCol.setCellValueFactory(new PropertyValueFactory<>("category"));
+        feedbackToxicityCol.setCellValueFactory(new PropertyValueFactory<>("toxicity"));
+        feedbackQualityCol.setCellValueFactory(new PropertyValueFactory<>("quality"));
+        feedbackDuplicateCol.setCellValueFactory(new PropertyValueFactory<>("duplicate"));
+        feedbackFallbackCol.setCellValueFactory(new PropertyValueFactory<>("fallback"));
+        feedbackSourceCol.setCellValueFactory(new PropertyValueFactory<>("source"));
+        feedbackTable.setItems(feedbackRows);
+        refreshFeedbackSummary();
     }
 
     private Comparator<ForumPost> postComparator(String mode) {
@@ -325,6 +431,7 @@ public class AdminForumController {
         try {
             // READ (posts): admin gets full feed, including pending/rejected.
             allPosts.setAll(postRepo.findAll());
+            applyPostFilters();
             annotateDuplicateScores(allPosts);
             if (!allPosts.isEmpty() && postListView.getSelectionModel().getSelectedItem() == null) {
                 postListView.getSelectionModel().selectFirst();
@@ -443,7 +550,7 @@ public class AdminForumController {
             p.setAuthorId(Session.getCurrentUserId());
             p.setTitle(InputValidator.norm(title.getText()));
             p.setContent(InputValidator.norm(content.getText()));
-            p.setTag(InputValidator.normalizeNullable(tag.getText()));
+            p.setTag(InputValidator.normalizeSingleTag(tag.getText()));
             p.setStatus(status.getValue());
             p.setPinned(pinned.isSelected());
             p.setLocked(locked.isSelected());
@@ -525,23 +632,25 @@ public class AdminForumController {
     private void refreshAdminCommentActionVisibility() {
         ForumPost p = selectedPost;
         boolean hasPost = p != null;
-        boolean locked = hasPost && p.isLocked();
-
         ForumComment sel = commentListView2.getSelectionModel().getSelectedItem();
         boolean hasSel = sel != null;
 
-        // Add comment: only when post exists and not locked
-        boolean showAdd = hasPost && !locked;
+        // Admin can add comments whenever a post is selected.
+        boolean showAdd = hasPost;
         addCommentBtn2.setVisible(showAdd);
         addCommentBtn2.setManaged(showAdd);
 
-        // Update/Delete: only when a comment is selected AND not locked
-        boolean showModify = hasPost && !locked && hasSel;
+        // Update/Delete: only when a comment is selected.
+        boolean showModify = hasPost && hasSel;
         updateCommentBtn2.setVisible(showModify);
         updateCommentBtn2.setManaged(showModify);
 
         deleteCommentBtn2.setVisible(showModify);
         deleteCommentBtn2.setManaged(showModify);
+        if (seeCommentPostBtn2 != null) {
+            seeCommentPostBtn2.setVisible(hasSel);
+            seeCommentPostBtn2.setManaged(hasSel);
+        }
         refreshAiAnalyzeButtonState();
     }
 
@@ -558,12 +667,14 @@ public class AdminForumController {
         try {
             // READ (comments): admin sees all comment statuses for selected post.
             comments.clear();
+            commentBuffer.clear();
             if (selectedPost == null) {
                 commentListView2.setItems(comments);
                 refreshAiAnalyzeButtonState();
                 return;
             }
-            comments.setAll(commentRepo.findByPostId(selectedPost.getId()));
+            commentBuffer.addAll(commentRepo.findByPostId(selectedPost.getId()));
+            applyCommentFiltersAndSort();
             commentListView2.setItems(comments);
             commentListView2.getSelectionModel().clearSelection();
             commentArea2.clear();
@@ -573,6 +684,81 @@ public class AdminForumController {
         } catch (Exception ex) {
             showError("Failed to load comments", ex);
         }
+    }
+
+    private void applyCommentFiltersAndSort() {
+        java.util.List<ForumComment> filtered = new java.util.ArrayList<>(commentBuffer);
+        String statusFilter = commentStatusFilterBox2 == null ? "All"
+                : safe(commentStatusFilterBox2.getValue()).trim().toUpperCase(Locale.ROOT);
+        if (!statusFilter.isBlank() && !"ALL".equals(statusFilter)) {
+            filtered.removeIf(c -> !statusFilter.equals(safe(c.getStatus()).trim().toUpperCase(Locale.ROOT)));
+        }
+
+        String sortMode = commentSortBox2 == null ? "Newest" : safe(commentSortBox2.getValue());
+        Comparator<ForumComment> byCreatedAsc = Comparator.comparing(
+                ForumComment::getCreatedAt,
+                Comparator.nullsLast(Comparator.naturalOrder()));
+        Comparator<ForumComment> comparator;
+        if ("Oldest".equalsIgnoreCase(sortMode)) {
+            comparator = byCreatedAsc;
+        } else if ("Status".equalsIgnoreCase(sortMode)) {
+            comparator = Comparator
+                    .comparingInt((ForumComment c) -> commentStatusRank(c.getStatus()))
+                    .thenComparing(byCreatedAsc.reversed());
+        } else {
+            comparator = byCreatedAsc.reversed();
+        }
+        filtered.sort(comparator);
+        comments.setAll(filtered);
+    }
+
+    private int commentStatusRank(String status) {
+        String value = safe(status).trim().toUpperCase(Locale.ROOT);
+        if ("PENDING".equals(value)) {
+            return 0;
+        }
+        if ("REJECTED".equals(value)) {
+            return 1;
+        }
+        if ("APPROVED".equals(value)) {
+            return 2;
+        }
+        return 3;
+    }
+
+    @FXML
+    private void onSeeCommentPost2() {
+        ForumComment selected = commentListView2.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            return;
+        }
+        long postId = selected.getPostId();
+        if (searchField != null) {
+            searchField.clear();
+        }
+        if (statusFilterBox != null) {
+            statusFilterBox.setValue("All");
+        }
+        applyPostFilters();
+        selectPostById(postId);
+        if (postListView.getSelectionModel().getSelectedItem() == null
+                || postListView.getSelectionModel().getSelectedItem().getId() != postId) {
+            try {
+                ForumPost post = postRepo.findById(postId);
+                if (post != null) {
+                    boolean exists = allPosts.stream().anyMatch(p -> p.getId() == postId);
+                    if (!exists) {
+                        allPosts.add(post);
+                    }
+                    applyPostFilters();
+                    selectPostById(postId);
+                }
+            } catch (Exception ex) {
+                showError("Failed to open related post", ex);
+                return;
+            }
+        }
+        mainTabs.getSelectionModel().select(0);
     }
 
     @FXML
@@ -588,7 +774,7 @@ public class AdminForumController {
         refreshAiAnalyzeButtonState();
 
         String postText = safe(post.getTitle()) + "\n\n" + safe(post.getContent());
-        moderationEngine.analyzePostAsync(postText)
+        moderationEngine.analyzePostAsync(postText, "post:" + post.getId())
                 .whenComplete((report, error) -> Platform.runLater(() -> {
                     aiPostAnalysisInProgress = false;
                     btnAiAnalyzePost.setText(AI_POST_BUTTON_TEXT);
@@ -610,12 +796,7 @@ public class AdminForumController {
                     post.setDuplicateScore(report.getDuplicateScore());
                     post.setDuplicateOfPostId(report.getDuplicateOfPostId());
                     postListView.refresh();
-                    AdminModerationDialog.show(
-                            report,
-                            "Post",
-                            identifier,
-                            () -> applyRecommendationToPost(post, "APPROVED"),
-                            () -> applyRecommendationToPost(post, "REJECTED"));
+                    recordFeedback("POST", "Post #" + post.getId(), report, "Analyze");
                 }));
     }
 
@@ -632,7 +813,7 @@ public class AdminForumController {
         refreshAiAnalyzeButtonState();
 
         String postText = safe(post.getTitle()) + "\n\n" + safe(post.getContent());
-        moderationEngine.analyzePostAsync(postText)
+        moderationEngine.analyzePostAsync(postText, "post:" + post.getId())
                 .whenComplete((report, error) -> Platform.runLater(() -> {
                     aiReclassifyInProgress = false;
                     btnAiReclassify.setText(AI_RECLASSIFY_BUTTON_TEXT);
@@ -674,6 +855,7 @@ public class AdminForumController {
                         post.setTag(predictedCategory);
                         postListView.refresh();
                         renderSelectedPost();
+                        recordFeedback("POST", "Post #" + post.getId(), report, "Reclassify");
                         showInfo("Post #" + post.getId() + " reclassified as '" + predictedCategory + "'.");
                     } catch (Exception ex) {
                         DebugLog.error("AdminForumController",
@@ -696,7 +878,7 @@ public class AdminForumController {
         refreshAiAnalyzeButtonState();
 
         String commentText = safe(comment.getContent());
-        moderationEngine.analyzeCommentAsync(commentText)
+        moderationEngine.analyzeCommentAsync(commentText, "comment:" + comment.getId())
                 .whenComplete((report, error) -> Platform.runLater(() -> {
                     aiCommentAnalysisInProgress = false;
                     btnAiAnalyzeComment.setText(AI_COMMENT_BUTTON_TEXT);
@@ -715,12 +897,7 @@ public class AdminForumController {
                     if (report.isFallbackUsed()) {
                         showAiFallbackWarning("comment", report);
                     }
-                    AdminModerationDialog.show(
-                            report,
-                            "Comment",
-                            identifier,
-                            () -> applyRecommendationToComment(comment, "APPROVED"),
-                            () -> applyRecommendationToComment(comment, "REJECTED"));
+                    recordFeedback("COMMENT", "Comment #" + comment.getId(), report, "Analyze");
                 }));
     }
 
@@ -729,54 +906,8 @@ public class AdminForumController {
         if (aiAuditInProgress) {
             return;
         }
-        openAiAuditDialog(AI_AUDIT_LIMIT);
-    }
-
-    private void openAiAuditDialog(int limit) {
-        ObservableList<AuditRow> rows = FXCollections.observableArrayList();
-
-        Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("AI Audit");
-        dialog.getDialogPane().setPrefWidth(920);
-        dialog.getDialogPane().setPrefHeight(640);
-
-        ButtonType applyType = new ButtonType("Apply Decisions", ButtonBar.ButtonData.OK_DONE);
-        ButtonType closeType = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
-        dialog.getDialogPane().getButtonTypes().addAll(applyType, closeType);
-
-        ProgressBar progressBar = new ProgressBar(0);
-        progressBar.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(progressBar, Priority.ALWAYS);
-
-        Label progressLabel = new Label("Preparing audit...");
-        Button cancelBtn = new Button("Cancel");
-        cancelBtn.getStyleClass().add("secondary");
-
-        TableView<AuditRow> table = createAuditTable(rows);
-        VBox root = new VBox(10);
-        root.setPadding(new javafx.geometry.Insets(12));
-        root.getChildren().addAll(
-                new Label("Analyze the latest " + limit + " posts and latest " + limit + " comments."),
-                new HBox(10, progressBar, cancelBtn),
-                progressLabel,
-                table);
-        dialog.getDialogPane().setContent(root);
-
-        Node applyNode = dialog.getDialogPane().lookupButton(applyType);
-        if (applyNode instanceof Button applyButton) {
-            applyButton.setDisable(true);
-        }
-
-        Task<Void> auditTask = createAiAuditTask(limit, rows);
-        progressBar.progressProperty().bind(auditTask.progressProperty());
-        progressLabel.textProperty().bind(auditTask.messageProperty());
-
-        cancelBtn.setOnAction(evt -> {
-            if (auditTask.isRunning()) {
-                auditTask.cancel();
-            }
-        });
-
+        feedbackRows.clear();
+        refreshFeedbackSummary();
         aiAuditInProgress = true;
         if (btnAiAuditLast50 != null) {
             btnAiAuditLast50.setDisable(true);
@@ -784,78 +915,39 @@ public class AdminForumController {
         }
         refreshAiAnalyzeButtonState();
 
+        Task<Void> auditTask = createAiAuditTask(AI_AUDIT_LIMIT);
         auditTask.setOnSucceeded(evt -> {
-            progressBar.progressProperty().unbind();
-            progressLabel.textProperty().unbind();
-            cancelBtn.setDisable(true);
-
-            int actionable = countActionableAuditRows(rows);
-            String doneMessage = "Audit completed. " + rows.size() + " items analyzed";
-            if (actionable > 0) {
-                doneMessage += " (" + actionable + " actionable).";
-            } else {
-                doneMessage += ". No REJECT/PENDING decisions to apply.";
-            }
-            progressLabel.setText(doneMessage);
-
-            if (applyNode instanceof Button applyButton) {
-                applyButton.setDisable(actionable == 0);
-            }
             setAiAuditIdle();
+            showInfo("AI audit completed. Results are available in the Feedback tab.");
         });
-
         auditTask.setOnCancelled(evt -> {
-            progressBar.progressProperty().unbind();
-            progressLabel.textProperty().unbind();
-            cancelBtn.setDisable(true);
-            progressLabel.setText("Audit cancelled. " + rows.size() + " items analyzed so far.");
-            if (applyNode instanceof Button applyButton) {
-                applyButton.setDisable(countActionableAuditRows(rows) == 0);
-            }
-            DebugLog.info("AdminForumController", "AI audit cancelled by admin.");
             setAiAuditIdle();
+            showWarning("AI audit cancelled.");
+            DebugLog.info("AdminForumController", "AI audit cancelled by admin.");
         });
-
         auditTask.setOnFailed(evt -> {
-            progressBar.progressProperty().unbind();
-            progressLabel.textProperty().unbind();
-            cancelBtn.setDisable(true);
-
+            setAiAuditIdle();
             Throwable error = auditTask.getException();
             String message = shortErrorMessage(error);
-            progressLabel.setText("Audit stopped: " + message);
-            if (applyNode instanceof Button applyButton) {
-                applyButton.setDisable(true);
-            }
             DebugLog.error("AdminForumController", "AI audit failed: " + message, error);
             showWarning("AI audit stopped: " + message);
-            setAiAuditIdle();
-        });
-
-        dialog.setOnHidden(evt -> {
-            if (auditTask.isRunning()) {
-                auditTask.cancel();
-            }
-            setAiAuditIdle();
         });
 
         Thread worker = new Thread(auditTask, "admin-ai-audit");
         worker.setDaemon(true);
         worker.start();
-
-        dialog.showAndWait().ifPresent(selected -> {
-            if (selected == applyType) {
-                applyAuditDecisions(rows);
-            }
-        });
     }
 
-    private Task<Void> createAiAuditTask(int limit, ObservableList<AuditRow> outRows) {
+    private Task<Void> createAiAuditTask(int limit) {
         return new Task<>() {
             @Override
             protected Void call() throws Exception {
-                updateMessage("Loading latest posts/comments...");
+                updateMessage("Loading latest pending/rejected posts and latest comments...");
                 List<ForumPost> posts = postRepo.findLatest(limit);
+                posts.removeIf(post -> {
+                    String status = safe(post == null ? "" : post.getStatus()).trim().toUpperCase(Locale.ROOT);
+                    return "APPROVED".equals(status);
+                });
                 List<ForumComment> latestComments = commentRepo.findLatest(limit);
 
                 int total = posts.size() + latestComments.size();
@@ -873,11 +965,10 @@ public class AdminForumController {
                         return null;
                     }
                     ModerationReport report = moderationEngine
-                            .analyzePostAsync(buildAuditPostText(post))
+                            .analyzePostAsync(buildAuditPostText(post), "post:" + post.getId())
                             .join();
                     ensureAuditAvailable(report);
-                    AuditRow row = AuditRow.fromPost(post, report);
-                    Platform.runLater(() -> outRows.add(row));
+                    Platform.runLater(() -> recordFeedback("POST", "Post #" + post.getId(), report, "Audit"));
                     done++;
                     updateProgress(done, total);
                     updateMessage("Analyzed " + done + " / " + total);
@@ -889,11 +980,11 @@ public class AdminForumController {
                         return null;
                     }
                     ModerationReport report = moderationEngine
-                            .analyzeCommentAsync(safe(comment.getContent()))
+                            .analyzeCommentAsync(safe(comment.getContent()), "comment:" + comment.getId())
                             .join();
                     ensureAuditAvailable(report);
-                    AuditRow row = AuditRow.fromComment(comment, report);
-                    Platform.runLater(() -> outRows.add(row));
+                    Platform.runLater(
+                            () -> recordFeedback("COMMENT", "Comment #" + comment.getId(), report, "Audit"));
                     done++;
                     updateProgress(done, total);
                     updateMessage("Analyzed " + done + " / " + total);
@@ -922,114 +1013,8 @@ public class AdminForumController {
         refreshAiAnalyzeButtonState();
     }
 
-    private TableView<AuditRow> createAuditTable(ObservableList<AuditRow> rows) {
-        TableView<AuditRow> table = new TableView<>(rows);
-        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_SUBSEQUENT_COLUMNS);
-
-        TableColumn<AuditRow, Long> idCol = new TableColumn<>("ID");
-        idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
-
-        TableColumn<AuditRow, String> typeCol = new TableColumn<>("Type");
-        typeCol.setCellValueFactory(new PropertyValueFactory<>("type"));
-
-        TableColumn<AuditRow, Double> toxCol = new TableColumn<>("Toxicity");
-        toxCol.setCellValueFactory(new PropertyValueFactory<>("toxicity"));
-        toxCol.setCellFactory(col -> decimalCell());
-
-        TableColumn<AuditRow, Double> qualityCol = new TableColumn<>("Quality");
-        qualityCol.setCellValueFactory(new PropertyValueFactory<>("quality"));
-        qualityCol.setCellFactory(col -> decimalCell());
-
-        TableColumn<AuditRow, Double> duplicateCol = new TableColumn<>("Duplicate");
-        duplicateCol.setCellValueFactory(new PropertyValueFactory<>("duplicate"));
-        duplicateCol.setCellFactory(col -> decimalCell());
-
-        TableColumn<AuditRow, String> decisionCol = new TableColumn<>("Decision");
-        decisionCol.setCellValueFactory(new PropertyValueFactory<>("decision"));
-
-        table.getColumns().addAll(idCol, typeCol, toxCol, qualityCol, duplicateCol, decisionCol);
-        return table;
-    }
-
-    private TableCell<AuditRow, Double> decimalCell() {
-        return new TableCell<>() {
-            @Override
-            protected void updateItem(Double value, boolean empty) {
-                super.updateItem(value, empty);
-                if (empty || value == null) {
-                    setText("");
-                    return;
-                }
-                setText(String.format("%.3f", value));
-            }
-        };
-    }
-
     private String buildAuditPostText(ForumPost post) {
         return safe(post == null ? "" : post.getTitle()) + "\n\n" + safe(post == null ? "" : post.getContent());
-    }
-
-    private int countActionableAuditRows(List<AuditRow> rows) {
-        int count = 0;
-        for (AuditRow row : rows) {
-            if (toStatusFromDecision(row.getDecision()) != null) {
-                count++;
-            }
-        }
-        return count;
-    }
-
-    private void applyAuditDecisions(List<AuditRow> rows) {
-        if (rows == null || rows.isEmpty()) {
-            showInfo("No audit results to apply.");
-            return;
-        }
-
-        int updated = 0;
-        int rejected = 0;
-        int pending = 0;
-
-        try {
-            for (AuditRow row : rows) {
-                String targetStatus = toStatusFromDecision(row.getDecision());
-                if (targetStatus == null) {
-                    continue;
-                }
-                if ("POST".equals(row.getType())) {
-                    postRepo.updateStatus(row.getId(), targetStatus);
-                } else {
-                    commentRepo.updateStatus(row.getId(), targetStatus);
-                }
-                updated++;
-                if ("REJECTED".equals(targetStatus)) {
-                    rejected++;
-                } else if ("PENDING".equals(targetStatus)) {
-                    pending++;
-                }
-            }
-        } catch (Exception ex) {
-            DebugLog.error("AdminForumController", "Failed applying AI audit decisions", ex);
-            showError("Failed to apply AI audit decisions", ex);
-            return;
-        }
-
-        showInfo("Applied decisions to " + updated + " items (Rejected: " + rejected + ", Pending: " + pending + ").");
-        onRefreshPosts();
-        loadComments();
-    }
-
-    private String toStatusFromDecision(String decision) {
-        if (decision == null || decision.isBlank()) {
-            return null;
-        }
-        String normalized = decision.trim().toUpperCase(Locale.ROOT);
-        if ("REJECT".equals(normalized) || "REJECTED".equals(normalized)) {
-            return "REJECTED";
-        }
-        if ("PENDING".equals(normalized)) {
-            return "PENDING";
-        }
-        return null;
     }
 
     private void refreshAiAnalyzeButtonState() {
@@ -1050,6 +1035,54 @@ public class AdminForumController {
         if (btnAiAuditLast50 != null) {
             btnAiAuditLast50.setDisable(aiAuditInProgress);
         }
+    }
+
+    private void recordFeedback(String type, String target, ModerationReport report, String source) {
+        if (report == null) {
+            return;
+        }
+        FeedbackRow row = new FeedbackRow(
+                FEEDBACK_TS.format(LocalDateTime.now()),
+                safe(type),
+                safe(target),
+                safe(report.getDecision()),
+                safe(resolvePredictedCategory(report)),
+                String.format(Locale.ROOT, "%.3f", report.getToxicity()),
+                String.format(Locale.ROOT, "%.3f", report.getQualityScore()),
+                String.format(Locale.ROOT, "%.3f", report.getDuplicateScore()),
+                report.isFallbackUsed() ? "Yes" : "No",
+                safe(source));
+
+        feedbackRows.add(0, row);
+        if (feedbackRows.size() > 250) {
+            feedbackRows.remove(feedbackRows.size() - 1);
+        }
+        refreshFeedbackSummary();
+    }
+
+    private void refreshFeedbackSummary() {
+        if (feedbackTotalLabel == null) {
+            return;
+        }
+        int total = feedbackRows.size();
+        int posts = 0;
+        int commentsCount = 0;
+        int fallback = 0;
+        for (FeedbackRow row : feedbackRows) {
+            if ("POST".equals(row.getType())) {
+                posts++;
+            } else if ("COMMENT".equals(row.getType())) {
+                commentsCount++;
+            }
+            if ("Yes".equals(row.getFallback())) {
+                fallback++;
+            }
+        }
+        feedbackTotalLabel.setText(Integer.toString(total));
+        feedbackPostLabel.setText(Integer.toString(posts));
+        feedbackCommentLabel.setText(Integer.toString(commentsCount));
+        feedbackFallbackLabel.setText(Integer.toString(fallback));
+        feedbackLastUpdatedLabel.setText(total == 0 ? "No AI analysis yet" : "Updated " + feedbackRows.get(0).getTime());
     }
 
     private String resolvePredictedCategory(ModerationReport report) {
@@ -1160,8 +1193,7 @@ public class AdminForumController {
     @FXML
     private void onAddComment2() {
         // CREATE (comments): admin can write comment with explicit moderation status.
-        if (selectedPost == null || selectedPost.isLocked()) {
-            showWarning("This post is locked. You cannot modify comments.");
+        if (selectedPost == null) {
             return;
         }
         List<String> errors = InputValidator.validateComment(commentArea2.getText());
@@ -1181,16 +1213,76 @@ public class AdminForumController {
             showInfo("Comment added");
             loadComments();
             refreshAdminCommentActionVisibility();
+            if (containsGeminiTrigger(c.getContent())) {
+                requestGeminiReplyAsync(selectedPost, c.getContent());
+            }
         } catch (Exception ex) {
             showError("Failed to add comment", ex);
         }
     }
 
+    private boolean containsGeminiTrigger(String commentText) {
+        return commentText != null && commentText.toLowerCase(Locale.ROOT).contains("@gemini");
+    }
+
+    private void requestGeminiReplyAsync(ForumPost targetPost, String userCommentText) {
+        if (targetPost == null) {
+            return;
+        }
+        if (geminiUserId <= 0) {
+            DebugLog.error("AdminForumController",
+                    "Gemini bot user not found (expected email gemini@hirely.local)", null);
+            showWarning("Gemini bot user is missing. Create user with email gemini@hirely.local.");
+            return;
+        }
+        long postId = targetPost.getId();
+        String cleanedUserComment = GeminiClient.cleanTriggerToken(userCommentText);
+        CompletableFuture.supplyAsync(() -> geminiClient.generateReply(
+                targetPost.getTitle(),
+                targetPost.getContent(),
+                cleanedUserComment,
+                targetPost.getTag()))
+                .whenComplete((replyText, ex) -> Platform.runLater(() -> {
+                    String text = replyText;
+                    if (ex != null) {
+                        DebugLog.error("AdminForumController", "Gemini async generation failed", ex);
+                        text = "Gemini is unavailable right now (missing key or service error). Please try again later.";
+                    }
+                    insertGeminiComment(postId, text);
+                }));
+    }
+
+    private void insertGeminiComment(long postId, String content) {
+        try {
+            ForumComment bot = new ForumComment();
+            bot.setPostId(postId);
+            bot.setAuthorId(geminiUserId);
+            bot.setStatus("APPROVED");
+            bot.setContent(trimToCommentLimit(content));
+            commentRepo.insert(bot);
+            if (selectedPost != null && selectedPost.getId() == postId) {
+                loadComments();
+            }
+        } catch (Exception ex) {
+            DebugLog.error("AdminForumController", "Failed inserting Gemini reply for post #" + postId, ex);
+        }
+    }
+
+    private String trimToCommentLimit(String text) {
+        String normalized = (text == null || text.isBlank())
+                ? "Gemini is unavailable right now (missing key or service error). Please try again later."
+                : text.trim();
+        int max = InputValidator.COMMENT_MAX;
+        if (normalized.length() <= max) {
+            return normalized;
+        }
+        return normalized.substring(0, max - 3) + "...";
+    }
+
     @FXML
     private void onUpdateComment2() {
         // UPDATE (comments): admin edit flow on selected comment.
-        if (selectedPost == null || selectedPost.isLocked()) {
-            showWarning("This post is locked. You cannot modify comments.");
+        if (selectedPost == null) {
             return;
         }
 
@@ -1437,70 +1529,42 @@ public class AdminForumController {
         return (double) intersection / union;
     }
 
-    private static final class AuditRow {
-        private final long id;
+    public static final class FeedbackRow {
+        private final String time;
         private final String type;
-        private final double toxicity;
-        private final double quality;
-        private final double duplicate;
+        private final String target;
         private final String decision;
+        private final String category;
+        private final String toxicity;
+        private final String quality;
+        private final String duplicate;
+        private final String fallback;
+        private final String source;
 
-        private AuditRow(long id, String type, double toxicity, double quality, double duplicate, String decision) {
-            this.id = id;
+        private FeedbackRow(String time, String type, String target, String decision, String category,
+                String toxicity, String quality, String duplicate, String fallback, String source) {
+            this.time = time;
             this.type = type;
+            this.target = target;
+            this.decision = decision;
+            this.category = category;
             this.toxicity = toxicity;
             this.quality = quality;
             this.duplicate = duplicate;
-            this.decision = decision;
+            this.fallback = fallback;
+            this.source = source;
         }
 
-        private static AuditRow fromPost(ForumPost post, ModerationReport report) {
-            return new AuditRow(
-                    post.getId(),
-                    "POST",
-                    report.getToxicity(),
-                    report.getQualityScore(),
-                    report.getDuplicateScore(),
-                    safeDecision(report.getDecision()));
-        }
-
-        private static AuditRow fromComment(ForumComment comment, ModerationReport report) {
-            return new AuditRow(
-                    comment.getId(),
-                    "COMMENT",
-                    report.getToxicity(),
-                    report.getQualityScore(),
-                    report.getDuplicateScore(),
-                    safeDecision(report.getDecision()));
-        }
-
-        private static String safeDecision(String decision) {
-            return decision == null ? "" : decision.trim().toUpperCase(Locale.ROOT);
-        }
-
-        public long getId() {
-            return id;
-        }
-
-        public String getType() {
-            return type;
-        }
-
-        public double getToxicity() {
-            return toxicity;
-        }
-
-        public double getQuality() {
-            return quality;
-        }
-
-        public double getDuplicate() {
-            return duplicate;
-        }
-
-        public String getDecision() {
-            return decision;
-        }
+        public String getTime() { return time; }
+        public String getType() { return type; }
+        public String getTarget() { return target; }
+        public String getDecision() { return decision; }
+        public String getCategory() { return category; }
+        public String getToxicity() { return toxicity; }
+        public String getQuality() { return quality; }
+        public String getDuplicate() { return duplicate; }
+        public String getFallback() { return fallback; }
+        public String getSource() { return source; }
     }
 
     private class CommentCardCell extends ListCell<ForumComment> {

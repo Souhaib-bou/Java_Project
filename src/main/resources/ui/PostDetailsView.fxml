@@ -18,7 +18,7 @@
                 <Button fx:id="editPostBtn" text="Edit" onAction="#onEditPost" styleClass="secondary"/>
                 <Button fx:id="deletePostBtn" text="Delete" onAction="#onDeletePost" styleClass="danger"/>
                 <HBox spacing="6" alignment="CENTER">
-                    <Button fx:id="notificationsBtn" text="Notifications" onAction="#onOpenNotifications" styleClass="secondary">
+                    <Button fx:id="notificationsBtn" onAction="#onOpenNotifications" styleClass="social-icon-btn notification-btn" contentDisplay="GRAPHIC_ONLY">
                         <graphic>
                             <FontIcon iconLiteral="fas-bell"/>
                         </graphic>
@@ -34,9 +34,21 @@
 
             <HBox spacing="8" alignment="CENTER_RIGHT">
                  <padding><Insets left="16"/></padding>
-                 <Button text="_" onAction="#onMinimize" styleClass="win-btn"/>
-                 <Button text="□" onAction="#onMaximize" styleClass="win-btn"/>
-                 <Button text="X" onAction="#onClose" styleClass="win-btn, win-close"/>
+                 <Button onAction="#onMinimize" styleClass="win-btn win-icon-btn" contentDisplay="GRAPHIC_ONLY">
+                     <graphic>
+                         <FontIcon iconLiteral="fas-window-minimize"/>
+                     </graphic>
+                 </Button>
+                 <Button onAction="#onMaximize" styleClass="win-btn win-icon-btn" contentDisplay="GRAPHIC_ONLY">
+                     <graphic>
+                         <FontIcon iconLiteral="fas-square"/>
+                     </graphic>
+                 </Button>
+                 <Button onAction="#onClose" styleClass="win-btn win-close win-icon-btn" contentDisplay="GRAPHIC_ONLY">
+                     <graphic>
+                         <FontIcon iconLiteral="fas-times"/>
+                     </graphic>
+                 </Button>
             </HBox>
         </HBox>
     </top>
@@ -58,9 +70,18 @@
                     <Label fx:id="metaLabel" styleClass="post-meta"/>
 
                     <HBox spacing="10" alignment="CENTER_LEFT" styleClass="action-bar">
-                        <Button fx:id="likePostBtn" text="Like" onAction="#onToggleLikePost" styleClass="secondary"/>
-                        <Label fx:id="likeCountLabel" text="Likes: 0" styleClass="post-meta"/>
-                        <Button fx:id="sharePostBtn" text="Share (0)" onAction="#onSharePost" styleClass="secondary"/>
+                        <Button fx:id="likePostBtn" onAction="#onToggleLikePost" styleClass="social-icon-btn like-btn" contentDisplay="GRAPHIC_ONLY">
+                            <graphic>
+                                <FontIcon fx:id="likePostIcon" iconLiteral="fas-heart"/>
+                            </graphic>
+                        </Button>
+                        <Label fx:id="likeCountLabel" text="0" styleClass="post-meta social-count"/>
+                        <Button fx:id="sharePostBtn" onAction="#onSharePost" styleClass="social-icon-btn share-btn" contentDisplay="GRAPHIC_ONLY">
+                            <graphic>
+                                <FontIcon fx:id="sharePostIcon" iconLiteral="fas-share-alt"/>
+                            </graphic>
+                        </Button>
+                        <Label fx:id="shareCountLabel" text="0" styleClass="post-meta social-count"/>
                         <Label fx:id="shareHintLabel" text="" styleClass="post-meta" visible="false" managed="false"/>
                     </HBox>
 
@@ -80,6 +101,8 @@
                     <HBox alignment="CENTER_LEFT">
                         <Label text="Comments" styleClass="section-title"/>
                         <Region HBox.hgrow="ALWAYS"/>
+                        <Label text="Sort:" styleClass="muted"/>
+                        <ComboBox fx:id="commentSortBox" prefWidth="130"/>
                         <Button text="Refresh" onAction="#onRefreshComments" styleClass="secondary">
                             <graphic>
                                 <FontIcon iconLiteral="fas-sync-alt"/>
@@ -104,6 +127,7 @@
                     </HBox>
 
                     <ListView fx:id="commentListView" VBox.vgrow="ALWAYS"/>
+                    <Label fx:id="geminiReplyingHint" text="Gemini is replying..." styleClass="muted" visible="false" managed="false"/>
                     <Label fx:id="lockHint" text="" styleClass="muted"/>
                 </VBox>
             </VBox>

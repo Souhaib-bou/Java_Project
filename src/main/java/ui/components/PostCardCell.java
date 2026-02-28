@@ -4,8 +4,10 @@ import javafx.animation.PauseTransition;
 import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.OverrunStyle;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.HBox;
@@ -39,14 +41,14 @@ public class PostCardCell extends ListCell<ForumPost> {
     private final HBox footerLeft = new HBox(8);
     private final HBox footerRight = new HBox(8);
     private final Label tagBadge = new Label();
-    private final Label createdAt = new Label();
     private final Label statusChip = new Label();
     private final Label dupChip = new Label();
     private final Label flags = new Label();
 
-    private final Button likeBtn = new Button("Like");
+    private final Button likeBtn = new Button();
     private final Label likesLabel = new Label();
-    private final Button shareBtn = new Button("Share");
+    private final Button shareBtn = new Button();
+    private final Label shareCountLabel = new Label();
     private final Label shareHint = new Label();
 
     private final UserRepository userRepo;
@@ -88,17 +90,27 @@ public class PostCardCell extends ListCell<ForumPost> {
         preview.getStyleClass().add("post-preview");
         flags.getStyleClass().add("muted");
         tagBadge.getStyleClass().add("tag-badge");
-        createdAt.getStyleClass().add("post-meta");
         statusChip.getStyleClass().addAll("pill", "gray");
         dupChip.getStyleClass().addAll("pill", "gray");
-        likesLabel.getStyleClass().add("post-meta");
+        likesLabel.getStyleClass().addAll("post-meta", "social-count");
+        shareCountLabel.getStyleClass().addAll("post-meta", "social-count");
         shareHint.getStyleClass().add("muted");
         title.setWrapText(true);
         preview.setWrapText(true);
         preview.setMaxWidth(Double.MAX_VALUE);
+        tagBadge.setTextOverrun(OverrunStyle.CLIP);
+        statusChip.setTextOverrun(OverrunStyle.CLIP);
+        dupChip.setTextOverrun(OverrunStyle.CLIP);
+        tagBadge.setMinWidth(Region.USE_PREF_SIZE);
+        statusChip.setMinWidth(Region.USE_PREF_SIZE);
+        dupChip.setMinWidth(Region.USE_PREF_SIZE);
 
-        likeBtn.getStyleClass().add("secondary");
-        shareBtn.getStyleClass().add("secondary");
+        likeBtn.getStyleClass().addAll("social-icon-btn", "like-btn");
+        shareBtn.getStyleClass().addAll("social-icon-btn", "share-btn");
+        likeBtn.setContentDisplay(ContentDisplay.TEXT_ONLY);
+        shareBtn.setContentDisplay(ContentDisplay.TEXT_ONLY);
+        likeBtn.setText("\u2661");
+        shareBtn.setText("\u2197");
         shareHint.setVisible(false);
         shareHint.setManaged(false);
 
@@ -113,8 +125,8 @@ public class PostCardCell extends ListCell<ForumPost> {
         HBox.setHgrow(spacer, Priority.ALWAYS);
         footerRow.setAlignment(Pos.CENTER_LEFT);
         footerRight.setAlignment(Pos.CENTER_RIGHT);
-        footerLeft.getChildren().addAll(tagBadge, createdAt, statusChip, dupChip);
-        footerRight.getChildren().addAll(likeBtn, likesLabel, shareBtn, shareHint);
+        footerLeft.getChildren().addAll(tagBadge, statusChip);
+        footerRight.getChildren().addAll(likeBtn, likesLabel, shareBtn, shareCountLabel, shareHint);
         footerRow.getChildren().addAll(footerLeft, spacer, footerRight);
 
         card.getChildren().addAll(headingBox, preview, footerRow);
@@ -139,8 +151,7 @@ public class PostCardCell extends ListCell<ForumPost> {
 
         String author = displayName(p.getAuthorId());
         String when = formatTime(p.getCreatedAt());
-        meta.setText(author);
-        createdAt.setText(when);
+        meta.setText(when.isBlank() ? author : (author + " - " + when));
 
         tagBadge.setText(safe(p.getTag()).isBlank() ? "General" : p.getTag());
 
@@ -149,17 +160,18 @@ public class PostCardCell extends ListCell<ForumPost> {
         statusChip.setVisible(showStatus && !statusText.isBlank());
         statusChip.setManaged(showStatus && !statusText.isBlank());
 
-        double duplicateScore = p.getDuplicateScore();
-        boolean showDup = showStatus && duplicateScore > 0.0;
-        dupChip.setText(String.format("Duplicate? %.2f", duplicateScore));
-        dupChip.setVisible(showDup);
-        dupChip.setManaged(showDup);
+        dupChip.setVisible(false);
+        dupChip.setManaged(false);
 
-        likesLabel.setText("Likes: " + Math.max(0, p.getLikeCount()));
-        shareBtn.setText("Share (" + Math.max(0, p.getShareCount()) + ")");
+        likesLabel.setText(Integer.toString(Math.max(0, p.getLikeCount())));
+        shareCountLabel.setText(Integer.toString(Math.max(0, p.getShareCount())));
+        likeBtn.getStyleClass().remove("liked");
+        if (p.isLikedByCurrentUser()) {
+            likeBtn.getStyleClass().add("liked");
+        }
+        likeBtn.setText(p.isLikedByCurrentUser() ? "\u2665" : "\u2661");
 
         boolean canLike = likeToggleHandler != null;
-        likeBtn.setText(p.isLikedByCurrentUser() ? "Unlike" : "Like");
         likeBtn.setDisable(!canLike);
         if (canLike) {
             likeBtn.setOnAction(event -> {

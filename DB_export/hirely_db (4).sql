@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : 127.0.0.1
--- Généré le : mer. 25 fév. 2026 à 17:08
+-- Généré le : ven. 27 fév. 2026 à 11:15
 -- Version du serveur : 10.4.32-MariaDB
 -- Version de PHP : 8.1.25
 
@@ -39,33 +39,64 @@ CREATE TABLE `forum_comment` (
   `edited_at` datetime DEFAULT NULL,
   `edited_by` bigint(20) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `is_pinned` tinyint(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Déchargement des données de la table `forum_comment`
 --
 
-INSERT INTO `forum_comment` (`id`, `post_id`, `author_id`, `content`, `status`, `moderated_by`, `moderated_at`, `moderation_note`, `edited_at`, `edited_by`, `created_at`, `updated_at`) VALUES
-(4, 5, 1, 'Keep it 1 page, strong projects, quantified impact. Happy to review.', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-14 19:39:52', '2026-02-14 19:39:52'),
-(5, 5, 2, 'Thanks Ali! I will update it and share results.', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-14 19:39:52', '2026-02-14 19:39:52'),
-(6, 4, 2, 'This should be hidden until admin approves (PENDING).', 'PENDING', NULL, NULL, NULL, NULL, NULL, '2026-02-14 19:39:52', '2026-02-14 19:39:52'),
-(17, 7, 99, 'Only 5 new posts !!!', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-15 18:43:17', '2026-02-15 18:54:02'),
-(18, 7, 2, 'Good News!', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-15 18:50:29', '2026-02-15 18:53:28'),
-(20, 7, 1, 'Great!', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-15 19:02:19', '2026-02-15 19:05:01'),
-(22, 7, 1, 'Great!', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-15 19:05:17', '2026-02-15 19:05:17'),
-(23, 7, 1, 'Great!', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-15 19:05:28', '2026-02-15 19:05:28'),
-(24, 7, 1, 'Great!', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-15 19:05:43', '2026-02-15 19:05:43'),
-(26, 6, 1, 'no works just fine', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-16 17:28:39', '2026-02-16 17:28:39'),
-(27, 5, 1, 'of course anytime !', 'PENDING', NULL, NULL, NULL, NULL, NULL, '2026-02-17 09:24:12', '2026-02-17 09:24:12'),
-(28, 5, 2, 'Thank you !', 'PENDING', NULL, NULL, NULL, NULL, NULL, '2026-02-17 09:51:30', '2026-02-17 09:51:30'),
-(29, 4, 1, 'I hate you!', 'PENDING', NULL, NULL, NULL, NULL, NULL, '2026-02-22 09:22:46', '2026-02-22 09:22:46'),
-(30, 4, 1, 'I like this post', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-22 09:23:01', '2026-02-22 09:23:01'),
-(31, 6, 1, 'this so disgusting !', 'PENDING', NULL, NULL, NULL, NULL, NULL, '2026-02-22 09:55:34', '2026-02-22 09:55:34'),
-(32, 4, 1, 'shit', 'PENDING', NULL, NULL, NULL, NULL, NULL, '2026-02-22 09:56:58', '2026-02-22 09:56:58'),
-(33, 4, 1, 'I love this post', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-22 09:57:44', '2026-02-22 09:57:44'),
-(34, 4, 1, 'need more info plz', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-22 09:57:55', '2026-02-22 09:57:55'),
-(35, 6, 2, 'Kill yourself', 'REJECTED', NULL, NULL, NULL, NULL, NULL, '2026-02-24 09:14:27', '2026-02-24 09:14:27');
+INSERT INTO `forum_comment` (`id`, `post_id`, `author_id`, `content`, `status`, `moderated_by`, `moderated_at`, `moderation_note`, `edited_at`, `edited_by`, `created_at`, `updated_at`, `is_pinned`) VALUES
+(4, 5, 1, 'Keep it 1 page, strong projects, quantified impact. Happy to review.', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-14 19:39:52', '2026-02-14 19:39:52', 0),
+(5, 5, 2, 'Thanks Ali! I will update it and share results.', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-14 19:39:52', '2026-02-14 19:39:52', 0),
+(6, 4, 2, 'This should be hidden until admin approves (PENDING).', 'PENDING', NULL, NULL, NULL, NULL, NULL, '2026-02-14 19:39:52', '2026-02-14 19:39:52', 0),
+(17, 7, 99, 'Only 5 new posts !!!', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-15 18:43:17', '2026-02-15 18:54:02', 0),
+(18, 7, 2, 'Good News!', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-15 18:50:29', '2026-02-15 18:53:28', 0),
+(20, 7, 1, 'Great!', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-15 19:02:19', '2026-02-15 19:05:01', 0),
+(22, 7, 1, 'Great!', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-15 19:05:17', '2026-02-15 19:05:17', 0),
+(23, 7, 1, 'Great!', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-15 19:05:28', '2026-02-15 19:05:28', 0),
+(24, 7, 1, 'Great!', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-15 19:05:43', '2026-02-15 19:05:43', 0),
+(26, 6, 1, 'no works just fine', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-16 17:28:39', '2026-02-16 17:28:39', 0),
+(27, 5, 1, 'of course anytime !', 'PENDING', NULL, NULL, NULL, NULL, NULL, '2026-02-17 09:24:12', '2026-02-17 09:24:12', 0),
+(28, 5, 2, 'Thank you !', 'PENDING', NULL, NULL, NULL, NULL, NULL, '2026-02-17 09:51:30', '2026-02-17 09:51:30', 0),
+(29, 4, 1, 'I hate you!', 'PENDING', NULL, NULL, NULL, NULL, NULL, '2026-02-22 09:22:46', '2026-02-22 09:22:46', 0),
+(30, 4, 1, 'I like this post', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-22 09:23:01', '2026-02-22 09:23:01', 0),
+(31, 6, 1, 'this so disgusting !', 'PENDING', NULL, NULL, NULL, NULL, NULL, '2026-02-22 09:55:34', '2026-02-22 09:55:34', 0),
+(32, 4, 1, 'shit', 'PENDING', NULL, NULL, NULL, NULL, NULL, '2026-02-22 09:56:58', '2026-02-22 09:56:58', 0),
+(33, 4, 1, 'I love this post', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-22 09:57:44', '2026-02-22 09:57:44', 0),
+(34, 4, 1, 'need more info plz', 'APPROVED', NULL, NULL, NULL, NULL, NULL, '2026-02-22 09:57:55', '2026-02-22 09:57:55', 0),
+(35, 6, 2, 'Kill yourself', 'REJECTED', NULL, NULL, NULL, NULL, NULL, '2026-02-24 09:14:27', '2026-02-24 09:14:27', 0);
+
+-- --------------------------------------------------------
+
+--
+-- Structure de la table `forum_interaction`
+--
+
+CREATE TABLE `forum_interaction` (
+  `id` bigint(20) NOT NULL,
+  `target_type` enum('POST','COMMENT') NOT NULL DEFAULT 'POST',
+  `target_id` bigint(20) NOT NULL,
+  `user_id` bigint(20) NOT NULL,
+  `interaction_type` varchar(10) NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `forum_interaction`
+--
+
+INSERT INTO `forum_interaction` (`id`, `target_type`, `target_id`, `user_id`, `interaction_type`, `created_at`) VALUES
+(4, 'POST', 9, 2, 'SHARE', '2026-02-25 18:11:01'),
+(22, 'POST', 9, 1, 'SHARE', '2026-02-25 18:11:10'),
+(47, 'POST', 6, 2, 'LIKE', '2026-02-25 18:20:19'),
+(48, 'POST', 5, 2, 'LIKE', '2026-02-25 18:20:31'),
+(52, 'POST', 9, 2, 'LIKE', '2026-02-27 06:23:44'),
+(54, 'POST', 9, 1, 'LIKE', '2026-02-27 09:23:14'),
+(55, 'POST', 7, 1, 'LIKE', '2026-02-27 09:23:18'),
+(56, 'POST', 7, 2, 'LIKE', '2026-02-27 09:23:26'),
+(59, 'COMMENT', 123, 1, 'LIKE', '2026-02-27 10:27:26');
 
 -- --------------------------------------------------------
 
@@ -84,6 +115,23 @@ CREATE TABLE `forum_notification` (
   `is_read` tinyint(1) NOT NULL DEFAULT 0,
   `created_at` datetime NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Déchargement des données de la table `forum_notification`
+--
+
+INSERT INTO `forum_notification` (`id`, `recipient_user_id`, `actor_user_id`, `type`, `post_id`, `comment_id`, `message`, `is_read`, `created_at`) VALUES
+(1, 99, 1, 'POST_LIKED', 9, NULL, 'Ali Ben Salah liked your post (#9).', 0, '2026-02-25 18:10:10'),
+(2, 99, 2, 'POST_LIKED', 9, NULL, 'Mohammed Rhim liked your post (#9).', 0, '2026-02-25 18:10:15'),
+(3, 99, 2, 'POST_LIKED', 9, NULL, 'Mohammed Rhim liked your post (#9).', 0, '2026-02-25 18:10:38'),
+(4, 99, 2, 'POST_SHARED', 9, NULL, 'Mohammed Rhim shared your post: \'Welcome to Hirely\'', 0, '2026-02-25 18:11:01'),
+(5, 99, 1, 'POST_SHARED', 9, NULL, 'Ali Ben Salah shared your post: \'Welcome to Hirely\'', 0, '2026-02-25 18:11:10'),
+(6, 99, 2, 'POST_LIKED', 9, NULL, 'Mohammed Rhim liked your post (#9).', 0, '2026-02-25 18:13:43'),
+(7, 99, 1, 'POST_LIKED', 9, NULL, 'Ali Ben Salah liked your post (#9).', 0, '2026-02-27 06:23:38'),
+(8, 99, 2, 'POST_LIKED', 9, NULL, 'Mohammed Rhim liked your post (#9).', 0, '2026-02-27 06:23:44'),
+(9, 1, 2, 'POST_LIKED', 7, NULL, 'Mohammed Rhim liked your post (#7).', 1, '2026-02-27 06:23:45'),
+(10, 99, 1, 'POST_LIKED', 9, NULL, 'Ali Ben Salah liked your post (#9).', 0, '2026-02-27 09:23:14'),
+(11, 1, 2, 'POST_LIKED', 7, NULL, 'Mohammed Rhim liked your post (#7).', 1, '2026-02-27 09:23:26');
 
 -- --------------------------------------------------------
 
@@ -134,23 +182,7 @@ INSERT INTO `forum_post` (`id`, `author_id`, `title`, `content`, `tag`, `status`
 (22, 1, 'New Jobs', 'Company YY is hiring 70 new jobs', '#job', 'PENDING', 0, 0, NULL, NULL, NULL, NULL, NULL, '2026-02-24 10:02:14', '2026-02-24 10:02:14'),
 (23, 2, 'Bug: comment refresh', 'Sometimes I need to press refresh twice to see new comments. Anyone else?', '#bugs', 'PENDING', 0, 0, NULL, NULL, NULL, NULL, NULL, '2026-02-24 10:07:19', '2026-02-24 10:07:19'),
 (24, 2, 'Data Science Internship – Summer 2026 (Tunis / Remote)', 'Hi everyone,\nI’m currently looking for a summer internship in Data Science or Machine Learning in Tunis (or remote).\nI have experience with Python, pandas, scikit-learn, and basic SQL. I’ve completed a small ML project involving data cleaning and model evaluation.\n\nIf your company is hiring interns, I’d appreciate any details about:\n\nRequired skills\n\nApplication link\n\nRemote/hybrid options\n\nThank you!', '#internship', 'PENDING', 0, 0, NULL, NULL, NULL, NULL, NULL, '2026-02-24 10:32:38', '2026-02-24 10:32:38'),
-(25, 2, 'Data Science Internship – Summer 2026 (Tunis / Remote)', 'Hi everyone,\nI’m currently looking for a summer internship in Data Science or Machine Learning in Tunis (or remote).\nI have experience with Python, pandas, scikit-learn, and basic SQL. I’ve completed a small ML project involving data cleaning and model evaluation.\n\nIf your company is hiring interns, I’d appreciate any details about:\n\nRequired skills\n\nApplication link\n\nRemote/hybrid options\n\nThank you!', '#internship', 'PENDING', 0, 0, NULL, NULL, NULL, NULL, NULL, '2026-02-24 10:34:43', '2026-02-24 10:34:43'),
-(26, 2, 'Fuck you', 'Fuck youFuck youFuck youFuck youFuck youFuck youFuck youFuck youFuck youFuck youFuck youFuck youFuck you', '#love', 'REJECTED', 0, 0, NULL, NULL, NULL, NULL, NULL, '2026-02-24 10:37:19', '2026-02-24 10:37:19'),
-(27, 2, 'nigger', 'nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger nigger', '#blm', 'REJECTED', 0, 0, NULL, NULL, NULL, NULL, NULL, '2026-02-24 10:38:30', '2026-02-24 10:38:30');
-
--- --------------------------------------------------------
-
---
--- Structure de la table `forum_post_interaction`
---
-
-CREATE TABLE `forum_post_interaction` (
-  `id` bigint(20) NOT NULL,
-  `post_id` bigint(20) NOT NULL,
-  `user_id` bigint(20) NOT NULL,
-  `type` varchar(10) NOT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+(25, 2, 'Data Science Internship – Summer 2026 (Tunis / Remote)', 'Hi everyone,\nI’m currently looking for a summer internship in Data Science or Machine Learning in Tunis (or remote).\nI have experience with Python, pandas, scikit-learn, and basic SQL. I’ve completed a small ML project involving data cleaning and model evaluation.\n\nIf your company is hiring interns, I’d appreciate any details about:\n\nRequired skills\n\nApplication link\n\nRemote/hybrid options\n\nThank you!', '#internship', 'PENDING', 0, 0, NULL, NULL, NULL, NULL, NULL, '2026-02-24 10:34:43', '2026-02-24 10:34:43');
 
 -- --------------------------------------------------------
 
@@ -162,7 +194,7 @@ CREATE TABLE `role` (
   `role_id` int(11) NOT NULL,
   `name` varchar(50) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
-  `status` varchar(20) NOT NULL DEFAULT 'active',
+  `status` enum('active','inactive') NOT NULL DEFAULT 'active',
   `default_dashboard` varchar(50) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -189,7 +221,7 @@ CREATE TABLE `user` (
   `email` varchar(100) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
   `role_id` int(11) NOT NULL,
-  `status` varchar(20) NOT NULL DEFAULT 'active',
+  `status` enum('active','inactive','pending') NOT NULL DEFAULT 'active',
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -219,6 +251,16 @@ ALTER TABLE `forum_comment`
   ADD KEY `idx_forum_comment_created` (`created_at`);
 
 --
+-- Index pour la table `forum_interaction`
+--
+ALTER TABLE `forum_interaction`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_interaction` (`target_type`,`target_id`,`user_id`,`interaction_type`),
+  ADD KEY `idx_fpi_user_type` (`user_id`,`interaction_type`),
+  ADD KEY `idx_target` (`target_type`,`target_id`,`interaction_type`),
+  ADD KEY `idx_user` (`user_id`,`target_type`,`interaction_type`);
+
+--
 -- Index pour la table `forum_notification`
 --
 ALTER TABLE `forum_notification`
@@ -238,15 +280,6 @@ ALTER TABLE `forum_post`
   ADD KEY `idx_forum_post_feed` (`status`,`is_pinned`,`created_at`),
   ADD KEY `idx_forum_post_author` (`author_id`),
   ADD KEY `idx_forum_post_created` (`created_at`);
-
---
--- Index pour la table `forum_post_interaction`
---
-ALTER TABLE `forum_post_interaction`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_fpi_post_user_type` (`post_id`,`user_id`,`type`),
-  ADD KEY `idx_fpi_post_type` (`post_id`,`type`),
-  ADD KEY `idx_fpi_user_type` (`user_id`,`type`);
 
 --
 -- Index pour la table `role`
@@ -275,22 +308,22 @@ ALTER TABLE `forum_comment`
   MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
+-- AUTO_INCREMENT pour la table `forum_interaction`
+--
+ALTER TABLE `forum_interaction`
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=60;
+
+--
 -- AUTO_INCREMENT pour la table `forum_notification`
 --
 ALTER TABLE `forum_notification`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT pour la table `forum_post`
 --
 ALTER TABLE `forum_post`
   MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=28;
-
---
--- AUTO_INCREMENT pour la table `forum_post_interaction`
---
-ALTER TABLE `forum_post_interaction`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT pour la table `role`
@@ -318,6 +351,12 @@ ALTER TABLE `forum_comment`
   ADD CONSTRAINT `fk_forum_comment_post` FOREIGN KEY (`post_id`) REFERENCES `forum_post` (`id`) ON DELETE CASCADE;
 
 --
+-- Contraintes pour la table `forum_interaction`
+--
+ALTER TABLE `forum_interaction`
+  ADD CONSTRAINT `fk_fpi_user_20260225` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE;
+
+--
 -- Contraintes pour la table `forum_notification`
 --
 ALTER TABLE `forum_notification`
@@ -333,13 +372,6 @@ ALTER TABLE `forum_post`
   ADD CONSTRAINT `fk_forum_post_author` FOREIGN KEY (`author_id`) REFERENCES `user` (`user_id`),
   ADD CONSTRAINT `fk_forum_post_edited_by` FOREIGN KEY (`edited_by`) REFERENCES `user` (`user_id`),
   ADD CONSTRAINT `fk_forum_post_moderated_by` FOREIGN KEY (`moderated_by`) REFERENCES `user` (`user_id`);
-
---
--- Contraintes pour la table `forum_post_interaction`
---
-ALTER TABLE `forum_post_interaction`
-  ADD CONSTRAINT `fk_fpi_post_20260225` FOREIGN KEY (`post_id`) REFERENCES `forum_post` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `fk_fpi_user_20260225` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE;
 
 --
 -- Contraintes pour la table `user`
