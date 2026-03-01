@@ -37,9 +37,13 @@
                     <Button text="Login" onAction="#handleLogin" styleClass="btn-primary"/>
                 </HBox>
                 <HBox alignment="CENTER_RIGHT" spacing="10">
-                    <Button text="Create account" onAction="#handleOpenSignup" styleClass="btn-secondary"/>
+                    <Button text="Create account"    onAction="#handleOpenSignup"    styleClass="btn-secondary"/>
+                    <Button text="Forgot password?"  onAction="#handleForgotPassword" styleClass="btn-secondary"/>
                 </HBox>
-
+                <HBox alignment="CENTER_RIGHT" spacing="10">
+                    <Button text="Sign in with Google" onAction="#handleGoogleLogin" styleClass="btn-secondary"/>
+                    <Button text="Login with Face"     onAction="#handleFaceLogin"   styleClass="btn-secondary"/>
+                </HBox>
 
                 <Label fx:id="lblMsg" text="" styleClass="footer-label"/>
             </VBox>

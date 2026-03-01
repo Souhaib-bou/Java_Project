@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 
 <VBox xmlns="http://javafx.com/javafx/17"
@@ -42,11 +43,20 @@
 
         <HBox alignment="CENTER_RIGHT" spacing="10">
             <Button text="Back" onAction="#handleBack" styleClass="btn-secondary"/>
+            <Button text="Setup Face ID" onAction="#handleSetupFaceId" styleClass="btn-secondary"/>
             <Button text="Save Changes" onAction="#handleSave" styleClass="btn-primary"/>
             <Button text="Delete Account" onAction="#handleDeleteAccount" styleClass="btn-danger"/>
             <Button text="Deactivate Account"
                     onAction="#handleDeactivateAccount"
                     styleClass="btn-danger"/>
+        </HBox>
+
+        <HBox alignment="CENTER" spacing="16">
+            <VBox alignment="CENTER" spacing="6">
+                <Label text="Your Profile QR Code" styleClass="form-label"/>
+                <ImageView fx:id="qrCodeView" fitWidth="180" fitHeight="180" preserveRatio="true"/>
+                <Label text="Scan to view profile info" styleClass="footer-label"/>
+            </VBox>
         </HBox>
 
         <Label fx:id="lblMsg" text="" styleClass="footer-label"/>

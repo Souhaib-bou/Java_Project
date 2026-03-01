@@ -7,7 +7,11 @@ public class User {
     private String email;
     private String password;  // plain (dev)
     private Integer roleId;   // nullable
-    private String status;    // "active" | "inactive"
+    private String status;
+    private String profilePic;
+    private String googleId;
+    private String faceData;
+// "active" | "inactive"
 
     // convenience fields for table display (optional)
     private String roleName;
@@ -49,13 +53,28 @@ public class User {
     public String getRoleName() { return roleName; }
     public void setRoleName(String roleName) { this.roleName = roleName; }
 
+    /**
+     * Returns the fullname value.
+     */
     public String getFullName() {
         String fn = firstName == null ? "" : firstName;
         String ln = lastName == null ? "" : lastName;
         return (fn + " " + ln).trim();
     }
+    public String getProfilePic() { return profilePic; }
+    public void setProfilePic(String profilePic) { this.profilePic = profilePic; }
+
+    public String getGoogleId() { return googleId; }
+    public void setGoogleId(String googleId) { this.googleId = googleId; }
+
+    public String getFaceData() { return faceData; }
+    public void setFaceData(String faceData) { this.faceData = faceData; }
+
 
     @Override
+    /**
+     * Executes this operation.
+     */
     public String toString() {
         String name = getFullName();
         return name.isEmpty() ? ("User #" + userId) : name;

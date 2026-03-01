@@ -11,7 +11,7 @@ public class MyDB {
 
     // NOTE: add timeouts so it doesn't "hang"
     private static final String URL =
-            "jdbc:mysql://localhost:3306/workshop?serverTimezone=UTC"
+            "jdbc:mysql://localhost:3306/hirely?serverTimezone=UTC"
                     + "?useSSL=false"
                     + "&allowPublicKeyRetrieval=true"
                     + "&serverTimezone=UTC"
@@ -35,7 +35,6 @@ public class MyDB {
         if (instance == null) instance = new MyDB();
         return instance;
     }
-
     public Connection getConnection() {
         return connection;
     }
