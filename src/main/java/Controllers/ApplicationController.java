@@ -11,6 +11,8 @@ import Utils.UserSession;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
@@ -70,7 +72,12 @@ public class ApplicationController {
     @FXML private TextArea reviewNoteField;
     @FXML private Button addButton;
     @FXML private Button updateButton;
-
+    @FXML private VBox statsCard;
+    @FXML private Label statTotal;
+    @FXML private Label statPending;
+    @FXML private Label statAccepted;
+    @FXML private Label statRejected;
+    @FXML private BarChart<String, Number> statusChart;
     // ================= TABLE =================
     @FXML private TableView<Application> tableView;
     @FXML private TableColumn<Application, Integer> colId;
@@ -128,6 +135,8 @@ public class ApplicationController {
         // ── Form card: hidden entirely until recruiter clicks Review ──
         formCard.setVisible(isCandidate);
         formCard.setManaged(isCandidate);
+        statsCard.setVisible(isRecruiter);
+        statsCard.setManaged(isRecruiter);
         // Search bar — recruiter only
         searchBar.setVisible(isRecruiter);
         searchBar.setManaged(isRecruiter);
@@ -225,7 +234,31 @@ public class ApplicationController {
             new Alert(Alert.AlertType.ERROR, "Failed to add application: " + e.getMessage()).showAndWait();
         }
     }
+    private void updateStats() {
+        if (!"Recruiter".equalsIgnoreCase(currentUserRole)) return;
 
+        long total    = data.size();
+        long pending  = data.stream().filter(a -> "Pending".equalsIgnoreCase(a.getCurrentStatus())).count();
+        long accepted = data.stream().filter(a -> "Accepted".equalsIgnoreCase(a.getCurrentStatus())).count();
+        long rejected = data.stream().filter(a -> "Rejected".equalsIgnoreCase(a.getCurrentStatus())).count();
+
+        // ── Update tiles ──
+        statTotal.setText(String.valueOf(total));
+        statPending.setText(String.valueOf(pending));
+        statAccepted.setText(String.valueOf(accepted));
+        statRejected.setText(String.valueOf(rejected));
+
+        // ── Update bar chart ──
+        statusChart.getData().clear();
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        series.setName("Applications");
+        series.getData().add(new XYChart.Data<>("Pending",  pending));
+        series.getData().add(new XYChart.Data<>("Accepted", accepted));
+        series.getData().add(new XYChart.Data<>("Rejected", rejected));
+
+        statusChart.getData().add(series);
+    }
     // ================= UPDATE =================//
     @FXML
     public void updateApplication() {
@@ -496,6 +529,7 @@ public class ApplicationController {
             filteredData = new FilteredList<>(data, p -> true);
             sortedData   = new SortedList<>(filteredData);
             tableView.setItems(sortedData);
+            updateStats();
 
         } catch (SQLException e) {
             e.printStackTrace();

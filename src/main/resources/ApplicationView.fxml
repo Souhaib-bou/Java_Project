@@ -4,7 +4,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.shape.*?>
-
+<?import javafx.scene.chart.*?>
 <BorderPane xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="Controllers.ApplicationController"
@@ -23,6 +23,55 @@
                         <padding><Insets top="36" right="40" bottom="36" left="40"/></padding>
                         <Label text="Applications" styleClass="hero-title"/>
                         <Label text="Manage and track job applications in one place" styleClass="hero-subtitle"/>
+                    </VBox>
+                    <!-- ════════════════════════════════
+     RECRUITER ONLY — Stats Dashboard
+     ════════════════════════════════ -->
+                    <VBox fx:id="statsCard" styleClass="form-card" spacing="0">
+
+                        <HBox styleClass="card-header" alignment="CENTER_LEFT">
+                            <Label text="Applications Overview" styleClass="card-title"/>
+                        </HBox>
+
+                        <VBox spacing="20">
+                            <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+
+                            <!-- ── Stat Tiles ── -->
+                            <HBox spacing="16">
+
+                                <VBox fx:id="tileTotalBox" styleClass="stat-tile" HBox.hgrow="ALWAYS" alignment="CENTER" spacing="4">
+                                    <Label fx:id="statTotal" text="0" styleClass="stat-number"/>
+                                    <Label text="TOTAL" styleClass="stat-label"/>
+                                </VBox>
+
+                                <VBox fx:id="tilePendingBox" styleClass="stat-tile-yellow" HBox.hgrow="ALWAYS" alignment="CENTER" spacing="4">
+                                    <Label fx:id="statPending" text="0" styleClass="stat-number"/>
+                                    <Label text="PENDING" styleClass="stat-label"/>
+                                </VBox>
+
+                                <VBox fx:id="tileAcceptedBox" styleClass="stat-tile-green" HBox.hgrow="ALWAYS" alignment="CENTER" spacing="4">
+                                    <Label fx:id="statAccepted" text="0" styleClass="stat-number"/>
+                                    <Label text="ACCEPTED" styleClass="stat-label"/>
+                                </VBox>
+
+                                <VBox fx:id="tileRejectedBox" styleClass="stat-tile-red" HBox.hgrow="ALWAYS" alignment="CENTER" spacing="4">
+                                    <Label fx:id="statRejected" text="0" styleClass="stat-number"/>
+                                    <Label text="REJECTED" styleClass="stat-label"/>
+                                </VBox>
+
+                            </HBox>
+
+                            <!-- ── Bar Chart ── -->
+                            <BarChart fx:id="statusChart" prefHeight="220" animated="true">
+                                <xAxis>
+                                    <CategoryAxis label="Status"/>
+                                </xAxis>
+                                <yAxis>
+                                    <NumberAxis label="Count" minorTickVisible="false"/>
+                                </yAxis>
+                            </BarChart>
+
+                        </VBox>
                     </VBox>
                     <!-- ════════════════════════════════
      SEARCH + SORT BAR
