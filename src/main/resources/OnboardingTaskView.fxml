@@ -2,86 +2,268 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.image.Image?>
-<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 
 <BorderPane xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="Controllers.OnboardingTaskController"
-            stylesheets="@styles/hirely.css">
-
-    <!-- HEADER (same style as Plans) -->
-    <top>
-        <VBox styleClass="header">
-            <Button text="← Back to Plans" onAction="#handleBack" styleClass="btn-secondary"/>
-            <!-- thin gradient line like mockup -->
-        </VBox>
-    </top>
+            stylesheets="@styles/hirely.css"
+            styleClass="app-root">
 
     <center>
-        <VBox spacing="14">
-            <padding>
-                <Insets top="18" right="18" bottom="18" left="18"/>
-            </padding>
+        <ScrollPane fitToWidth="true"
+                    hbarPolicy="NEVER"
+                    vbarPolicy="AS_NEEDED"
+                    styleClass="card-scroll">
+            <content>
+                <VBox spacing="16">
+                    <padding>
+                        <Insets top="18" right="18" bottom="18" left="18"/>
+                    </padding>
 
-            <!-- FORM CARD -->
-            <VBox spacing="12" styleClass="card">
-                <Label text="Task Details" styleClass="section-title"/>
+                    <!-- ================= TASK SUMMARY CARDS ================= -->
+                    <GridPane hgap="12" vgap="12">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="25" hgrow="ALWAYS"/>
+                            <ColumnConstraints percentWidth="25" hgrow="ALWAYS"/>
+                            <ColumnConstraints percentWidth="25" hgrow="ALWAYS"/>
+                            <ColumnConstraints percentWidth="25" hgrow="ALWAYS"/>
+                        </columnConstraints>
 
-                <GridPane hgap="10" vgap="10">
-                    <columnConstraints>
-                        <ColumnConstraints minWidth="120"/>
-                        <ColumnConstraints hgrow="ALWAYS"/>
-                    </columnConstraints>
+                        <VBox spacing="6" styleClass="card metric-card metric-card-accent"
+                              GridPane.columnIndex="0" GridPane.rowIndex="0">
+                            <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
+                            <Label text="Total Tasks" styleClass="metric-label"/>
+                            <Label fx:id="lblTaskMetricTotal" text="0" styleClass="metric-value"/>
+                            <Label text="All tasks in this plan" styleClass="muted-text"/>
+                        </VBox>
 
-                    <Label text="Plan ID" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-                    <TextField fx:id="txtPlanId" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+                        <VBox spacing="6" styleClass="card metric-card metric-card-success"
+                              GridPane.columnIndex="1" GridPane.rowIndex="0">
+                            <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
+                            <Label text="Completed" styleClass="metric-label"/>
+                            <Label fx:id="lblTaskMetricCompleted" text="0" styleClass="metric-value"/>
+                            <Label text="Tasks finished" styleClass="muted-text"/>
+                        </VBox>
 
-                    <Label text="Title" styleClass="form-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-                    <TextField fx:id="txtTitle" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+                        <VBox spacing="6" styleClass="card metric-card metric-card-warning"
+                              GridPane.columnIndex="2" GridPane.rowIndex="0">
+                            <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
+                            <Label text="In Progress" styleClass="metric-label"/>
+                            <Label fx:id="lblTaskMetricInProgress" text="0" styleClass="metric-value"/>
+                            <Label text="Currently active" styleClass="muted-text"/>
+                        </VBox>
 
-                    <Label text="Description" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-                    <TextArea fx:id="txtDescription" prefRowCount="3" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+                        <VBox spacing="6" styleClass="card metric-card metric-card-danger"
+                              GridPane.columnIndex="3" GridPane.rowIndex="0">
+                            <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
+                            <Label text="Blocked" styleClass="metric-label"/>
+                            <Label fx:id="lblTaskMetricBlocked" text="0" styleClass="metric-value"/>
+                            <Label text="Need attention" styleClass="muted-text"/>
+                        </VBox>
+                    </GridPane>
 
-                    <Label text="Status" styleClass="form-label" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-                    <ComboBox fx:id="cmbStatus" GridPane.rowIndex="3" GridPane.columnIndex="1" prefWidth="200"/>
+                    <!-- ================= TASK EXPLORER ================= -->
+                    <VBox spacing="10" styleClass="card">
+                        <padding>
+                            <Insets top="14" right="14" bottom="14" left="14"/>
+                        </padding>
 
-                    <Label text="Filepath" styleClass="form-label" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-                    <HBox spacing="8" GridPane.rowIndex="4" GridPane.columnIndex="1">
-                        <TextField fx:id="txtFilepath" promptText="Upload in update popup…" prefWidth="260"/>
-                        <Button fx:id="btnBrowse" text="Browse" styleClass="btn-secondary"/>
-                    </HBox>
-                </GridPane>
+                        <HBox alignment="CENTER_LEFT" spacing="10">
+                            <Label text="Task Explorer" styleClass="section-title"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <CheckBox fx:id="chkHasAttachmentOnly" text="Has attachment only"/>
+                        </HBox>
 
-                <HBox spacing="10" alignment="CENTER_RIGHT">
-                    <Button text="Add" onAction="#handleAddTask" styleClass="btn-primary"/>
-                    <Button text="Update" onAction="#handleUpdateTask" styleClass="btn-secondary"/>
-                    <Button text="Delete" onAction="#handleDeleteTask" styleClass="btn-danger"/>
-                </HBox>
-            </VBox>
+                        <GridPane hgap="10" vgap="10">
+                            <columnConstraints>
+                                <ColumnConstraints percentWidth="36" hgrow="ALWAYS"/>
+                                <ColumnConstraints percentWidth="21" hgrow="ALWAYS"/>
+                                <ColumnConstraints percentWidth="25" hgrow="ALWAYS"/>
+                                <ColumnConstraints percentWidth="18" hgrow="ALWAYS"/>
+                            </columnConstraints>
 
-            <!-- TABLE CARD -->
-            <VBox spacing="10" styleClass="card">
-                <Label text="Tasks" styleClass="section-title"/>
+                            <TextField fx:id="txtTaskSearch"
+                                       promptText="Search tasks by title, description, status, task ID, plan ID..."
+                                       GridPane.columnIndex="0" GridPane.rowIndex="0"
+                                       maxWidth="1.7976931348623157E308"/>
 
-                <TableView fx:id="tvTasks" prefHeight="320" styleClass="hirely-table">
-                    <columns>
-                        <TableColumn fx:id="colTaskId" text="Task ID" prefWidth="80"/>
-                        <TableColumn fx:id="colPlanId" text="Plan ID" prefWidth="80"/>
-                        <TableColumn fx:id="colTitle" text="Title" prefWidth="180"/>
-                        <TableColumn fx:id="colDescription" text="Description" prefWidth="240"/>
-                        <TableColumn fx:id="colStatus" text="Status" prefWidth="140"/>
-                        <TableColumn fx:id="colFilepath" text="File" prefWidth="240"/>
-                    </columns>
-                </TableView>
+                            <ComboBox fx:id="cmbTaskFilterStatus"
+                                      promptText="Filter status"
+                                      GridPane.columnIndex="1" GridPane.rowIndex="0"
+                                      maxWidth="1.7976931348623157E308"/>
 
-                <HBox styleClass="footer" alignment="CENTER_LEFT">
-                    <Label fx:id="lblStatus" text="Ready" styleClass="footer-label"/>
-                </HBox>
-            </VBox>
+                            <ComboBox fx:id="cmbTaskSort"
+                                      promptText="Sort by"
+                                      GridPane.columnIndex="2" GridPane.rowIndex="0"
+                                      maxWidth="1.7976931348623157E308"/>
 
-        </VBox>
+                            <Button text="Reset"
+                                    onAction="#handleResetTaskExplorer"
+                                    GridPane.columnIndex="3" GridPane.rowIndex="0"
+                                    styleClass="btn-secondary"
+                                    maxWidth="1.7976931348623157E308"/>
+                        </GridPane>
+                    </VBox>
+
+                    <!-- ================= MAIN CONTENT GRID ================= -->
+                    <GridPane hgap="16" vgap="16" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="38" hgrow="ALWAYS"/>
+                            <ColumnConstraints percentWidth="62" hgrow="ALWAYS"/>
+                        </columnConstraints>
+
+                        <!-- LEFT: FORM CARD -->
+                        <VBox spacing="12" styleClass="card"
+                              GridPane.columnIndex="0" GridPane.rowIndex="0">
+                            <padding>
+                                <Insets top="16" right="16" bottom="16" left="16"/>
+                            </padding>
+
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Button text="← Back to Plans" onAction="#handleBack" styleClass="btn-secondary"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                            </HBox>
+
+                            <Label text="Task Details" styleClass="section-title"/>
+                            <Separator />
+
+                            <GridPane hgap="12" vgap="12">
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="90" hgrow="NEVER"/>
+                                    <ColumnConstraints hgrow="ALWAYS"/>
+                                </columnConstraints>
+
+                                <Label text="Plan ID" styleClass="form-label"
+                                       GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                                <TextField fx:id="txtPlanId"
+                                           GridPane.rowIndex="0" GridPane.columnIndex="1"
+                                           maxWidth="1.7976931348623157E308"/>
+
+                                <Label text="Title" styleClass="form-label"
+                                       GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                                <TextField fx:id="txtTitle"
+                                           GridPane.rowIndex="1" GridPane.columnIndex="1"
+                                           maxWidth="1.7976931348623157E308"/>
+
+                                <Label text="Description" styleClass="form-label"
+                                       GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                                <TextArea fx:id="txtDescription" prefRowCount="4"
+                                          GridPane.rowIndex="2" GridPane.columnIndex="1"
+                                          maxWidth="1.7976931348623157E308"/>
+
+                                <Label text="Status" styleClass="form-label"
+                                       GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                                <ComboBox fx:id="cmbStatus"
+                                          GridPane.rowIndex="3" GridPane.columnIndex="1"
+                                          maxWidth="1.7976931348623157E308"/>
+
+                                <Label text="Filepath" styleClass="form-label"
+                                       GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                                <HBox spacing="8" GridPane.rowIndex="4" GridPane.columnIndex="1">
+                                    <TextField fx:id="txtFilepath"
+                                               promptText="Upload in update popup…"
+                                               HBox.hgrow="ALWAYS"/>
+                                    <Button fx:id="btnBrowse" text="Browse" styleClass="btn-secondary"/>
+                                </HBox>
+                            </GridPane>
+
+                            <Separator />
+
+                            <GridPane hgap="10" vgap="10">
+                                <columnConstraints>
+                                    <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
+                                    <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
+                                </columnConstraints>
+
+                                <Button fx:id="btnAdd"
+                                        text="Add"
+                                        onAction="#handleAddTask"
+                                        styleClass="btn-primary"
+                                        maxWidth="1.7976931348623157E308"
+                                        GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+
+                                <Button fx:id="btnUpdate"
+                                        text="Update"
+                                        onAction="#handleUpdateTask"
+                                        styleClass="btn-secondary"
+                                        maxWidth="1.7976931348623157E308"
+                                        GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+                                <Button fx:id="btnDelete"
+                                        text="Delete"
+                                        onAction="#handleDeleteTask"
+                                        styleClass="btn-danger"
+                                        maxWidth="1.7976931348623157E308"
+                                        GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+                            </GridPane>
+
+                            <Label text="Tip: Click a task card to select it, then update or delete."
+                                   wrapText="true"
+                                   styleClass="muted-text"/>
+                        </VBox>
+
+                        <!-- RIGHT: TASKS CARDS -->
+                        <VBox spacing="10" styleClass="card"
+                              GridPane.columnIndex="1" GridPane.rowIndex="0"
+                              VBox.vgrow="ALWAYS">
+                            <padding>
+                                <Insets top="16" right="16" bottom="16" left="16"/>
+                            </padding>
+
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="Tasks" styleClass="section-title"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                            </HBox>
+                            <!-- RECOMMENDED ACTIONS (Role-Based Decision Guide) -->
+                            <VBox spacing="10" styleClass="card metric-card-accent">
+                                <padding>
+                                    <Insets top="14" right="14" bottom="14" left="14"/>
+                                </padding>
+
+                                <HBox alignment="CENTER_LEFT" spacing="10">
+                                    <Label text="Recommended Actions" styleClass="section-title"/>
+                                    <Region HBox.hgrow="ALWAYS"/>
+                                    <Label fx:id="lblDecisionGuideRole" text="Role: -" styleClass="muted-text"/>
+                                </HBox>
+
+                                <VBox fx:id="recommendationsContainer" spacing="8"/>
+                            </VBox>
+
+                            <ScrollPane fx:id="tasksScrollPane"
+                                        fitToWidth="true"
+                                        hbarPolicy="NEVER"
+                                        vbarPolicy="AS_NEEDED"
+                                        styleClass="card-scroll"
+                                        VBox.vgrow="ALWAYS">
+                                <content>
+                                    <VBox fx:id="tasksCardsContainer" spacing="10" fillWidth="true">
+                                        <padding>
+                                            <Insets top="2" right="2" bottom="2" left="2"/>
+                                        </padding>
+                                    </VBox>
+                                </content>
+                            </ScrollPane>
+
+                            <!-- Hidden fallback table -->
+                            <TableView fx:id="tvTasks" visible="false" managed="false" prefHeight="0">
+                                <columns>
+                                    <TableColumn fx:id="colTaskId" text="Task ID" prefWidth="80"/>
+                                    <TableColumn fx:id="colPlanId" text="Plan ID" prefWidth="80"/>
+                                    <TableColumn fx:id="colTitle" text="Title" prefWidth="180"/>
+                                    <TableColumn fx:id="colDescription" text="Description" prefWidth="240"/>
+                                    <TableColumn fx:id="colStatus" text="Status" prefWidth="140"/>
+                                    <TableColumn fx:id="colFilepath" text="File" prefWidth="240"/>
+                                </columns>
+                            </TableView>
+
+                            <HBox styleClass="footer" alignment="CENTER_LEFT">
+                                <Label fx:id="lblStatus" text="Ready" styleClass="footer-label"/>
+                            </HBox>
+                        </VBox>
+                    </GridPane>
+                </VBox>
+            </content>
+        </ScrollPane>
     </center>
-
 </BorderPane>

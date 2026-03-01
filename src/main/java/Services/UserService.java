@@ -27,6 +27,32 @@ public class UserService {
         ResultSet rs = ps.executeQuery();
         return rs.next();
     }
+    public User findById(int id) throws SQLException {
+
+        String sql = "SELECT * FROM Users WHERE user_id = ?";
+
+        PreparedStatement ps = cnx.prepareStatement(sql);
+        ps.setInt(1, id);
+
+        ResultSet rs = ps.executeQuery();
+
+        if (rs.next()) {
+
+            User u = new User();
+
+            u.setUserId(rs.getInt("user_id"));
+            u.setFirstName(rs.getString("first_name"));
+            u.setLastName(rs.getString("last_name"));
+            u.setEmail(rs.getString("email"));
+            u.setPassword(rs.getString("password"));
+            u.setRoleId(rs.getInt("role_id"));
+            u.setStatus(rs.getString("status"));
+
+            return u;
+        }
+
+        return null;
+    }
 
     /**
      * Sets the userstatus value.
@@ -147,15 +173,21 @@ public class UserService {
      * Returns the userbyid value.
      */
     public User getUserById(int userId) throws SQLException {
+
         String sql =
-                "SELECT user_id, first_name, last_name, email, password, role_id, status, profile_pic " +
-                        "FROM users WHERE user_id=?";
+                "SELECT u.user_id, u.first_name, u.last_name, u.email, u.password, " +
+                        "       u.role_id, u.status, u.profile_pic, " +
+                        "       r.name AS role_name " +
+                        "FROM users u " +
+                        "LEFT JOIN role r ON r.role_id = u.role_id " +
+                        "WHERE u.user_id = ?";
 
         PreparedStatement ps = cnx.prepareStatement(sql);
         ps.setInt(1, userId);
         ResultSet rs = ps.executeQuery();
 
         if (rs.next()) {
+
             User u = new User(
                     rs.getInt("user_id"),
                     rs.getString("first_name"),
@@ -165,9 +197,13 @@ public class UserService {
                     (Integer) rs.getObject("role_id"),
                     rs.getString("status")
             );
+
             u.setProfilePic(rs.getString("profile_pic"));
+            u.setRoleName(rs.getString("role_name")); // ✅ VERY IMPORTANT
+
             return u;
         }
+
         return null;
     }
 

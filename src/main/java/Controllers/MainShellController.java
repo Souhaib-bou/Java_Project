@@ -70,6 +70,8 @@ public class MainShellController implements Initializable {
         });
     }
 
+
+
     @Override
     /**
      * Initializes UI components and loads initial data.
@@ -241,26 +243,6 @@ public class MainShellController implements Initializable {
         }
     }
 
-    public void openApplicationsForJob(int jobOfferId) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/ApplicationView.fxml"));
-            Parent root = loader.load();
-
-            ApplicationController controller = loader.getController();
-            controller.setShell(this);
-            controller.setJobContext(jobOfferId);   // ✅ pass job id
-
-            contentHost.getChildren().setAll(root);
-            setPageMeta("Applications", "For Job Offer #" + jobOfferId);
-
-            Stage stage = (Stage) contentHost.getScene().getWindow();
-            stage.setTitle("Hirely — Applications (Job #" + jobOfferId + ")");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            new Alert(Alert.AlertType.ERROR, "Cannot load ApplicationView.fxml. Check console.").showAndWait();
-        }
-    }
 
     // ===================== HEADER =====================
     /**
@@ -352,11 +334,6 @@ public class MainShellController implements Initializable {
         location.setPromptText("Location");
         location.getStyleClass().add("input");
 
-        Button searchBtn = new Button("Search");
-        searchBtn.getStyleClass().addAll("btn", "btn-primary");
-        searchBtn.setOnAction(e -> openJobOffers());
-
-        searchBar.getChildren().addAll(keyword, location, searchBtn);
 
         heroText.getChildren().addAll(heroTitle, heroSubtitle, searchBar);
         hero.getChildren().add(heroText);
@@ -400,11 +377,6 @@ public class MainShellController implements Initializable {
         HBox sectionFooter = new HBox();
         sectionFooter.getStyleClass().add("section-footer");
 
-        Button viewAll = new Button("View All Jobs");
-        viewAll.getStyleClass().addAll("btn", "btn-secondary");
-        viewAll.setOnAction(e -> openJobOffers());
-
-        sectionFooter.getChildren().add(viewAll);
 
         section.getChildren().addAll(sectionTitle, grid, sectionFooter);
 
@@ -529,65 +501,6 @@ public class MainShellController implements Initializable {
 
     // ===================== JOB OFFERS =====================
     @FXML
-    /**
-     * Handles the associated UI event.
-     */
-    private void handleOpenJobOffers() {
-        openJobOffers();
-    }
-
-    /**
-     * Navigates to the requested screen.
-     */
-    public void openJobOffers() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/JobOfferView.fxml"));
-            Parent root = loader.load();
-
-            JobOfferController controller = loader.getController();
-            controller.setShell(this);
-
-            contentHost.getChildren().setAll(root);
-            setPageMeta("Job Offers", "Create and manage job offers");
-
-            Stage stage = (Stage) contentHost.getScene().getWindow();
-            stage.setTitle("Hirely — Job Offers");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            new Alert(Alert.AlertType.ERROR, "Cannot load JobOfferView.fxml. Check console.").showAndWait();
-        }
-    }
-
-    // ===================== APPLICATIONS =====================
-    /**
-     * Navigates to the requested screen.
-     */
-    public void openApplications() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/ApplicationView.fxml"));
-            Parent root = loader.load();
-
-            ApplicationController controller = loader.getController();
-            controller.setShell(this);
-
-            contentHost.getChildren().setAll(root);
-            setPageMeta("Applications", "Manage applications");
-
-            Stage stage = (Stage) contentHost.getScene().getWindow();
-            stage.setTitle("Hirely — Applications");
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            new Alert(Alert.AlertType.ERROR, "Cannot load ApplicationView.fxml. Check console.").showAndWait();
-        }
-    }
-
-    // ===================== PROFILE =====================
-    @FXML
-    /**
-     * Handles the associated UI event.
-     */
     private void handleOpenProfile() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/UserProfileView.fxml"));

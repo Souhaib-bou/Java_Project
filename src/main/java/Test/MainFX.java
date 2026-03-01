@@ -24,6 +24,7 @@ public class MainFX extends Application {
 
             // allow resize + maximize
             primaryStage.setResizable(true);
+            primaryStage.setMaximized(true);
             primaryStage.setMinWidth(980);
             primaryStage.setMinHeight(650);
 

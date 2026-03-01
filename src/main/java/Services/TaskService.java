@@ -28,7 +28,7 @@ public class TaskService {
         ps.setInt(1, task.getPlanId());
         ps.setString(2, task.getTitle());
         ps.setString(3, task.getDescription());
-        ps.setString(4, task.getStatus());
+        ps.setString(4, toDbStatus(task.getStatus()));
 
         if (task.getFilepath() == null || task.getFilepath().trim().isEmpty()) {
             ps.setNull(5, Types.VARCHAR);
@@ -50,7 +50,7 @@ public class TaskService {
         ps.setInt(1, task.getPlanId());
         ps.setString(2, task.getTitle());
         ps.setString(3, task.getDescription());
-        ps.setString(4, task.getStatus());
+        ps.setString(4, toDbStatus(task.getStatus()));
         ps.setString(5, task.getFilepath());
         ps.setInt(6, taskId);
 
@@ -139,6 +139,20 @@ public class TaskService {
         }
 
         return list;
+    }
+    private String toDbStatus(String uiStatus) {
+        if (uiStatus == null) return "not_started";
+
+        String s = uiStatus.trim().toLowerCase();
+
+        return switch (s) {
+            case "not started", "not_started" -> "not_started";
+            case "in progress", "in_progress" -> "in_progress";
+            case "completed" -> "completed";
+            case "blocked" -> "blocked";
+            case "on hold", "on_hold" -> "on_hold";
+            default -> "not_started";
+        };
     }
 
     // GET TASKS BY STATUS

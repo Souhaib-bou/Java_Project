@@ -34,7 +34,6 @@
                     <HBox alignment="CENTER" spacing="10" styleClass="topbar-nav" HBox.hgrow="ALWAYS">
                         <Button text="Home" styleClass="nav-pill" onAction="#handleOpenHome"/>
                         <Button text="Onboarding" styleClass="nav-pill" onAction="#handleOpenOnboarding"/>
-                        <Button text="Job Offers" styleClass="nav-pill" onAction="#handleOpenJobOffers"/>
                     </HBox>
 
                     <!-- Right icons + profile -->

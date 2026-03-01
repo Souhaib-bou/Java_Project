@@ -1,5 +1,9 @@
 package Models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonIgnoreProperties(ignoreUnknown = true) // ✅ ignore extra fields like "deadline"
 public class OnboardingTask {
 
     private int taskId;
@@ -7,8 +11,18 @@ public class OnboardingTask {
     private String title;
     private String description;
     private String status;
+
+    @JsonProperty("filePath")
     private String filepath;
 
+    @JsonProperty("originalFileName")
+    private String originalFileName;
+
+    @JsonProperty("contentType")
+    private String contentType;
+
+    @JsonProperty("cloudinaryPublicId")
+    private String cloudinaryPublicId;
     public OnboardingTask() {}
 
     public OnboardingTask(int taskId, int planId, String title,
@@ -21,94 +35,64 @@ public class OnboardingTask {
         this.filepath = filepath;
     }
 
-    /**
-     * Returns the taskid value.
-     */
     public int getTaskId() {
         return taskId;
     }
 
-    /**
-     * Sets the taskid value.
-     */
     public void setTaskId(int taskId) {
         this.taskId = taskId;
     }
 
-    /**
-     * Returns the planid value.
-     */
     public int getPlanId() {
         return planId;
     }
 
-    /**
-     * Sets the planid value.
-     */
     public void setPlanId(int planId) {
         this.planId = planId;
     }
 
-    /**
-     * Returns the title value.
-     */
     public String getTitle() {
         return title;
     }
 
-    /**
-     * Sets the title value.
-     */
     public void setTitle(String title) {
         this.title = title;
     }
 
-    /**
-     * Returns the description value.
-     */
     public String getDescription() {
         return description;
     }
 
-    /**
-     * Sets the description value.
-     */
     public void setDescription(String description) {
         this.description = description;
     }
 
-    /**
-     * Returns the status value.
-     */
     public String getStatus() {
         return status;
     }
 
-    /**
-     * Sets the status value.
-     */
     public void setStatus(String status) {
         this.status = status;
     }
 
-    /**
-     * Returns the filepath value.
-     */
     public String getFilepath() {
         return filepath;
     }
 
-    /**
-     * Sets the filepath value.
-     */
     public void setFilepath(String filepath) {
         this.filepath = filepath;
     }
 
+    public String getOriginalFileName() { return originalFileName; }
+    public void setOriginalFileName(String originalFileName) { this.originalFileName = originalFileName; }
+
+    public String getContentType() { return contentType; }
+    public void setContentType(String contentType) { this.contentType = contentType; }
+
+    public String getCloudinaryPublicId() { return cloudinaryPublicId; }
+    public void setCloudinaryPublicId(String cloudinaryPublicId) { this.cloudinaryPublicId = cloudinaryPublicId; }
+
     @Override
-    /**
-     * Executes this operation.
-     */
     public String toString() {
         return "OnboardingTask{" +
                 "taskId=" + taskId +
