@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="Controllers.OnboardingTaskController"
+            stylesheets="@styles/hirely.css">
+
+    <!-- HEADER (same style as Plans) -->
+    <top>
+        <VBox styleClass="header">
+            <Button text="← Back to Plans" onAction="#handleBack" styleClass="btn-secondary"/>
+            <!-- thin gradient line like mockup -->
+        </VBox>
+    </top>
+
+    <center>
+        <VBox spacing="14">
+            <padding>
+                <Insets top="18" right="18" bottom="18" left="18"/>
+            </padding>
+
+            <!-- FORM CARD -->
+            <VBox spacing="12" styleClass="card">
+                <Label text="Task Details" styleClass="section-title"/>
+
+                <GridPane hgap="10" vgap="10">
+                    <columnConstraints>
+                        <ColumnConstraints minWidth="120"/>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                    </columnConstraints>
+
+                    <Label text="Plan ID" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                    <TextField fx:id="txtPlanId" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+                    <Label text="Title" styleClass="form-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                    <TextField fx:id="txtTitle" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+                    <Label text="Description" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                    <TextArea fx:id="txtDescription" prefRowCount="3" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                    <Label text="Status" styleClass="form-label" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                    <ComboBox fx:id="cmbStatus" GridPane.rowIndex="3" GridPane.columnIndex="1" prefWidth="200"/>
+
+                    <Label text="Filepath" styleClass="form-label" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                    <HBox spacing="8" GridPane.rowIndex="4" GridPane.columnIndex="1">
+                        <TextField fx:id="txtFilepath" promptText="Upload in update popup…" prefWidth="260"/>
+                        <Button fx:id="btnBrowse" text="Browse" styleClass="btn-secondary"/>
+                    </HBox>
+                </GridPane>
+
+                <HBox spacing="10" alignment="CENTER_RIGHT">
+                    <Button text="Add" onAction="#handleAddTask" styleClass="btn-primary"/>
+                    <Button text="Update" onAction="#handleUpdateTask" styleClass="btn-secondary"/>
+                    <Button text="Delete" onAction="#handleDeleteTask" styleClass="btn-danger"/>
+                </HBox>
+            </VBox>
+
+            <!-- TABLE CARD -->
+            <VBox spacing="10" styleClass="card">
+                <Label text="Tasks" styleClass="section-title"/>
+
+                <TableView fx:id="tvTasks" prefHeight="320" styleClass="hirely-table">
+                    <columns>
+                        <TableColumn fx:id="colTaskId" text="Task ID" prefWidth="80"/>
+                        <TableColumn fx:id="colPlanId" text="Plan ID" prefWidth="80"/>
+                        <TableColumn fx:id="colTitle" text="Title" prefWidth="180"/>
+                        <TableColumn fx:id="colDescription" text="Description" prefWidth="240"/>
+                        <TableColumn fx:id="colStatus" text="Status" prefWidth="140"/>
+                        <TableColumn fx:id="colFilepath" text="File" prefWidth="240"/>
+                    </columns>
+                </TableView>
+
+                <HBox styleClass="footer" alignment="CENTER_LEFT">
+                    <Label fx:id="lblStatus" text="Ready" styleClass="footer-label"/>
+                </HBox>
+            </VBox>
+
+        </VBox>
+    </center>
+
+</BorderPane>

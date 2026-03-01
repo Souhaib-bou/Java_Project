@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="Controllers.OnboardingTaskEditController"
+            stylesheets="@styles/hirely.css"
+            styleClass="app-root">
+
+    <padding>
+        <Insets top="18" right="18" bottom="18" left="18"/>
+    </padding>
+
+    <center>
+        <!-- Card container -->
+        <VBox spacing="14" styleClass="card" maxWidth="Infinity" maxHeight="Infinity">
+
+            <Label text="Update Task" styleClass="section-title"/>
+
+            <GridPane hgap="12" vgap="10" VBox.vgrow="ALWAYS">
+                <columnConstraints>
+                    <ColumnConstraints minWidth="110" hgrow="NEVER"/>
+                    <ColumnConstraints minWidth="260" hgrow="ALWAYS"/>
+                </columnConstraints>
+
+                <Label text="Plan ID" styleClass="form-label"
+                       GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                <TextField fx:id="txtPlanId"
+                           GridPane.rowIndex="0" GridPane.columnIndex="1"
+                           maxWidth="Infinity"/>
+
+                <Label text="Title" styleClass="form-label"
+                       GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                <TextField fx:id="txtTitle"
+                           GridPane.rowIndex="1" GridPane.columnIndex="1"
+                           maxWidth="Infinity"/>
+
+                <Label text="Description" styleClass="form-label"
+                       GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                <TextArea fx:id="txtDescription" prefRowCount="4"
+                          GridPane.rowIndex="2" GridPane.columnIndex="1"
+                          maxWidth="Infinity" GridPane.vgrow="ALWAYS"/>
+
+                <Label text="Status" styleClass="form-label"
+                       GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+                <ComboBox fx:id="cmbStatus"
+                          GridPane.rowIndex="3" GridPane.columnIndex="1"
+                          maxWidth="Infinity"/>
+
+                <Label text="File" styleClass="form-label"
+                       GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+                <HBox spacing="10" GridPane.rowIndex="4" GridPane.columnIndex="1">
+                    <TextField fx:id="txtFilepath" maxWidth="Infinity" HBox.hgrow="ALWAYS"/>
+                    <Button text="Browse" onAction="#handleBrowse" styleClass="btn-secondary"/>
+                </HBox>
+            </GridPane>
+
+            <!-- pushes buttons to bottom when window is tall -->
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button text="Cancel" onAction="#handleCancel" styleClass="btn-secondary"/>
+                <Button text="Save" onAction="#handleSave" styleClass="btn-primary"/>
+            </HBox>
+
+        </VBox>
+    </center>
+
+</BorderPane>
