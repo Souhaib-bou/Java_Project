@@ -8,7 +8,10 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.fxml.FXML;
+import java.util.Comparator;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
@@ -18,6 +21,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+
 
 public class JobOfferController {
 
@@ -36,6 +40,10 @@ public class JobOfferController {
     @FXML private Label heroTitle;
     @FXML private Label heroSubtitle;
     @FXML private Label tableTitle;
+    @FXML private TextField searchField;
+    @FXML private ComboBox<String> sortCombo;
+    @FXML private Button sortOrderBtn;
+    @FXML private VBox searchBar;
 
     // ================= TABLE =================
     @FXML private TableView<JobOffer> tableView;
@@ -56,6 +64,9 @@ public class JobOfferController {
     private int currentUserId = 0;
     private String currentUserRole;
     private MainShellController shell;
+    private FilteredList<JobOffer> filteredData;
+    private SortedList<JobOffer> sortedData;
+    private boolean sortAscending = true;
     /**
      * Sets the shell value.
      */
@@ -94,6 +105,9 @@ public class JobOfferController {
         addActionButtonsToTable();
         loadData();
         clearFields();
+        applyRoleVisibility();
+        addStatusBadgeToTable();
+        setupSearchAndSort();
         applyRoleVisibility();
         addStatusBadgeToTable();
     }
@@ -270,23 +284,65 @@ public class JobOfferController {
      */
     private void loadData() {
         try {
-            if (currentUserId <= 0) {
-                data.clear();
-                return;
-            }
+            if (currentUserId <= 0) { data.clear(); return; }
 
             if ("Admin".equalsIgnoreCase(currentUserRole)) {
                 data.setAll(service.getAll());
-            } else if ("candidate".equalsIgnoreCase(currentUserRole)) {
+            } else if ("Candidate".equalsIgnoreCase(currentUserRole)) {
                 data.setAll(service.getAll());
             } else {
                 data.setAll(service.getByUser(currentUserId));
             }
 
-            tableView.setItems(data);
+            // ✅ Wrap in FilteredList + SortedList
+            filteredData = new FilteredList<>(data, p -> true);
+            sortedData = new SortedList<>(filteredData);
+            tableView.setItems(sortedData);
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+    private void setupSearchAndSort() {
+        // ── Sort options ──
+        sortCombo.getItems().setAll("Title", "Salary", "Experience", "Location", "Status");
+        sortCombo.setValue("Title");
+
+        // ── Search listener ──
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (filteredData == null) return;
+            String keyword = newVal.toLowerCase().trim();
+            filteredData.setPredicate(job -> {
+                if (keyword.isEmpty()) return true;
+                return (job.getTitle()        != null && job.getTitle().toLowerCase().contains(keyword))
+                        || (job.getLocation()     != null && job.getLocation().toLowerCase().contains(keyword))
+                        || (job.getContractType() != null && job.getContractType().toLowerCase().contains(keyword))
+                        || (job.getStatus()       != null && job.getStatus().toLowerCase().contains(keyword));
+            });
+        });
+
+        // ── Sort listener ──
+        sortCombo.valueProperty().addListener((obs, oldVal, newVal) -> applySort());
+    }
+
+    private void applySort() {
+        if (sortedData == null) return;
+        String selected = sortCombo.getValue();
+        Comparator<JobOffer> comparator = switch (selected) {
+            case "Salary"     -> Comparator.comparingDouble(JobOffer::getSalary);
+            case "Experience" -> Comparator.comparingInt(JobOffer::getExperienceRequired);
+            case "Location"   -> Comparator.comparing(j -> j.getLocation() != null ? j.getLocation() : "");
+            case "Status"     -> Comparator.comparing(j -> j.getStatus() != null ? j.getStatus() : "");
+            default           -> Comparator.comparing(j -> j.getTitle() != null ? j.getTitle() : "");
+        };
+        sortedData.setComparator(sortAscending ? comparator : comparator.reversed());
+        sortOrderBtn.setText(sortAscending ? "↑ ASC" : "↓ DESC");
+    }
+
+    @FXML
+    private void handleSortOrder() {
+        sortAscending = !sortAscending;
+        applySort();
     }
 
     // ================= ACTION BUTTONS COLUMN =================

@@ -12,6 +12,9 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
+import java.util.Comparator;
         import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.HBox;
 import java.util.Map;
@@ -36,7 +39,10 @@ public class ApplicationController {
     @FXML private TextField resumeField;
     @FXML private VBox formCard;
     @FXML private VBox reviewPanel;
-
+    @FXML private TextField searchField;
+    @FXML private ComboBox<String> sortCombo;
+    @FXML private Button sortOrderBtn;
+    @FXML private VBox searchBar;
     // Read-only labels
     @FXML private Label viewEmail;
     @FXML private Label viewPhone;
@@ -83,7 +89,9 @@ public class ApplicationController {
     private Integer currentJobId = null;   // set via setJobContext(...)
     private int currentUserId;
     private String currentUserRole;
-
+    private FilteredList<Application> filteredData;
+    private SortedList<Application> sortedData;
+    private boolean sortAscending = true;
     // ================= INITIALIZE =================
     @FXML
     public void initialize() throws SQLException {
@@ -110,6 +118,7 @@ public class ApplicationController {
 
         applyRoleVisibility();
         loadData();
+        setupSearchAndSort();
     }
 
     private void applyRoleVisibility() {
@@ -119,6 +128,9 @@ public class ApplicationController {
         // ── Form card: hidden entirely until recruiter clicks Review ──
         formCard.setVisible(isCandidate);
         formCard.setManaged(isCandidate);
+        // Search bar — recruiter only
+        searchBar.setVisible(isRecruiter);
+        searchBar.setManaged(isRecruiter);
 
         // ── Recruiter review panel: hidden until row selected ──
         reviewPanel.setVisible(false);
@@ -473,24 +485,60 @@ public class ApplicationController {
     // ================= LOAD DATA =================
     private void loadData() {
         try {
-            // 👤 Candidate: only see his own applications
             if ("Candidate".equalsIgnoreCase(currentUserRole)) {
                 data.setAll(service.getByUser(currentUserId));
-            }
-            // 🧑‍💼 Recruiter: see applications (all or by job)
-            else {
-                if (currentJobId == null) {
-                    data.setAll(service.getAll());
-                } else {
-                    data.setAll(service.getByJob(currentJobId));
-                }
+            } else {
+                if (currentJobId == null) data.setAll(service.getAll());
+                else data.setAll(service.getByJob(currentJobId));
             }
 
-            tableView.setItems(data);
+            // ✅ Wrap in FilteredList + SortedList
+            filteredData = new FilteredList<>(data, p -> true);
+            sortedData   = new SortedList<>(filteredData);
+            tableView.setItems(sortedData);
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+    private void setupSearchAndSort() {
+        sortCombo.getItems().setAll("Date", "Status", "Salary", "Experience", "Score");
+        sortCombo.setValue("Date");
+
+        // ── Search ──
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (filteredData == null) return;
+            String keyword = newVal.toLowerCase().trim();
+            filteredData.setPredicate(app -> {
+                if (keyword.isEmpty()) return true;
+                return (app.getEmail()         != null && app.getEmail().toLowerCase().contains(keyword))
+                        || (app.getCurrentStatus() != null && app.getCurrentStatus().toLowerCase().contains(keyword))
+                        || (app.getCoverLetter()   != null && app.getCoverLetter().toLowerCase().contains(keyword))
+                        || (app.getPhone()         != null && app.getPhone().contains(keyword));
+            });
+        });
+
+        // ── Sort ──
+        sortCombo.valueProperty().addListener((obs, oldVal, newVal) -> applySort());
+    }
+
+    private void applySort() {
+        if (sortedData == null) return;
+        Comparator<Application> comparator = switch (sortCombo.getValue()) {
+            case "Status"     -> Comparator.comparing(a -> a.getCurrentStatus() != null ? a.getCurrentStatus() : "");
+            case "Salary"     -> Comparator.comparingDouble(Application::getExpectedSalary);
+            case "Experience" -> Comparator.comparingInt(Application::getExperienceYears);
+            case "Score"      -> Comparator.comparing(a -> a.getScore() != null ? a.getScore() : -1.0);
+            default           -> Comparator.comparing(a -> a.getApplicationDate() != null ? a.getApplicationDate() : java.time.LocalDate.MIN);
+        };
+        sortedData.setComparator(sortAscending ? comparator : comparator.reversed());
+        sortOrderBtn.setText(sortAscending ? "↑ ASC" : "↓ DESC");
+    }
+
+    @FXML
+    private void handleSortOrder() {
+        sortAscending = !sortAscending;
+        applySort();
     }
 
     // ================= JOB CONTEXT =================

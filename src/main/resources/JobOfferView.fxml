@@ -27,6 +27,17 @@
                             </VBox>
                         </HBox>
                     </VBox>
+                    <VBox fx:id="searchBar" styleClass="jo-card" spacing="0">
+                        <HBox styleClass="jo-card-header" alignment="CENTER_LEFT" spacing="12">
+                            <padding><Insets top="12" right="20" bottom="12" left="20"/></padding>
+                            <TextField fx:id="searchField" promptText="🔍  Search by title, location, contract..."
+                                       styleClass="jo-field-input" prefWidth="400"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label text="SORT BY" styleClass="jo-field-label"/>
+                            <ComboBox fx:id="sortCombo" prefWidth="160" styleClass="jo-field-input"/>
+                            <Button text="↑↓" fx:id="sortOrderBtn" onAction="#handleSortOrder" styleClass="jo-btn-map"/>
+                        </HBox>
+                    </VBox>
 
                     <!-- ═══════════ CONTENT ═══════════ -->
                     <VBox spacing="20">

@@ -24,6 +24,21 @@
                         <Label text="Applications" styleClass="hero-title"/>
                         <Label text="Manage and track job applications in one place" styleClass="hero-subtitle"/>
                     </VBox>
+                    <!-- ════════════════════════════════
+     SEARCH + SORT BAR
+     ════════════════════════════════ -->
+                    <VBox fx:id="searchBar" styleClass="form-card" spacing="0">
+                        <HBox styleClass="card-header" alignment="CENTER_LEFT" spacing="12">
+                            <padding><Insets top="12" right="20" bottom="12" left="20"/></padding>
+                            <TextField fx:id="searchField" promptText="🔍  Search by email, status, cover letter..."
+                                       styleClass="field-input" prefWidth="400"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label text="SORT BY" styleClass="field-label"/>
+                            <ComboBox fx:id="sortCombo" prefWidth="160" styleClass="field-input"/>
+                            <Button fx:id="sortOrderBtn" text="↑ ASC"
+                                    onAction="#handleSortOrder" styleClass="btn-ghost"/>
+                        </HBox>
+                    </VBox>
 
                     <!-- ═══════════════ CONTENT AREA ═══════════════ -->
                     <VBox spacing="20">
