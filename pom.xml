@@ -17,7 +17,10 @@
     </properties>
 
     <dependencies>
+<<<<<<< HEAD
 
+=======
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
         <!-- MySQL Connector -->
         <dependency>
             <groupId>com.mysql</groupId>
@@ -25,6 +28,7 @@
             <version>9.6.0</version>
         </dependency>
 
+<<<<<<< HEAD
         <!-- JavaFX -->
         <dependency>
             <groupId>org.openjfx</groupId>
@@ -114,6 +118,20 @@
             <groupId>org.bytedeco</groupId>
             <artifactId>javacv-platform</artifactId>
             <version>1.5.10</version>
+=======
+        <!-- JavaFX Controls -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>17.0.18</version>
+        </dependency>
+
+        <!-- JavaFX FXML -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>17.0.18</version>
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
         </dependency>
 
         <!-- JUnit -->
@@ -124,6 +142,7 @@
             <scope>test</scope>
         </dependency>
 
+<<<<<<< HEAD
         <!-- Security fix — force safe jackson-core version -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -147,6 +166,59 @@
     <build>
         <plugins>
 
+=======
+        <!-- QR Code generation -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.2</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>3.5.2</version>
+        </dependency>
+
+        <!-- Google OAuth 2.0 -->
+        <dependency>
+            <groupId>com.google.oauth-client</groupId>
+            <artifactId>google-oauth-client</artifactId>
+            <version>1.36.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.oauth-client</groupId>
+            <artifactId>google-oauth-client-jetty</artifactId>
+            <version>1.36.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client</artifactId>
+            <version>2.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.http-client</groupId>
+            <artifactId>google-http-client-jackson2</artifactId>
+            <version>1.45.0</version>
+        </dependency>
+
+        <!-- Face recognition (OpenCV via JavaCV) -->
+        <dependency>
+            <groupId>org.bytedeco</groupId>
+            <artifactId>javacv-platform</artifactId>
+            <version>1.5.10</version>
+        </dependency>
+
+        <!-- Email / Gmail SMTP -->
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>jakarta.mail</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
             <!-- Compiler Plugin -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -171,8 +243,13 @@
                     </execution>
                 </executions>
             </plugin>
+<<<<<<< HEAD
 
         </plugins>
     </build>
 
+=======
+        </plugins>
+    </build>
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
 </project>

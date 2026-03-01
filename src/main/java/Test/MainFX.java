@@ -1,5 +1,9 @@
 package Test;
 
+<<<<<<< HEAD
+=======
+import Utils.OpenCVLoader;
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -9,10 +13,15 @@ import javafx.stage.Stage;
 public class MainFX extends Application {
 
     @Override
+<<<<<<< HEAD
     /**
      * Executes this operation.
      */
     public void start(Stage primaryStage) {
+=======
+    public void start(Stage primaryStage) {
+        OpenCVLoader.load();
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/LoginView.fxml"));
 
@@ -35,9 +44,12 @@ public class MainFX extends Application {
         }
     }
 
+<<<<<<< HEAD
     /**
      * Executes this operation.
      */
+=======
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
     public static void main(String[] args) {
         launch(args);
     }

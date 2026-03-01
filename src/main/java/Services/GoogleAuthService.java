@@ -21,6 +21,10 @@ import java.util.Map;
 
 public class GoogleAuthService {
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
     private static final List<String> SCOPES = Arrays.asList("openid", "email", "profile");
 
     private final UserService userService = new UserService();

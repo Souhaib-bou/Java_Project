@@ -1,6 +1,7 @@
 package Controllers;
 
 import Models.User;
+<<<<<<< HEAD
 import Services.UserService;
 import Utils.UserSession;
 import java.io.File;
@@ -9,10 +10,15 @@ import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.animation.FadeTransition;
 import javafx.animation.TranslateTransition;
+=======
+import Utils.UserSession;
+
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+<<<<<<< HEAD
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Parent;
@@ -29,6 +35,17 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.GridPane;
+=======
+import javafx.scene.Parent;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Label;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+
+import java.net.URL;
+import java.util.ResourceBundle;
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
 
 public class MainShellController implements Initializable {
 
@@ -40,6 +57,7 @@ public class MainShellController implements Initializable {
     @FXML private Label lblPageTitle;
     @FXML private Label lblPageSubtitle;
 
+<<<<<<< HEAD
     @FXML private ImageView imgHeaderAvatar;
 
     // Button chip in MainShell.fxml
@@ -265,6 +283,20 @@ public class MainShellController implements Initializable {
     /**
      * Loads and refreshes data displayed in the view.
      */
+=======
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        refreshHeader();
+
+        // IMPORTANT: during initialize(), Scene/Window can be null.
+        // So: build content now, set window title later.
+        openHome();
+
+        // If you prefer onboarding first, replace openHome() with openPlans()
+        // openPlans();
+    }
+
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
     private void refreshHeader() {
         User u = UserSession.getInstance().getCurrentUser();
         if (u == null) return;
@@ -278,6 +310,7 @@ public class MainShellController implements Initializable {
         String i1 = fn.isEmpty() ? "U" : fn.substring(0, 1).toUpperCase();
         String i2 = ln.isEmpty() ? "" : ln.substring(0, 1).toUpperCase();
         String initials = (i1 + i2).trim();
+<<<<<<< HEAD
         lblHeaderInitials.setText(initials.isEmpty() ? "U" : initials);
 
         String path = u.getProfilePic();
@@ -296,10 +329,20 @@ public class MainShellController implements Initializable {
     /**
      * Sets the pagemeta value.
      */
+=======
+
+        lblHeaderInitials.setText(initials.isEmpty() ? "U" : initials);
+    }
+
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
     private void setPageMeta(String title, String subtitle) {
         lblPageTitle.setText(title);
         lblPageSubtitle.setText(subtitle);
 
+<<<<<<< HEAD
+=======
+        // ✅ set title safely AFTER Scene exists
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
         Platform.runLater(() -> {
             if (contentHost != null && contentHost.getScene() != null) {
                 Stage stage = (Stage) contentHost.getScene().getWindow();
@@ -308,6 +351,7 @@ public class MainShellController implements Initializable {
         });
     }
 
+<<<<<<< HEAD
     // ===================== HOME =====================
     /**
      * Navigates to the requested screen.
@@ -467,21 +511,53 @@ public class MainShellController implements Initializable {
     /**
      * Handles the associated UI event.
      */
+=======
+    // ===== HOME =====
+
+    private void openHome() {
+        VBox home = new VBox(10);
+        home.getStyleClass().add("card");
+
+        Label t = new Label("Home");
+        t.getStyleClass().add("section-title");
+
+        Label s = new Label("Use the Onboarding button to manage plans and tasks.");
+        s.getStyleClass().add("footer-label");
+
+        home.getChildren().addAll(t, s);
+
+        contentHost.getChildren().setAll(home);
+        setPageMeta("Home", "Welcome");
+    }
+
+    @FXML
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
     private void handleOpenHome() {
         openHome();
     }
 
+<<<<<<< HEAD
     // ===================== ONBOARDING =====================
     /**
      * Navigates to the requested screen.
      */
     public void openPlans() {
         try {
+=======
+    // ===== ONBOARDING =====
+
+    public void openPlans() {
+        /*try {
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/OnboardingPlanView.fxml"));
             Parent root = loader.load();
 
             OnboardingPlanController controller = loader.getController();
+<<<<<<< HEAD
             controller.setShell(this);
+=======
+            controller.setShell(this); // ✅ give it navigation ability
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
 
             contentHost.getChildren().setAll(root);
             setPageMeta("Onboarding Plans", "Assign plans and track progress");
@@ -491,6 +567,7 @@ public class MainShellController implements Initializable {
 
         } catch (Exception e) {
             e.printStackTrace();
+<<<<<<< HEAD
         }
     }
 
@@ -499,11 +576,24 @@ public class MainShellController implements Initializable {
      */
     public void openTasks(int planId) {
         try {
+=======
+        }*/
+    }
+
+
+    public void openTasks(int planId) {
+        /*try {
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/OnboardingTaskView.fxml"));
             Parent root = loader.load();
 
             OnboardingTaskController taskController = loader.getController();
             taskController.setPlanContext(planId);
+<<<<<<< HEAD
+=======
+
+            // allow "Back"
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
             taskController.setOnBack(this::openPlans);
 
             contentHost.getChildren().setAll(root);
@@ -515,6 +605,7 @@ public class MainShellController implements Initializable {
         } catch (Exception e) {
             e.printStackTrace();
             new Alert(Alert.AlertType.ERROR, "Cannot load tasks view. Check console.").showAndWait();
+<<<<<<< HEAD
         }
     }
 
@@ -531,20 +622,34 @@ public class MainShellController implements Initializable {
     /**
      * Handles the associated UI event.
      */
+=======
+        }*/
+    }
+    @FXML
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
     private void handleOpenJobOffers() {
         openJobOffers();
     }
 
+<<<<<<< HEAD
     /**
      * Navigates to the requested screen.
      */
     public void openJobOffers() {
         try {
+=======
+    public void openJobOffers() {
+        /*try {
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/JobOfferView.fxml"));
             Parent root = loader.load();
 
             JobOfferController controller = loader.getController();
+<<<<<<< HEAD
             controller.setShell(this);
+=======
+            controller.setShell(this); // ✅ give navigation ability
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
 
             contentHost.getChildren().setAll(root);
             setPageMeta("Job Offers", "Create and manage job offers");
@@ -555,6 +660,7 @@ public class MainShellController implements Initializable {
         } catch (Exception e) {
             e.printStackTrace();
             new Alert(Alert.AlertType.ERROR, "Cannot load JobOfferView.fxml. Check console.").showAndWait();
+<<<<<<< HEAD
         }
     }
 
@@ -564,6 +670,31 @@ public class MainShellController implements Initializable {
      */
     public void openApplications() {
         try {
+=======
+        }*/
+    }
+    @FXML
+    private void handleOpenRoles() {
+        openRoles();
+    }
+
+    public void openRoles() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/RoleManagement.fxml"));
+            Parent root = loader.load();
+
+            contentHost.getChildren().setAll(root);
+            setPageMeta("Role Management", "Create and manage system roles");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            new Alert(Alert.AlertType.ERROR, "Cannot load RoleManagement.fxml. Check console.").showAndWait();
+        }
+    }
+
+    public void openApplications() {
+        /*try {
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/ApplicationView.fxml"));
             Parent root = loader.load();
 
@@ -579,6 +710,7 @@ public class MainShellController implements Initializable {
         } catch (Exception e) {
             e.printStackTrace();
             new Alert(Alert.AlertType.ERROR, "Cannot load ApplicationView.fxml. Check console.").showAndWait();
+<<<<<<< HEAD
         }
     }
 
@@ -587,6 +719,20 @@ public class MainShellController implements Initializable {
     /**
      * Handles the associated UI event.
      */
+=======
+        }*/
+    }
+
+
+    @FXML
+    private void handleOpenOnboarding() {
+       // openPlans();
+    }
+
+    // ===== PROFILE =====
+
+    @FXML
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
     private void handleOpenProfile() {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/UserProfileView.fxml"));
@@ -603,6 +749,7 @@ public class MainShellController implements Initializable {
         }
     }
 
+<<<<<<< HEAD
     /**
      * Executes this operation.
      */
@@ -614,21 +761,38 @@ public class MainShellController implements Initializable {
     /**
      * Loads and refreshes data displayed in the view.
      */
+=======
+    public void backToPlans() {
+        //refreshHeader();
+        //openPlans();
+    }
+
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
     public void refreshShellUserChip() {
         refreshHeader();
     }
 
+<<<<<<< HEAD
     // ===================== LOGOUT =====================
     @FXML
     /**
      * Handles the associated UI event.
      */
+=======
+    // ===== LOGOUT =====
+
+    @FXML
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
     public void handleLogout() {
         try {
             UserSession.getInstance().clear();
 
             Parent loginRoot = FXMLLoader.load(getClass().getResource("/LoginView.fxml"));
 
+<<<<<<< HEAD
+=======
+            // here we are already inside a shown Scene, safe to access window
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
             Stage stage = (Stage) contentHost.getScene().getWindow();
             stage.getScene().setRoot(loginRoot);
             stage.setTitle("Hirely — Login");
@@ -637,4 +801,8 @@ public class MainShellController implements Initializable {
             e.printStackTrace();
         }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c

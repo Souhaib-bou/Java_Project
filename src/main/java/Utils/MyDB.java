@@ -11,7 +11,11 @@ public class MyDB {
 
     // NOTE: add timeouts so it doesn't "hang"
     private static final String URL =
+<<<<<<< HEAD
             "jdbc:mysql://localhost:3306/hirely"
+=======
+            "jdbc:mysql://localhost:3306/hirely?serverTimezone=UTC"
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
                     + "?useSSL=false"
                     + "&allowPublicKeyRetrieval=true"
                     + "&serverTimezone=UTC"
@@ -21,9 +25,12 @@ public class MyDB {
     private static final String USERNAME = "root";
     private static final String PASSWORD = "";
 
+<<<<<<< HEAD
     /**
      * Creates a new MyDB instance.
      */
+=======
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
     private MyDB() {
         try {
             connection = DriverManager.getConnection(URL, USERNAME, PASSWORD);
@@ -34,17 +41,23 @@ public class MyDB {
         }
     }
 
+<<<<<<< HEAD
     /**
      * Returns the instance value.
      */
+=======
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
     public static MyDB getInstance() {
         if (instance == null) instance = new MyDB();
         return instance;
     }
+<<<<<<< HEAD
 
     /**
      * Returns the connection value.
      */
+=======
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
     public Connection getConnection() {
         return connection;
     }

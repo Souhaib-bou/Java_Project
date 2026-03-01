@@ -28,8 +28,11 @@ public class RoleController {
     private final RoleService roleService = new RoleService();
     private final ObservableList<Role> roleList = FXCollections.observableArrayList();
 
+<<<<<<< HEAD
     private MainShellController shell;
 
+=======
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
     @FXML
     public void initialize() {
 
@@ -101,9 +104,12 @@ public class RoleController {
             }
         });
     }
+<<<<<<< HEAD
     public void setShell(MainShellController shell) {
         this.shell = shell;
     }
+=======
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
     @FXML
     private void handleUpdate() {
         Role selected = roleTable.getSelectionModel().getSelectedItem();

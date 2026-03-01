@@ -1,10 +1,21 @@
 package test;
 
+<<<<<<< HEAD
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.sql.SQLException;
 import java.util.List;
 import org.junit.jupiter.api.*;
+=======
+import Models.Role;
+import Services.RoleService;
+import org.junit.jupiter.api.*;
+
+import java.sql.SQLException;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class RoleServiceTest {
