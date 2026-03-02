@@ -4,18 +4,16 @@ import Models.Role;
 import Models.User;
 import Services.RoleService;
 import Services.UserService;
-
+import java.net.URL;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.ResourceBundle;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
-
-import java.net.URL;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.ResourceBundle;
 
 public class UserModuleController implements Initializable {
 
@@ -63,6 +61,9 @@ public class UserModuleController implements Initializable {
     private Role selectedRole;
 
     @Override
+    /**
+     * Initializes UI components and loads initial data.
+     */
     public void initialize(URL location, ResourceBundle resources) {
 
         // combos
@@ -107,6 +108,9 @@ public class UserModuleController implements Initializable {
         reloadUsers();
     }
 
+    /**
+     * Executes this operation.
+     */
     private void reloadUsers() {
         try {
             List<User> users = userService.getAllUsers();
@@ -118,6 +122,9 @@ public class UserModuleController implements Initializable {
         }
     }
 
+    /**
+     * Executes this operation.
+     */
     private void reloadRoles() {
         try {
             List<Role> roles = roleService.getAllRoles();
@@ -132,6 +139,9 @@ public class UserModuleController implements Initializable {
 
     // ========= USERS =========
 
+    /**
+     * Executes this operation.
+     */
     private void fillUserForm(User u) {
         txtFirstName.setText(u.getFirstName());
         txtLastName.setText(u.getLastName());
@@ -153,6 +163,9 @@ public class UserModuleController implements Initializable {
     }
 
     @FXML
+    /**
+     * Handles the associated UI event.
+     */
     private void handleClearUser() {
         txtFirstName.clear();
         txtLastName.clear();
@@ -166,6 +179,9 @@ public class UserModuleController implements Initializable {
     }
 
     @FXML
+    /**
+     * Handles the associated UI event.
+     */
     private void handleAddUser() {
         if (!validateUserForm()) return;
 
@@ -193,6 +209,9 @@ public class UserModuleController implements Initializable {
     }
 
     @FXML
+    /**
+     * Handles the associated UI event.
+     */
     private void handleUpdateUser() {
         if (selectedUser == null) {
             showWarning("No selection", "Select a user first.");
@@ -223,6 +242,9 @@ public class UserModuleController implements Initializable {
     }
 
     @FXML
+    /**
+     * Handles the associated UI event.
+     */
     private void handleDeleteUser() {
         if (selectedUser == null) {
             showWarning("No selection", "Select a user first.");
@@ -245,6 +267,9 @@ public class UserModuleController implements Initializable {
         }
     }
 
+    /**
+     * Executes this operation.
+     */
     private boolean validateUserForm() {
         String fn = txtFirstName.getText() == null ? "" : txtFirstName.getText().trim();
         String ln = txtLastName.getText() == null ? "" : txtLastName.getText().trim();
@@ -264,6 +289,9 @@ public class UserModuleController implements Initializable {
 
     // ========= ROLES =========
 
+    /**
+     * Executes this operation.
+     */
     private void fillRoleForm(Role r) {
         txtRoleName.setText(r.getRoleName());
         cmbRoleStatus.setValue(r.getStatus() == null ? "active" : r.getStatus());
@@ -273,6 +301,9 @@ public class UserModuleController implements Initializable {
 
 
     @FXML
+    /**
+     * Handles the associated UI event.
+     */
     private void handleClearRole() {
         txtRoleName.clear();
         cmbRoleStatus.setValue("active");
@@ -284,6 +315,9 @@ public class UserModuleController implements Initializable {
     }
 
     @FXML
+    /**
+     * Handles the associated UI event.
+     */
     private void handleAddRole() {
         String name = txtRoleName.getText() == null ? "" : txtRoleName.getText().trim();
         if (name.isEmpty()) {
@@ -312,6 +346,9 @@ public class UserModuleController implements Initializable {
 
 
     @FXML
+    /**
+     * Handles the associated UI event.
+     */
     private void handleUpdateRole() {
         if (selectedRole == null) {
             showWarning("No selection", "Select a role first.");
@@ -344,6 +381,9 @@ public class UserModuleController implements Initializable {
 
 
     @FXML
+    /**
+     * Handles the associated UI event.
+     */
     private void handleDeleteRole() {
         if (selectedRole == null) {
             showWarning("No selection", "Select a role first.");
@@ -370,14 +410,23 @@ public class UserModuleController implements Initializable {
 
     // ========= dialogs =========
 
+    /**
+     * Executes this operation.
+     */
     private void showInfo(String t, String c) {
         new Alert(Alert.AlertType.INFORMATION, c).showAndWait();
     }
 
+    /**
+     * Executes this operation.
+     */
     private void showWarning(String t, String c) {
         new Alert(Alert.AlertType.WARNING, c).showAndWait();
     }
 
+    /**
+     * Executes this operation.
+     */
     private void showError(String t, String c) {
         new Alert(Alert.AlertType.ERROR, c).showAndWait();
     }

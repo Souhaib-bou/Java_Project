@@ -7,7 +7,9 @@ public class User {
     private String email;
     private String password;  // plain (dev)
     private Integer roleId;   // nullable
-    private String status;    // "active" | "inactive"
+    private String status;
+    private String profilePic;
+// "active" | "inactive"
 
     // convenience fields for table display (optional)
     private String roleName;
@@ -49,13 +51,22 @@ public class User {
     public String getRoleName() { return roleName; }
     public void setRoleName(String roleName) { this.roleName = roleName; }
 
+    /**
+     * Returns the fullname value.
+     */
     public String getFullName() {
         String fn = firstName == null ? "" : firstName;
         String ln = lastName == null ? "" : lastName;
         return (fn + " " + ln).trim();
     }
+    public String getProfilePic() { return profilePic; }
+    public void setProfilePic(String profilePic) { this.profilePic = profilePic; }
+
 
     @Override
+    /**
+     * Executes this operation.
+     */
     public String toString() {
         String name = getFullName();
         return name.isEmpty() ? ("User #" + userId) : name;

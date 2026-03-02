@@ -2,7 +2,6 @@ package Services;
 
 import Models.OnboardingPlan;
 import Utils.MyDB;
-
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,11 +10,17 @@ public class PlanService {
 
     private final Connection cnx;
 
+    /**
+     * Creates a new PlanService instance.
+     */
     public PlanService() {
         cnx = MyDB.getInstance().getConnection();
     }
 
     // ADD PLAN
+    /**
+     * Creates a new record and updates the UI.
+     */
     public int addOnboardingPlan(OnboardingPlan plan) throws SQLException {
         String sql = "INSERT INTO OnboardingPlan (user_id, Status, Deadline) VALUES (?, ?, ?)";
         PreparedStatement ps = cnx.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -35,6 +40,9 @@ public class PlanService {
     }
 
     // UPDATE PLAN
+    /**
+     * Updates the selected record and refreshes the UI.
+     */
     public void updateOnboardingPlan(int planId, OnboardingPlan plan) throws SQLException {
         String sql = "UPDATE OnboardingPlan SET user_id = ?, Status = ?, Deadline = ? WHERE Planid = ?";
         PreparedStatement ps = cnx.prepareStatement(sql);
@@ -48,6 +56,9 @@ public class PlanService {
     }
 
     // DELETE PLAN
+    /**
+     * Deletes the selected record and refreshes the UI.
+     */
     public void deleteOnboardingPlan(int planId) throws SQLException {
         String sql = "DELETE FROM OnboardingPlan WHERE Planid = ?";
         PreparedStatement ps = cnx.prepareStatement(sql);
@@ -56,6 +67,9 @@ public class PlanService {
     }
 
     // GET ALL PLANS
+    /**
+     * Returns the allonboardingplans value.
+     */
     public List<OnboardingPlan> getAllOnboardingPlans() throws SQLException {
         List<OnboardingPlan> list = new ArrayList<>();
         String sql = "SELECT * FROM OnboardingPlan";
@@ -75,6 +89,9 @@ public class PlanService {
     }
 
     // GET PLAN BY ID
+    /**
+     * Returns the onboardingplanbyid value.
+     */
     public OnboardingPlan getOnboardingPlanById(int planId) throws SQLException {
         String sql = "SELECT * FROM OnboardingPlan WHERE Planid = ?";
         PreparedStatement ps = cnx.prepareStatement(sql);
@@ -94,6 +111,9 @@ public class PlanService {
     }
 
     // GET PLANS BY USER
+    /**
+     * Returns the onboardingplansbyuserid value.
+     */
     public List<OnboardingPlan> getOnboardingPlansByUserId(int userId) throws SQLException {
         List<OnboardingPlan> list = new ArrayList<>();
         String sql = "SELECT * FROM OnboardingPlan WHERE user_id = ?";
@@ -114,6 +134,9 @@ public class PlanService {
     }
 
     // GET PLANS BY STATUS
+    /**
+     * Returns the onboardingplansbystatus value.
+     */
     public List<OnboardingPlan> getOnboardingPlansByStatus(String status) throws SQLException {
         List<OnboardingPlan> list = new ArrayList<>();
         String sql = "SELECT * FROM OnboardingPlan WHERE Status = ?";

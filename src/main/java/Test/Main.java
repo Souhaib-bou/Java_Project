@@ -4,7 +4,6 @@ import Models.OnboardingPlan;
 import Models.OnboardingTask;
 import Services.PlanService;
 import Services.TaskService;
-
 import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Date;
@@ -12,6 +11,9 @@ import java.util.List;
 
 public class Main {
 
+    /**
+     * Executes this operation.
+     */
     public static void main(String[] args) {
 
         PlanService planService = new PlanService();

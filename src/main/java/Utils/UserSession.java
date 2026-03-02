@@ -8,6 +8,9 @@ public class UserSession {
 
     private User currentUser;
 
+    // NEW: JWT token returned by Spring Boot login
+    private String token;
+
     private UserSession() {}
 
     public static UserSession getInstance() {
@@ -23,11 +26,22 @@ public class UserSession {
         this.currentUser = currentUser;
     }
 
+    // NEW
+    public String getToken() {
+        return token;
+    }
+
+    // NEW
+    public void setToken(String token) {
+        this.token = token;
+    }
+
     public boolean isLoggedIn() {
-        return currentUser != null;
+        return currentUser != null && token != null && !token.isBlank();
     }
 
     public void clear() {
         currentUser = null;
+        token = null;
     }
 }

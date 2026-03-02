@@ -9,6 +9,9 @@ public class Role {
 
     public Role() {}
 
+    /**
+     * Creates a new Role instance.
+     */
     public Role(int roleId, String roleName, String status, String dashboard, String description) {
         this.roleId = roleId;
         this.roleName = roleName;
@@ -33,6 +36,9 @@ public class Role {
     public void setDescription(String description) { this.description = description; }
 
     @Override
+    /**
+     * Executes this operation.
+     */
     public String toString() {
         return roleName;
     }

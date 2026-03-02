@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/hirely?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: root
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  flyway:
+    enabled: false
+  servlet:
+    multipart:
+          max-file-size: 200MB
+          max-request-size: 200MB
+
+server:
+  port: 8081
+
+app:
+  jwt:
+    secret: "change-me-please-change-me-please-32chars"
+    expirationMinutes: 720
+  uploadsDir: uploads
+  publicBaseUrl: "http://192.168.1.5:8081"
+
+cloudinary:
+  cloudName: dtkb3tazw
+  apiKey: 262659876483828
+  apiSecret: QkgS02IYHc5E4hYqlwNvrZYam_0
+  folderRoot: hirely/tasks

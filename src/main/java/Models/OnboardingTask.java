@@ -1,5 +1,9 @@
 package Models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonIgnoreProperties(ignoreUnknown = true) // ✅ ignore extra fields like "deadline"
 public class OnboardingTask {
 
     private int taskId;
@@ -7,8 +11,18 @@ public class OnboardingTask {
     private String title;
     private String description;
     private String status;
+
+    @JsonProperty("filePath")
     private String filepath;
 
+    @JsonProperty("originalFileName")
+    private String originalFileName;
+
+    @JsonProperty("contentType")
+    private String contentType;
+
+    @JsonProperty("cloudinaryPublicId")
+    private String cloudinaryPublicId;
     public OnboardingTask() {}
 
     public OnboardingTask(int taskId, int planId, String title,
@@ -68,6 +82,15 @@ public class OnboardingTask {
     public void setFilepath(String filepath) {
         this.filepath = filepath;
     }
+
+    public String getOriginalFileName() { return originalFileName; }
+    public void setOriginalFileName(String originalFileName) { this.originalFileName = originalFileName; }
+
+    public String getContentType() { return contentType; }
+    public void setContentType(String contentType) { this.contentType = contentType; }
+
+    public String getCloudinaryPublicId() { return cloudinaryPublicId; }
+    public void setCloudinaryPublicId(String cloudinaryPublicId) { this.cloudinaryPublicId = cloudinaryPublicId; }
 
     @Override
     public String toString() {

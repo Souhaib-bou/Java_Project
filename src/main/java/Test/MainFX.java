@@ -9,6 +9,9 @@ import javafx.stage.Stage;
 public class MainFX extends Application {
 
     @Override
+    /**
+     * Executes this operation.
+     */
     public void start(Stage primaryStage) {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("/LoginView.fxml"));
@@ -21,6 +24,7 @@ public class MainFX extends Application {
 
             // allow resize + maximize
             primaryStage.setResizable(true);
+            primaryStage.setMaximized(true);
             primaryStage.setMinWidth(980);
             primaryStage.setMinHeight(650);
 
@@ -32,6 +36,9 @@ public class MainFX extends Application {
         }
     }
 
+    /**
+     * Executes this operation.
+     */
     public static void main(String[] args) {
         launch(args);
     }

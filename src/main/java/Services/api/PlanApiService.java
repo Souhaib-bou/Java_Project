@@ -45,4 +45,7 @@ public class PlanApiService {
             default -> "pending";
         };
     }
+    public byte[] getPlanQrPng(int planId) throws Exception {
+        return ApiClient.getBytes("/api/plans/" + planId + "/qr.png");
+    }
 }
