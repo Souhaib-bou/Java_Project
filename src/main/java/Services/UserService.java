@@ -27,6 +27,7 @@ public class UserService {
         ResultSet rs = ps.executeQuery();
         return rs.next();
     }
+<<<<<<< HEAD
     public User findById(int id) throws SQLException {
 
         String sql = "SELECT * FROM Users WHERE user_id = ?";
@@ -53,6 +54,8 @@ public class UserService {
 
         return null;
     }
+=======
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
 
     /**
      * Sets the userstatus value.
@@ -210,6 +213,81 @@ public class UserService {
     /**
      * Executes this operation.
      */
+<<<<<<< HEAD
+=======
+    public User findByGoogleId(String googleId) throws SQLException {
+        String sql =
+                "SELECT u.user_id, u.first_name, u.last_name, u.email, u.password, " +
+                "       u.role_id, u.status, u.profile_pic, u.google_id, u.face_data, " +
+                "       r.name AS role_name " +
+                "FROM users u " +
+                "LEFT JOIN role r ON r.role_id = u.role_id " +
+                "WHERE u.google_id = ? LIMIT 1";
+        PreparedStatement ps = cnx.prepareStatement(sql);
+        ps.setString(1, googleId);
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) {
+            User u = new User(
+                    rs.getInt("user_id"), rs.getString("first_name"),
+                    rs.getString("last_name"), rs.getString("email"),
+                    rs.getString("password"), (Integer) rs.getObject("role_id"),
+                    rs.getString("status")
+            );
+            u.setProfilePic(rs.getString("profile_pic"));
+            u.setGoogleId(rs.getString("google_id"));
+            u.setFaceData(rs.getString("face_data"));
+            u.setRoleName(rs.getString("role_name"));
+            return u;
+        }
+        return null;
+    }
+
+    public int addGoogleUser(String googleId, String email,
+                             String firstName, String lastName) throws SQLException {
+        String sql =
+                "INSERT INTO users (first_name, last_name, email, password, google_id, status) " +
+                "VALUES (?, ?, ?, '', ?, 'active')";
+        PreparedStatement ps = cnx.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+        ps.setString(1, firstName);
+        ps.setString(2, lastName);
+        ps.setString(3, email);
+        ps.setString(4, googleId);
+        ps.executeUpdate();
+        ResultSet rs = ps.getGeneratedKeys();
+        if (rs.next()) return rs.getInt(1);
+        throw new SQLException("Failed to retrieve generated user_id for Google user.");
+    }
+
+    public void saveFaceData(int userId, String faceData) throws SQLException {
+        String sql = "UPDATE users SET face_data = ? WHERE user_id = ?";
+        PreparedStatement ps = cnx.prepareStatement(sql);
+        ps.setString(1, faceData);
+        ps.setInt(2, userId);
+        ps.executeUpdate();
+    }
+
+    public List<User> getAllUsersWithFaceData() throws SQLException {
+        List<User> list = new ArrayList<>();
+        String sql =
+                "SELECT user_id, first_name, last_name, email, password, role_id, status, " +
+                "       profile_pic, face_data " +
+                "FROM users WHERE face_data IS NOT NULL AND face_data != ''";
+        Statement st = cnx.createStatement();
+        ResultSet rs = st.executeQuery(sql);
+        while (rs.next()) {
+            User u = new User(
+                    rs.getInt("user_id"), rs.getString("first_name"),
+                    rs.getString("last_name"), rs.getString("email"),
+                    rs.getString("password"), (Integer) rs.getObject("role_id"),
+                    rs.getString("status")
+            );
+            u.setFaceData(rs.getString("face_data"));
+            list.add(u);
+        }
+        return list;
+    }
+
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
     public User findByEmail(String email) throws SQLException {
         String sql =
                 "SELECT u.user_id, u.first_name, u.last_name, u.email, u.password, u.role_id, u.status, u.profile_pic, " +

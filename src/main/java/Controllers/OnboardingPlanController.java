@@ -3,6 +3,7 @@ package Controllers;
 import Models.OnboardingPlan;
 import Models.User;
 import Services.PlanService;
+<<<<<<< HEAD
 import Services.UserService;
 import Services.api.PlanApiService;
 import javafx.application.Platform;
@@ -12,6 +13,20 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.collections.transformation.SortedList;
+=======
+
+import java.net.URL;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.*;
+
+import Services.UserService;
+import javafx.application.Platform;
+import javafx.beans.property.ReadOnlyStringWrapper;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -28,6 +43,7 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
+<<<<<<< HEAD
 import java.net.URL;
 import java.sql.SQLException;
 import java.time.LocalDate;
@@ -45,6 +61,8 @@ import javafx.scene.image.ImageView;
 import java.io.ByteArrayInputStream;
 import java.util.concurrent.ConcurrentHashMap;
 
+=======
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
 public class OnboardingPlanController implements Initializable {
 
     /* ================= FORM ================= */
@@ -60,6 +78,7 @@ public class OnboardingPlanController implements Initializable {
     @FXML private TableColumn<OnboardingPlan, Date> colDeadline;
     @FXML private TableColumn<OnboardingPlan, Void> colActions;
 
+<<<<<<< HEAD
     @FXML private Button btnClear;
     @FXML private Button btnAdd;
     @FXML private Button btnUpdate;
@@ -112,12 +131,41 @@ public class OnboardingPlanController implements Initializable {
     private final Map<Integer, Image> qrCache = new ConcurrentHashMap<>();
     /**
      * Shell setter (used by MainShellController).
+=======
+    @FXML private Label lblStatus;
+
+    /* header chip */
+    @FXML private Label lblHeaderUserName;
+    @FXML private Label lblHeaderInitials;
+
+    /* one-window navigation host (must exist in Plan FXML) */
+    @FXML private BorderPane appRoot;
+    @FXML private StackPane contentHost;
+
+    /* ================= SERVICES ================= */
+    private PlanService planService;
+    private UserService userService;
+
+    private ObservableList<OnboardingPlan> plansList;
+    private OnboardingPlan selectedPlan;
+
+    // userId -> "First Last"
+    private final Map<Integer, String> userNameById = new HashMap<>();
+
+    // we keep the original plans UI node here so we can go back from Tasks
+    private Parent plansContent;
+    private MainShellController shell;
+
+    /**
+     * Sets the shell value.
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
      */
     public void setShell(MainShellController shell) {
         this.shell = shell;
     }
 
     @Override
+<<<<<<< HEAD
     public void initialize(URL location, ResourceBundle resources) {
         planService = new PlanService(); // kept for compatibility with existing edit/delete flow
         userService = new UserService();
@@ -259,14 +307,71 @@ public class OnboardingPlanController implements Initializable {
                     plansList.setAll(plans);
 
                     // if form user empty, preselect first for better UX
+=======
+    /**
+     * Initializes UI components and loads initial data.
+     */
+    public void initialize(URL location, ResourceBundle resources) {
+
+        planService = new PlanService();
+        userService = new UserService();
+        plansList = FXCollections.observableArrayList();
+
+        // save the current plans view content (for back navigation)
+        if (contentHost != null && !contentHost.getChildren().isEmpty()) {
+            plansContent = (Parent) contentHost.getChildren().get(0);
+        }
+
+        setupStatus();
+        setupTable();        // includes status renderer + actions renderer
+        setupSelection();    // selection is still used for Update/Delete
+
+        // header chip follows selected user in the FORM (optional)
+        cmbUser.valueProperty().addListener((obs, oldU, newU) -> updateHeaderChip(newU));
+
+        updateStatusLabel("Loading...");
+
+        Task<Void> loadTask = new Task<>() {
+            @Override
+            /**
+             * Executes this operation.
+             */
+            protected Void call() throws Exception {
+                List<User> users = userService.getAllUsers();
+                List<OnboardingPlan> plans = planService.getAllOnboardingPlans();
+
+                Platform.runLater(() -> {
+                    // users + map
+                    cmbUser.setItems(FXCollections.observableArrayList(users));
+                    userNameById.clear();
+                    for (User u : users) {
+                        userNameById.put(u.getUserId(), u.getFirstName() + " " + u.getLastName());
+                    }
+
+                    cmbUser.setConverter(new javafx.util.StringConverter<>() {
+                        @Override public String toString(User u) {
+                            return (u == null) ? "" : u.getFirstName() + " " + u.getLastName();
+                        }
+                        @Override public User fromString(String s) { return null; }
+                    });
+
+                    // plans
+                    plansList.setAll(plans);
+                    tvPlans.setItems(plansList);
+
+                    // optional: pick first user so chip is never empty
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
                     if (!users.isEmpty() && cmbUser.getValue() == null) {
                         cmbUser.getSelectionModel().selectFirst();
                     }
 
+<<<<<<< HEAD
                     applyExplorerFilters();
                     refreshPlansCardsView();// apply current search/filter/sort if controls exist
                     applyRoleRulesDeferred();
                     refreshSummaryCards();
+=======
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
                     updateStatusLabel("Loaded " + plans.size() + " plans");
                 });
 
@@ -277,6 +382,7 @@ public class OnboardingPlanController implements Initializable {
         loadTask.setOnFailed(e -> {
             Throwable ex = loadTask.getException();
             if (ex != null) ex.printStackTrace();
+<<<<<<< HEAD
 
             Platform.runLater(() -> {
                 showError("Loading Error", ex == null ? "Unknown error while loading plans." : ex.getMessage());
@@ -285,10 +391,18 @@ public class OnboardingPlanController implements Initializable {
         });
 
         Thread th = new Thread(loadTask, "onboarding-plan-load-thread");
+=======
+            Platform.runLater(() -> showError("Loading Error", ex == null ? "Unknown error" : ex.getMessage()));
+            updateStatusLabel("Load failed");
+        });
+
+        Thread th = new Thread(loadTask);
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
         th.setDaemon(true);
         th.start();
     }
 
+<<<<<<< HEAD
     private void bindUsers(List<User> users) {
         // Always fill the userNameById map (cards/table/search depend on it)
         userNameById.clear();
@@ -327,28 +441,51 @@ public class OnboardingPlanController implements Initializable {
 
     /* ================== NAV ================== */
 
+=======
+    /* ================== ONE-WINDOW NAV ================== */
+
+    /**
+     * Navigates to the requested screen.
+     */
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
     private void openTasksInSameWindow(int planId) {
         if (shell == null) {
             showError("Navigation Error", "Shell is not set. Cannot open tasks.");
             return;
         }
+<<<<<<< HEAD
         shell.openTasks(planId);
     }
 
     @SuppressWarnings("unused")
+=======
+        shell.openTasks(planId); // ✅ let the shell swap the view
+    }
+
+
+    /**
+     * Executes this operation.
+     */
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
     private void showPlansContent() {
         if (contentHost == null || plansContent == null) return;
 
         contentHost.getChildren().setAll(plansContent);
 
+<<<<<<< HEAD
         if (appRoot != null && appRoot.getScene() != null && appRoot.getScene().getWindow() != null) {
             Stage stage = (Stage) appRoot.getScene().getWindow();
             stage.setTitle("Onboarding Management System — Plans");
         }
+=======
+        Stage stage = (Stage) appRoot.getScene().getWindow();
+        stage.setTitle("Onboarding Management System — Plans");
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
     }
 
     /* ================== SETUP ================== */
 
+<<<<<<< HEAD
     private void setupStatus() {
         if (cmbStatus != null) {
             cmbStatus.getItems().setAll("Pending", "In Progress", "Completed", "On Hold");
@@ -451,25 +588,137 @@ public class OnboardingPlanController implements Initializable {
         }
     }
 
+=======
+    /**
+     * Sets the upstatus value.
+     */
+    private void setupStatus() {
+        cmbStatus.getItems().setAll("Pending", "In Progress", "Completed", "On Hold");
+        cmbStatus.setValue("Pending");
+    }
+
+    /**
+     * Sets the upselection value.
+     */
+    private void setupSelection() {
+        tvPlans.getSelectionModel().selectedItemProperty().addListener((obs, oldSel, newSel) -> {
+            selectedPlan = newSel;
+            if (newSel != null) populateFields(newSel);
+        });
+    }
+
+    /**
+     * Sets the uptable value.
+     */
+    private void setupTable() {
+        colPlanId.setCellValueFactory(new PropertyValueFactory<>("planId"));
+        colDeadline.setCellValueFactory(new PropertyValueFactory<>("deadline"));
+
+        // display name from map
+        colUserName.setCellValueFactory(cellData -> {
+            int uid = cellData.getValue().getUserId();
+            String name = userNameById.getOrDefault(uid, "Unknown");
+            return new ReadOnlyStringWrapper(name);
+        });
+
+        // ✅ Status with dot + colored text
+        colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+        colStatus.setCellFactory(column -> new TableCell<>() {
+
+            private final HBox box = new HBox(8);
+            private final Region dot = new Region();
+            private final Label text = new Label();
+
+            {
+                box.getStyleClass().add("status-container");
+                box.setAlignment(Pos.CENTER_LEFT);
+
+                dot.getStyleClass().add("status-dot");
+                text.getStyleClass().add("status-text");
+
+                box.getChildren().addAll(dot, text);
+                setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+            }
+
+            @Override
+            /**
+             * Updates the selected record and refreshes the UI.
+             */
+            protected void updateItem(String status, boolean empty) {
+                super.updateItem(status, empty);
+
+                if (empty || status == null || status.trim().isEmpty()) {
+                    setGraphic(null);
+                    return;
+                }
+
+                setGraphic(box);
+                text.setText(status);
+
+                dot.getStyleClass().removeAll(
+                        "status-dot-pending","status-dot-progress","status-dot-completed","status-dot-hold","status-dot-neutral"
+                );
+                text.getStyleClass().removeAll(
+                        "status-text-pending","status-text-progress","status-text-completed","status-text-hold","status-text-neutral"
+                );
+
+                String s = status.trim().toLowerCase();
+                if (s.equals("pending")) {
+                    dot.getStyleClass().add("status-dot-pending");
+                    text.getStyleClass().add("status-text-pending");
+                } else if (s.equals("in progress")) {
+                    dot.getStyleClass().add("status-dot-progress");
+                    text.getStyleClass().add("status-text-progress");
+                } else if (s.equals("completed")) {
+                    dot.getStyleClass().add("status-dot-completed");
+                    text.getStyleClass().add("status-text-completed");
+                } else if (s.equals("on hold")) {
+                    dot.getStyleClass().add("status-dot-hold");
+                    text.getStyleClass().add("status-text-hold");
+                } else {
+                    dot.getStyleClass().add("status-dot-neutral");
+                    text.getStyleClass().add("status-text-neutral");
+                }
+            }
+        });
+
+        // ✅ Actions column: button per row
+        setupActionsColumn();
+    }
+
+    /**
+     * Sets the upactionscolumn value.
+     */
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
     private void setupActionsColumn() {
         if (colActions == null) return;
 
         colActions.setCellFactory(col -> new TableCell<>() {
+<<<<<<< HEAD
+=======
+
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
             private final Button btn = new Button("Tasks");
 
             {
                 btn.getStyleClass().addAll("btn-primary", "btn-table");
 
                 btn.setOnAction(e -> {
+<<<<<<< HEAD
                     OnboardingPlan plan = getCurrentRowPlan();
                     if (plan != null) {
                         openTasksInSameWindow(plan.getPlanId());
                     }
+=======
+                    OnboardingPlan plan = getTableView().getItems().get(getIndex());
+                    if (plan != null) openTasksInSameWindow(plan.getPlanId());
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
                 });
 
                 setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
             }
 
+<<<<<<< HEAD
             private OnboardingPlan getCurrentRowPlan() {
                 if (getTableRow() == null) return null;
                 Object item = getTableRow().getItem();
@@ -490,10 +739,20 @@ public class OnboardingPlanController implements Initializable {
                     btn.setDisable(false);
                     setGraphic(btn);
                 }
+=======
+            @Override
+            /**
+             * Updates the selected record and refreshes the UI.
+             */
+            protected void updateItem(Void item, boolean empty) {
+                super.updateItem(item, empty);
+                setGraphic(empty ? null : btn);
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
             }
         });
     }
 
+<<<<<<< HEAD
     /* ================== EXPLORER (ADVANCED FEATURE #1) ================== */
 
     private void applyExplorerFilters() {
@@ -674,12 +933,41 @@ public class OnboardingPlanController implements Initializable {
             } else {
                 dpDeadline.setValue(null);
             }
+=======
+    /* ================== FORM FILL ================== */
+
+    /**
+     * Executes this operation.
+     */
+    private void populateFields(OnboardingPlan plan) {
+        // select user object in combobox
+        for (User u : cmbUser.getItems()) {
+            if (u.getUserId() == plan.getUserId()) {
+                cmbUser.setValue(u);
+                break;
+            }
+        }
+
+        cmbStatus.setValue(plan.getStatus());
+
+        if (plan.getDeadline() != null) {
+            LocalDate localDate = new java.sql.Date(plan.getDeadline().getTime()).toLocalDate();
+            dpDeadline.setValue(localDate);
+        } else {
+            dpDeadline.setValue(null);
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
         }
     }
 
     /* ================== CRUD ================== */
 
     @FXML
+<<<<<<< HEAD
+=======
+    /**
+     * Handles the associated UI event.
+     */
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
     private void handleAddPlan() {
         if (!validateInputs()) return;
 
@@ -688,6 +976,7 @@ public class OnboardingPlanController implements Initializable {
             Date deadline = Date.from(dpDeadline.getValue().atStartOfDay(ZoneId.systemDefault()).toInstant());
 
             OnboardingPlan plan = new OnboardingPlan(0, userId, cmbStatus.getValue(), deadline);
+<<<<<<< HEAD
 
             String createdJson = planApiService.createPlanJson(plan);
             showInfo("Success", "Plan created successfully.");
@@ -701,10 +990,26 @@ public class OnboardingPlanController implements Initializable {
         } catch (Exception ex) {
             ex.printStackTrace();
             showError("Error", ex.getMessage());
+=======
+            int id = planService.addOnboardingPlan(plan);
+
+            showInfo("Success", "Plan added with ID: " + id);
+            reloadPlansOnly();
+            handleClear();
+
+        } catch (SQLException e) {
+            showError("Database Error", e.getMessage());
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
         }
     }
 
     @FXML
+<<<<<<< HEAD
+=======
+    /**
+     * Handles the associated UI event.
+     */
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
     private void handleUpdatePlan() {
         if (selectedPlan == null) {
             showWarning("No Selection", "Select a plan first (for Update/Delete).");
@@ -718,21 +1023,29 @@ public class OnboardingPlanController implements Initializable {
             OnboardingPlanEditController editController = loader.getController();
             editController.setPlan(selectedPlan);
 
+<<<<<<< HEAD
             boolean isCandidate = Utils.UserSession.getInstance().getCurrentUser() != null
                     && Utils.UserSession.getInstance().getCurrentUser().getRoleId() == 1;
             editController.setCandidateMode(isCandidate);
 
+=======
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
             Scene scene = new Scene(root, 720, 520);
             scene.getStylesheets().add(getClass().getResource("/styles/hirely.css").toExternalForm());
 
             Stage stage = new Stage();
             stage.setTitle("Update Plan");
             stage.setScene(scene);
+<<<<<<< HEAD
+=======
+            stage.initOwner(tvPlans.getScene().getWindow());
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
             stage.initModality(Modality.WINDOW_MODAL);
             stage.setResizable(true);
             stage.setMinWidth(640);
             stage.setMinHeight(420);
 
+<<<<<<< HEAD
             // Safe owner resolution (works with table mode OR card mode)
             javafx.stage.Window ownerWindow = null;
 
@@ -756,6 +1069,11 @@ public class OnboardingPlanController implements Initializable {
 
             // after edit modal closes, reload from API (not local DB) to avoid mismatch
             reloadPlansOnlyFromApi();
+=======
+            stage.showAndWait();
+
+            reloadPlansOnly();
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -764,12 +1082,19 @@ public class OnboardingPlanController implements Initializable {
     }
 
     @FXML
+<<<<<<< HEAD
+=======
+    /**
+     * Handles the associated UI event.
+     */
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
     private void handleDeletePlan() {
         if (selectedPlan == null) {
             showWarning("No Selection", "Select a plan first (for Update/Delete).");
             return;
         }
 
+<<<<<<< HEAD
         Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, "Delete this plan?");
         confirm.setHeaderText("Confirm Delete");
         Optional<ButtonType> result = confirm.showAndWait();
@@ -788,11 +1113,25 @@ public class OnboardingPlanController implements Initializable {
                 showError("Database Error", e.getMessage());
             } catch (Exception e) {
                 showError("Error", e.getMessage());
+=======
+        Optional<ButtonType> result =
+                new Alert(Alert.AlertType.CONFIRMATION, "Delete this plan?").showAndWait();
+
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            try {
+                planService.deleteOnboardingPlan(selectedPlan.getPlanId());
+                showInfo("Success", "Plan deleted.");
+                reloadPlansOnly();
+                handleClear();
+            } catch (SQLException e) {
+                showError("Database Error", e.getMessage());
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
             }
         }
     }
 
     @FXML
+<<<<<<< HEAD
     private void handleClear() {
         if (cmbUser != null) cmbUser.setValue(null);
         if (cmbStatus != null) cmbStatus.setValue("Pending");
@@ -809,10 +1148,30 @@ public class OnboardingPlanController implements Initializable {
 
     // keep if FXML still references it
     @FXML
+=======
+    /**
+     * Handles the associated UI event.
+     */
+    private void handleClear() {
+        cmbUser.setValue(null);
+        cmbStatus.setValue("Pending");
+        dpDeadline.setValue(null);
+        selectedPlan = null;
+        tvPlans.getSelectionModel().clearSelection();
+        updateStatusLabel("Ready");
+    }
+
+    // keep it if your FXML still calls it
+    @FXML
+    /**
+     * Handles the associated UI event.
+     */
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
     private void handleManageTasks() {
         showWarning("Info", "Use the Tasks button inside the table row.");
     }
 
+<<<<<<< HEAD
     @FXML
     private void handleSaveStatus() {
         if (selectedPlan == null) {
@@ -837,18 +1196,28 @@ public class OnboardingPlanController implements Initializable {
      * Legacy local DB reload (kept for compatibility / fallback if needed).
      */
     @SuppressWarnings("unused")
+=======
+    /**
+     * Executes this operation.
+     */
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
     private void reloadPlansOnly() {
         try {
             List<OnboardingPlan> plans = planService.getAllOnboardingPlans();
             plansList.setAll(plans);
+<<<<<<< HEAD
             applyExplorerFilters();
             refreshSummaryCards();
+=======
+            tvPlans.setItems(plansList);
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
             updateStatusLabel("Loaded " + plans.size() + " plans");
         } catch (SQLException e) {
             showError("Error loading plans", e.getMessage());
         }
     }
 
+<<<<<<< HEAD
     private void reloadPlansOnlyFromApi() {
         try {
             List<OnboardingPlan> plans = fetchPlansFromApi();
@@ -873,10 +1242,19 @@ public class OnboardingPlanController implements Initializable {
     private boolean validateInputs() {
         if (cmbUser == null || dpDeadline == null) return false;
 
+=======
+    /* ================== HELPERS ================== */
+
+    /**
+     * Executes this operation.
+     */
+    private boolean validateInputs() {
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
         if (cmbUser.getValue() == null || dpDeadline.getValue() == null) {
             showWarning("Validation Error", "Select a user and deadline.");
             return false;
         }
+<<<<<<< HEAD
 
         if (dpDeadline.getValue().isBefore(LocalDate.now())) {
             showWarning("Validation Error", "Deadline cannot be in the past.");
@@ -903,11 +1281,30 @@ public class OnboardingPlanController implements Initializable {
 
         String i1 = fn.isEmpty() ? "" : fn.substring(0, 1).toUpperCase(Locale.ROOT);
         String i2 = ln.isEmpty() ? "" : ln.substring(0, 1).toUpperCase(Locale.ROOT);
+=======
+        return true;
+    }
+
+    /**
+     * Updates the selected record and refreshes the UI.
+     */
+    private void updateHeaderChip(User u) {
+        if (u == null) return;
+
+        if (lblHeaderUserName != null) lblHeaderUserName.setText(u.getFullName());
+
+        String fn = u.getFirstName() == null ? "" : u.getFirstName().trim();
+        String ln = u.getLastName() == null ? "" : u.getLastName().trim();
+
+        String i1 = fn.isEmpty() ? "" : fn.substring(0, 1).toUpperCase();
+        String i2 = ln.isEmpty() ? "" : ln.substring(0, 1).toUpperCase();
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
 
         String initials = (i1 + i2).trim();
         if (lblHeaderInitials != null) lblHeaderInitials.setText(initials.isEmpty() ? "U" : initials);
     }
 
+<<<<<<< HEAD
     private List<OnboardingPlan> parsePlans(String json) {
         List<OnboardingPlan> list = new ArrayList<>();
         if (json == null) return list;
@@ -1411,3 +1808,33 @@ public class OnboardingPlanController implements Initializable {
 
 
 }
+=======
+    /**
+     * Updates the selected record and refreshes the UI.
+     */
+    private void updateStatusLabel(String msg) {
+        if (lblStatus != null) lblStatus.setText(msg);
+    }
+
+    /**
+     * Executes this operation.
+     */
+    private void showInfo(String t, String c) {
+        new Alert(Alert.AlertType.INFORMATION, c).showAndWait();
+    }
+
+    /**
+     * Executes this operation.
+     */
+    private void showError(String t, String c) {
+        new Alert(Alert.AlertType.ERROR, c).showAndWait();
+    }
+
+    /**
+     * Executes this operation.
+     */
+    private void showWarning(String t, String c) {
+        new Alert(Alert.AlertType.WARNING, c).showAndWait();
+    }
+}
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67

@@ -4,19 +4,40 @@ import Models.User;
 import Services.UserService;
 import Utils.UserSession;
 
+<<<<<<< HEAD
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+=======
+import Utils.QRCodeGenerator;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.image.ImageView;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
 
 import java.sql.SQLException;
 
 public class UserProfileController {
 
+<<<<<<< HEAD
     @FXML private TextField txtFirstName;
     @FXML private TextField txtLastName;
     @FXML private TextField txtEmail;
     @FXML private PasswordField txtPassword;
 
     @FXML private Label lblMsg;
+=======
+    @FXML private TextField     txtFirstName;
+    @FXML private TextField     txtLastName;
+    @FXML private TextField     txtEmail;
+    @FXML private PasswordField txtPassword;
+    @FXML private ImageView     qrCodeView;
+    @FXML private Label         lblMsg;
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
 
     private final UserService userService = new UserService();
     private MainShellController shell;
@@ -38,6 +59,28 @@ public class UserProfileController {
         txtLastName.setText(nullToEmpty(u.getLastName()));
         txtEmail.setText(nullToEmpty(u.getEmail()));
         txtPassword.setText(nullToEmpty(u.getPassword()));
+<<<<<<< HEAD
+=======
+
+        generateQRCode(u);
+    }
+
+    private void generateQRCode(User u) {
+        try {
+            String vCard =
+                    "BEGIN:VCARD\r\n" +
+                    "VERSION:3.0\r\n" +
+                    "FN:" + u.getFullName() + "\r\n" +
+                    "N:" + nullToEmpty(u.getLastName()) + ";" + nullToEmpty(u.getFirstName()) + ";;;\r\n" +
+                    "EMAIL:" + nullToEmpty(u.getEmail()) + "\r\n" +
+                    "TITLE:" + nullToEmpty(u.getRoleName()) + "\r\n" +
+                    "NOTE:Status: " + nullToEmpty(u.getStatus()) + "\r\n" +
+                    "END:VCARD";
+            qrCodeView.setImage(QRCodeGenerator.generate(vCard, 300));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
     }
 
     @FXML
@@ -139,6 +182,31 @@ public class UserProfileController {
     }
 
     @FXML
+<<<<<<< HEAD
+=======
+    private void handleSetupFaceId() {
+        User u = UserSession.getInstance().getCurrentUser();
+        if (u == null) return;
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/FaceSetupView.fxml"));
+            Parent root = loader.load();
+
+            FaceSetupController ctrl = loader.getController();
+            ctrl.setUserId(u.getUserId());
+
+            Stage dialog = new Stage();
+            dialog.setTitle("Hirely — Setup Face ID");
+            dialog.setScene(new Scene(root, 700, 580));
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.show();
+        } catch (Exception e) {
+            e.printStackTrace();
+            lblMsg.setText("Cannot open Face ID setup: " + e.getMessage());
+        }
+    }
+
+    @FXML
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
     private void handleBack() {
         if (shell != null) shell.backToPlans();
     }

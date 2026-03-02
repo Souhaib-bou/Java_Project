@@ -1,3 +1,644 @@
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+    /* =========================
+       Hirely — Global Styles
+       ========================= */
+
+    /* ===== APP ROOT ===== */
+    .app-root, .root {
+        -fx-font-family: "Poppins", "Segoe UI", Arial, sans-serif;
+        -fx-font-size: 13px;
+        -fx-background-color: #F4F5FA;
+    }
+
+    /* ===== TOP BAR (matches the reference screenshot) ===== */
+    .topbar-shell {
+        -fx-padding: 14 18 10 18;
+    }
+
+    .topbar-wrap {
+        -fx-background-color: rgba(255,255,255,0.94);
+        -fx-border-color: rgba(233,234,242,0.85);
+        -fx-effect: dropshadow(gaussian, rgba(18,18,45,0.10), 30, 0.16, 0, 12);
+    }
+
+
+    .topbar {
+        -fx-padding: 2 6;
+    }
+    .brand-text {
+        -fx-text-fill: #FF5C28;
+        -fx-font-weight: 900;
+        -fx-font-size: 18px;
+        -fx-letter-spacing: 0.6px;
+        -fx-padding: 0 0 0 4;
+    }
+
+
+
+/* Slightly larger logo without changing layout logic */
+    .brand-logo {
+        -fx-smooth: true;
+        -fx-fit-height: 36;  /* bigger logo */
+        -fx-fit-width: 36;
+    }
+
+    /* Center navigation pills */
+    .nav-pill {
+        -fx-background-color: transparent;
+        -fx-text-fill: #2B1450;
+        -fx-font-weight: 800;
+        -fx-font-size: 13px;
+        -fx-padding: 10 16;
+        -fx-background-radius: 14;
+        -fx-border-radius: 14;
+        -fx-border-color: transparent;
+
+        /* kill focus ring */
+        -fx-focus-color: transparent;
+        -fx-faint-focus-color: transparent;
+    }
+    .nav-pill,
+    .nav-pill:focused,
+    .nav-pill:hover,
+    .nav-pill:pressed {
+        -fx-border-color: transparent;
+        -fx-focus-color: transparent;
+        -fx-faint-focus-color: transparent;
+    }
+    .nav-pill:focused {
+        -fx-background-color: transparent;
+        -fx-effect: null;
+    }
+    .nav-pill:hover {
+        -fx-background-color: rgba(43,20,80,0.05);
+    }
+
+
+    .nav-pill-active {
+        -fx-background-color: rgba(255,92,40,0.16);
+        -fx-text-fill: #FF5C28;
+    }
+
+
+    /* Right-side icon buttons */
+    .icon-btn {
+        -fx-background-color: rgba(43,20,80,0.05);
+    }
+    .icon-btn:hover { -fx-background-color: rgba(43,20,80,0.09); }
+    .icon-btn:pressed { -fx-background-color: rgba(43,20,80,0.14); }
+    .icon-btn:focused {
+        -fx-background-insets: 0;
+        -fx-border-insets: 0;
+        -fx-effect: null;
+    }
+
+    .badge {
+        -fx-background-color: #FF5C28;
+        -fx-text-fill: white;
+        -fx-font-weight: 900;
+        -fx-font-size: 10px;
+        -fx-padding: 2 6;
+        -fx-background-radius: 999;
+        -fx-translate-x: 10;
+        -fx-translate-y: -8;
+        -fx-effect: dropshadow(gaussian, rgba(255,92,40,0.25), 12, 0.15, 0, 4);
+    }
+
+    /* Profile chip */
+    .profile-chip {
+        -fx-background-color: rgba(43,20,80,0.05);
+        -fx-border-color: rgba(233,234,242,0.90);
+    }
+    .profile-chip:hover { -fx-background-color: rgba(43,20,80,0.09); }
+
+
+    .profile-chip:pressed { -fx-background-color: rgba(43,20,80,0.14); }
+
+    .profile-chip:focused {
+        -fx-background-insets: 0;
+        -fx-border-insets: 0;
+        -fx-effect: null;
+    }
+    .profile-name {
+        -fx-text-fill: #2B1450;
+        -fx-font-weight: 800;
+    }
+
+    .profile-caret {
+        -fx-text-fill: rgba(43,20,80,0.65);
+    }
+
+    /* Small page text under the bar */
+    .page-meta {
+        -fx-padding: 10 8 0 8;
+    }
+    .page-title {
+        -fx-text-fill: #1F2430;
+        -fx-font-size: 16px;
+        -fx-font-weight: 900;
+    }
+    .page-subtitle {
+        -fx-text-fill: #6A7283;
+        -fx-font-size: 12px;
+        -fx-font-weight: 700;
+    }
+
+    /* Alternative accent line class (used in some FXMLs) */
+    .header-accent-line {
+        -fx-min-height: 4px;
+        -fx-pref-height: 4px;
+        -fx-max-height: 4px;
+        -fx-background-color: linear-gradient(to right, #FF5C28, #231E53, #3F1244, #F17945);
+    }
+
+    /* ===== USER CHIP (right) ===== */
+    .user-chip {
+        -fx-padding: 8 12 8 10;
+        -fx-background-color: rgba(255,255,255,0.10);
+        -fx-background-radius: 999;
+        -fx-border-radius: 999;
+        -fx-border-color: rgba(255,255,255,0.18);
+        -fx-border-width: 1;
+    }
+
+    .user-chip-initials {
+        -fx-min-width: 28px;
+        -fx-min-height: 28px;
+        -fx-alignment: center;
+        -fx-background-color: rgba(255,255,255,0.14);
+        -fx-background-radius: 999;
+        -fx-text-fill: white;
+        -fx-font-weight: 900;
+    }
+
+    .user-chip-name {
+        -fx-text-fill: rgba(255,255,255,0.92);
+        -fx-font-weight: 700;
+    }
+
+    .user-chip-caret {
+        -fx-text-fill: rgba(255,255,255,0.75);
+        -fx-font-size: 12px;
+    }
+
+    /* ===== (legacy) HEADER BAR ===== */
+    .header-bar {
+        -fx-background-color: linear-gradient(to right, #2B1450 0%, #3F1244 55%, #5B2B97 100%);
+        -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 16, 0.15, 0, 6);
+    }
+
+    /* top-right chip (legacy) */
+    .header-chip {
+        -fx-background-color: rgba(255,255,255,0.12);
+        -fx-background-radius: 999;
+        -fx-padding: 8 12 8 10;
+        -fx-border-color: rgba(255,255,255,0.12);
+        -fx-border-radius: 999;
+        -fx-border-width: 1;
+    }
+    .chip-avatar {
+        -fx-background-color: rgba(255,255,255,0.18);
+        -fx-background-radius: 999;
+        -fx-padding: 6 10 6 10;
+        -fx-text-fill: white;
+        -fx-font-weight: 800;
+    }
+    .chip-text {
+        -fx-text-fill: white;
+        -fx-font-weight: 700;
+    }
+
+    /* ===== CARD CONTAINERS ===== */
+    .card {
+        -fx-background-color: white;
+        -fx-background-radius: 18;
+        -fx-border-radius: 18;
+        -fx-border-color: #E9EAF2;
+        -fx-border-width: 1;
+        -fx-padding: 18;
+        -fx-effect: dropshadow(gaussian, rgba(18,18,45,0.08), 22, 0.10, 0, 8);
+    }
+
+    .section-title {
+        -fx-font-size: 14px;
+        -fx-font-weight: 800;
+        -fx-text-fill: #1F2430;
+    }
+
+    .form-label {
+        -fx-text-fill: #5A6272;
+        -fx-font-weight: 700;
+    }
+
+    /* ===== INPUTS ===== */
+    .text-field, .combo-box, .date-picker, .text-area {
+        -fx-background-color: white;
+        -fx-background-radius: 12;
+        -fx-border-radius: 12;
+        -fx-border-color: #E1E3EE;
+        -fx-border-width: 1;
+        -fx-padding: 10 12 10 12;
+    }
+
+    .text-field:focused, .combo-box:focused, .date-picker:focused, .text-area:focused {
+        -fx-border-color: #5B2B97;
+        -fx-border-width: 2;
+        -fx-effect: dropshadow(gaussian, rgba(91,43,151,0.16), 14, 0.15, 0, 0);
+    }
+
+    /* ===== BUTTONS ===== */
+    .button {
+        -fx-background-radius: 12;
+        -fx-border-radius: 12;
+        -fx-font-weight: 800;
+        -fx-cursor: hand;
+        -fx-padding: 10 16 10 16;
+    }
+
+    /* Primary (orange-red) */
+    .btn-primary {
+        -fx-background-color: #FF5C28;
+        -fx-text-fill: white;
+        -fx-effect: dropshadow(gaussian, rgba(255,92,40,0.24), 14, 0.15, 0, 5);
+    }
+    .btn-primary:hover { -fx-opacity: 0.92; }
+    .btn-primary:pressed { -fx-scale-x: 0.98; -fx-scale-y: 0.98; }
+
+    /* Secondary (soft purple/neutral) */
+    .btn-secondary {
+        -fx-background-color: rgba(43,20,80,0.06);
+        -fx-text-fill: #2B1450;
+        -fx-background-radius: 12;
+        -fx-border-radius: 12;
+        -fx-padding: 10 16 10 16;
+        -fx-effect: dropshadow(gaussian, rgba(43,20,80,0.08), 12, 0.10, 0, 2);
+    }
+    .btn-secondary:hover { -fx-background-color: rgba(43,20,80,0.10); }
+
+    /* Danger (red) */
+    .btn-danger {
+        -fx-background-color: #E84855;
+        -fx-text-fill: white;
+    }
+    .btn-danger:hover { -fx-opacity: 0.92; }
+
+    /* =========================
+       TABLEVIEW (clean + consistent)
+       ========================= */
+
+    .table-view {
+        -fx-background-color: transparent;
+        -fx-background-insets: 0;
+    }
+
+    .hirely-table {
+        -fx-background-color: transparent;
+        -fx-border-color: #EEF0F7;
+        -fx-border-radius: 12;
+        -fx-background-radius: 12;
+    }
+
+    .table-view .column-header-background {
+        -fx-background-color: #F6F7FC;
+        -fx-background-radius: 12 12 0 0;
+    }
+
+    .table-view .column-header,
+    .table-view .filler {
+        -fx-size: 42px;
+        -fx-background-color: transparent;
+        -fx-border-color: transparent;
+    }
+
+    .table-view .column-header .label {
+        -fx-text-fill: #231E53;
+        -fx-font-weight: 800;
+    }
+
+    /* rows */
+    .table-row-cell {
+        -fx-background-color: white;
+        -fx-border-color: transparent transparent #EEF0F7 transparent;
+    }
+
+    /* selected row background */
+    .table-row-cell:filled:selected,
+    .table-row-cell:filled:selected:hover {
+        -fx-background-color: rgba(91,43,151,0.10);
+    }
+
+    /* ✅ IMPORTANT FIX: keep selected row text visible (Tasks + Plans) */
+    .table-row-cell:filled:selected .table-cell,
+    .table-row-cell:filled:selected:hover .table-cell {
+        -fx-text-fill: #1F2430;
+    }
+
+    /* Some skins style Text nodes directly */
+    .table-row-cell:filled:selected .text,
+    .table-row-cell:filled:selected:hover .text {
+        -fx-fill: #1F2430;
+    }
+
+    /* reduce harsh focus effect */
+    .table-view:focused .table-row-cell:filled:selected {
+        -fx-background-insets: 0;
+    }
+
+    /* ===== STATUS PILLS (Plan + Task) ===== */
+
+    /* cell alignment for pill graphics */
+    .table-cell.pill-cell {
+        -fx-alignment: CENTER;
+        -fx-padding: 6 10 6 10;
+    }
+
+    /* pill base */
+    .pill {
+        -fx-padding: 5 12 5 12;
+        -fx-background-radius: 999;
+        -fx-font-weight: 800;
+        -fx-font-size: 12px;
+    }
+
+    /* plan pills */
+    .pill-pending {
+        -fx-background-color: rgba(255,106,42,0.22);
+        -fx-text-fill: #FF6A2A;
+    }
+    .pill-progress {
+        -fx-background-color: rgba(91,43,151,0.18);
+        -fx-text-fill: #5B2B97;
+    }
+    .pill-completed {
+        -fx-background-color: rgba(38,191,126,0.22);
+        -fx-text-fill: #1E9B63;
+    }
+    .pill-hold {
+        -fx-background-color: rgba(120,120,140,0.22);
+        -fx-text-fill: #4C5160;
+    }
+
+    /* task pills */
+    .pill-not-started {
+        -fx-background-color: rgba(120,120,140,0.18);
+        -fx-text-fill: #4C5160;
+    }
+    .pill-blocked {
+        -fx-background-color: rgba(232,72,85,0.18);
+        -fx-text-fill: #E84855;
+    }
+
+    /* keep pill text readable even when row selected */
+    .table-row-cell:filled:selected .pill,
+    .table-row-cell:filled:selected:hover .pill {
+        -fx-text-fill: #1F2430;
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+        -fx-padding: 6 2 0 2;
+    }
+    .footer-label {
+        -fx-text-fill: #6B7280;
+        -fx-font-weight: 600;
+    }
+    /* ===== STATUS DOT STYLE (professional) ===== */
+    .status-dot {
+        -fx-min-width: 8px;
+        -fx-min-height: 8px;
+        -fx-max-width: 8px;
+        -fx-max-height: 8px;
+        -fx-background-radius: 999;
+        -fx-translate-y: 1; /* tiny visual adjustment */
+    }
+
+
+    .status-text {
+        -fx-font-weight: 800;
+        -fx-font-size: 12px;
+    }
+
+    /* Default/unknown */
+    .status-dot-neutral { -fx-background-color: #9CA3AF; }
+    .status-text-neutral { -fx-text-fill: #6B7280; }
+
+    /* Plans */
+    .status-dot-pending { -fx-background-color: #FF6A2A; }
+    .status-text-pending { -fx-text-fill: #FF6A2A; }
+
+    .status-dot-progress { -fx-background-color: #5B2B97; }
+    .status-text-progress { -fx-text-fill: #5B2B97; }
+
+    .status-dot-completed { -fx-background-color: #1E9B63; }
+    .status-text-completed { -fx-text-fill: #1E9B63; }
+
+    .status-dot-hold { -fx-background-color: #4C5160; }
+    .status-text-hold { -fx-text-fill: #4C5160; }
+
+    /* Tasks extras */
+    .status-dot-blocked { -fx-background-color: #E84855; }
+    .status-text-blocked { -fx-text-fill: #E84855; }
+    .status-container {
+        -fx-alignment: CENTER_LEFT;
+    }
+
+    /* =========================================================
+   USER CHIP + GLASS DROPDOWN (Button + ContextMenu)
+   ========================================================= */
+
+    /* The chip itself (Button) */
+    .user-chip-menu {
+        -fx-padding: 8 14 8 12;
+        -fx-background-color: rgba(255,255,255,0.10);
+        -fx-background-radius: 999;
+        -fx-border-radius: 999;
+        -fx-border-color: rgba(255,255,255,0.18);
+        -fx-border-width: 1;
+        -fx-cursor: hand;
+    }
+
+    .user-chip-menu:hover { -fx-background-color: rgba(255,255,255,0.14); }
+    .user-chip-menu:pressed { -fx-background-color: rgba(255,255,255,0.18); }
+
+
+    /* Remove default focus ring */
+    .user-chip-menu:focused {
+        -fx-focus-color: transparent;
+        -fx-faint-focus-color: transparent;
+    }
+
+    /* Avatar container */
+    .avatar-small {
+        -fx-background-color: rgba(255,255,255,0.15);
+        -fx-background-radius: 999;
+        -fx-border-radius: 999;
+        -fx-border-color: rgba(255,255,255,0.20);
+        -fx-border-width: 1;
+        -fx-alignment: center;
+    }
+
+    /* ===== Popup glass menu ===== */
+    /* ContextMenu root */
+/* =========================================================
+   USER DROPDOWN — CLEAN WHITE MENU (matches your screenshot)
+   ========================================================= */
+
+    .context-menu.user-menu-glass {
+        -fx-background-color: transparent;
+        -fx-padding: 0;
+    }
+
+    .context-menu.user-menu-glass .background {
+        -fx-background-color: rgba(255,255,255,0.98);
+        -fx-background-radius: 16;
+        -fx-border-radius: 16;
+        -fx-border-color: rgba(233,234,242,0.95);
+        -fx-border-width: 1;
+        -fx-effect: dropshadow(gaussian, rgba(18,18,45,0.18), 30, 0.18, 0, 14);
+    }
+
+    .context-menu.user-menu-glass .content {
+        -fx-background-color: transparent;
+        -fx-padding: 10;
+        -fx-background-radius: 16;
+    }
+
+    .context-menu.user-menu-glass .menu-item {
+        -fx-background-color: transparent;
+        -fx-background-radius: 12;
+        -fx-padding: 11 14;
+    }
+
+    .context-menu.user-menu-glass .menu-item:hover,
+    .context-menu.user-menu-glass .menu-item:focused {
+        -fx-background-color: rgba(43,20,80,0.06);
+    }
+
+    .context-menu.user-menu-glass .menu-item:pressed {
+        -fx-background-color: rgba(43,20,80,0.10);
+    }
+
+    .context-menu.user-menu-glass .menu-item .label {
+        -fx-text-fill: #2B1450;
+        -fx-font-weight: 800;
+    }
+
+    .context-menu.user-menu-glass .separator {
+        -fx-padding: 6 6 6 6;
+    }
+
+    .context-menu.user-menu-glass .separator .line {
+        -fx-border-color: rgba(233,234,242,0.95);
+    }
+
+
+/* =========================
+   Dashboard (Home) UI
+   ========================= */
+.page {
+    -fx-padding: 0;
+}
+
+.hero-row {
+    -fx-alignment: TOP_LEFT;
+}
+
+.hero {
+    -fx-background-radius: 18;
+    -fx-padding: 22;
+    -fx-pref-height: 220;
+    -fx-min-height: 220;
+    -fx-background-color: linear-gradient(to right, #4B2FA6, #FF7A59);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 18, 0.2, 0, 6);
+}
+
+.hero-text {
+    -fx-max-width: 560;
+}
+
+.hero-title {
+    -fx-font-size: 34px;
+    -fx-font-weight: 800;
+    -fx-text-fill: white;
+}
+
+.hero-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: rgba(255,255,255,0.9);
+}
+
+.search-bar {
+    -fx-padding: 10;
+    -fx-background-radius: 14;
+    -fx-background-color: rgba(255,255,255,0.92);
+    -fx-spacing: 10;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.stats-card {
+    -fx-min-width: 320;
+    -fx-padding: 16;
+}
+
+.stats-row {
+    -fx-alignment: CENTER_LEFT;
+}
+
+.stat-block {
+    -fx-padding: 10 12;
+    -fx-background-radius: 12;
+    -fx-background-color: #F4F5FA;
+}
+
+.stat-value {
+    -fx-font-size: 22px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #2B2B2B;
+}
+
+.stat-label {
+    -fx-font-size: 12px;
+    -fx-text-fill: #6B7280;
+}
+
+.card-grid {
+    -fx-padding: 0;
+}
+
+.job-card {
+    -fx-padding: 14;
+    -fx-min-width: 320;
+}
+
+.job-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: 700;
+}
+
+.job-meta {
+    -fx-alignment: CENTER_LEFT;
+}
+
+.job-salary {
+    -fx-text-fill: #FF4D2D;
+    -fx-font-weight: 700;
+}
+
+.chip {
+    -fx-padding: 4 10;
+    -fx-background-radius: 999;
+    -fx-background-color: rgba(75,47,166,0.12);
+    -fx-text-fill: #4B2FA6;
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+}
+
+.section-footer {
+    -fx-alignment: CENTER_LEFT;
+=======
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
 /* =========================
    Hirely — Global Styles
    ========================= */
@@ -9,6 +650,7 @@
     -fx-background-color: #F4F5FA;
 }
 
+<<<<<<< HEAD
 /* ===== TOP BAR (matches the reference screenshot) ===== */
 .topbar-shell {
     -fx-padding: 14 18 10 18;
@@ -133,6 +775,51 @@
     -fx-text-fill: #6A7283;
     -fx-font-size: 12px;
     -fx-font-weight: 700;
+=======
+/* ===== HEADER (new) ===== */
+.header-shell {
+    -fx-padding: 16 18 0 18;
+    -fx-background-radius: 18;
+    -fx-background-insets: 14 14 0 14;
+    -fx-background-color: linear-gradient(to bottom right, #231E53, #3F1244);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 20, 0.15, 0, 8);
+}
+
+.header-top {
+    -fx-padding: 10 14 10 14;
+}
+
+.header-app-title {
+    -fx-text-fill: rgba(255,255,255,0.92);
+    -fx-font-size: 16px;
+    -fx-font-weight: 800;
+}
+
+.header-bottom {
+    -fx-padding: 12 14 14 14;
+}
+
+.header-title {
+    -fx-text-fill: white;
+    -fx-font-size: 22px;
+    -fx-font-weight: 900;
+}
+
+.header-subtitle {
+    -fx-text-fill: rgba(255,255,255,0.80);
+    -fx-font-size: 12px;
+    -fx-font-weight: 600;
+}
+
+/* Thin accent line under header */
+.header-accent {
+    -fx-min-height: 4px;
+    -fx-pref-height: 4px;
+    -fx-max-height: 4px;
+    -fx-background-color: linear-gradient(to right, #FF5C28, #F17945);
+    -fx-background-radius: 0 0 18 18;
+    -fx-background-insets: 0 14 14 14;
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
 }
 
 /* Alternative accent line class (used in some FXMLs) */
@@ -222,6 +909,7 @@
     -fx-font-weight: 700;
 }
 
+<<<<<<< HEAD
 /* ===== NEW: PLAN PAGE / DASHBOARD HELPERS (SAFE ADDITIONS) ===== */
 
 /* Muted labels/descriptions */
@@ -321,6 +1009,8 @@
     -fx-text-fill: #4C5160;
 }
 
+=======
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
 /* ===== INPUTS ===== */
 .text-field, .combo-box, .date-picker, .text-area {
     -fx-background-color: white;
@@ -358,7 +1048,11 @@
 /* Secondary (soft purple/neutral) */
 .btn-secondary {
     -fx-background-color: rgba(43,20,80,0.06);
+<<<<<<< HEAD
     -fx-text-fill: #2B1450;
+=======
+    -fx-text-fill: #ec1616;
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
     -fx-background-radius: 12;
     -fx-border-radius: 12;
     -fx-padding: 10 16 10 16;
@@ -493,7 +1187,10 @@
     -fx-text-fill: #6B7280;
     -fx-font-weight: 600;
 }
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
 /* ===== STATUS DOT STYLE (professional) ===== */
 .status-dot {
     -fx-min-width: 8px;
@@ -504,6 +1201,10 @@
     -fx-translate-y: 1; /* tiny visual adjustment */
 }
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
 .status-text {
     -fx-font-weight: 800;
     -fx-font-size: 12px;
@@ -532,6 +1233,7 @@
 .status-container {
     -fx-alignment: CENTER_LEFT;
 }
+<<<<<<< HEAD
 
 /* =========================================================
    USER CHIP + GLASS DROPDOWN (Button + ContextMenu)
@@ -540,11 +1242,16 @@
 /* The chip itself (Button) */
 .user-chip-menu {
     -fx-padding: 8 14 8 12;
+=======
+/* ===== USER CHIP DROPDOWN (MenuButton) ===== */
+.user-chip-menu {
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
     -fx-background-color: rgba(255,255,255,0.10);
     -fx-background-radius: 999;
     -fx-border-radius: 999;
     -fx-border-color: rgba(255,255,255,0.18);
     -fx-border-width: 1;
+<<<<<<< HEAD
     -fx-cursor: hand;
 }
 
@@ -574,10 +1281,23 @@
    ========================================================= */
 
 .context-menu.user-menu-glass {
+=======
+    -fx-padding: 6 10 6 10;
+    -fx-cursor: hand;
+}
+
+/* hide default MenuButton arrow button so we can use our own caret */
+.user-chip-menu .arrow-button {
+    -fx-padding: 0;
+    -fx-background-color: transparent;
+}
+.user-chip-menu .arrow {
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
     -fx-background-color: transparent;
     -fx-padding: 0;
 }
 
+<<<<<<< HEAD
 .context-menu.user-menu-glass .background {
     -fx-background-color: rgba(255,255,255,0.98);
     -fx-background-radius: 16;
@@ -747,4 +1467,27 @@
 
 .card-scroll > .viewport {
     -fx-background-color: transparent;
+=======
+/* dropdown menu style */
+.user-chip-menu .context-menu {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: #E9EAF2;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(18,18,45,0.12), 18, 0.12, 0, 8);
+}
+
+/* menu items */
+.user-chip-menu .menu-item {
+    -fx-padding: 10 14 10 14;
+}
+.user-chip-menu .menu-item .label {
+    -fx-text-fill: #1F2430;
+    -fx-font-weight: 700;
+}
+.user-chip-menu .menu-item:focused {
+    -fx-background-color: rgba(91,43,151,0.10);
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
 }

@@ -11,6 +11,7 @@
             styleClass="app-root">
 
     <!-- MAIN SHELL already provides the header,
+<<<<<<< HEAD
          so this view contains only page content -->
 
     <center>
@@ -246,3 +247,94 @@
     </center>
 
 </BorderPane>
+=======
+         so this view should ONLY contain the page content. -->
+
+    <center>
+        <StackPane>
+            <padding>
+                <Insets top="18" right="18" bottom="18" left="18"/>
+            </padding>
+
+            <GridPane hgap="16" vgap="16" maxWidth="1.7976931348623157E308">
+                <!-- Make columns responsive -->
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="40" hgrow="ALWAYS"/>
+                    <ColumnConstraints percentWidth="60" hgrow="ALWAYS"/>
+                </columnConstraints>
+
+                <!-- LEFT: FORM CARD -->
+                <VBox spacing="12" styleClass="card" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                    <padding>
+                        <Insets top="16" right="16" bottom="16" left="16"/>
+                    </padding>
+
+                    <Label text="Plan Details" styleClass="section-title"/>
+
+                    <GridPane hgap="12" vgap="12">
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="90" hgrow="NEVER"/>
+                            <ColumnConstraints hgrow="ALWAYS"/>
+                        </columnConstraints>
+
+                        <Label text="User" styleClass="form-label"
+                               GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                        <ComboBox fx:id="cmbUser" promptText="Select a user..."
+                                  GridPane.rowIndex="0" GridPane.columnIndex="1"
+                                  maxWidth="1.7976931348623157E308"/>
+
+                        <Label text="Status" styleClass="form-label"
+                               GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                        <ComboBox fx:id="cmbStatus"
+                                  GridPane.rowIndex="1" GridPane.columnIndex="1"
+                                  maxWidth="1.7976931348623157E308"/>
+
+                        <Label text="Deadline" styleClass="form-label"
+                               GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                        <DatePicker fx:id="dpDeadline"
+                                    GridPane.rowIndex="2" GridPane.columnIndex="1"
+                                    maxWidth="1.7976931348623157E308"/>
+                    </GridPane>
+
+                    <HBox spacing="10" alignment="CENTER_RIGHT">
+                        <Button text="Clear" onAction="#handleClear" styleClass="btn-secondary"/>
+                        <Button text="Add" onAction="#handleAddPlan" styleClass="btn-primary"/>
+                        <Button text="Update" onAction="#handleUpdatePlan" styleClass="btn-secondary"/>
+                        <Button text="Delete" onAction="#handleDeletePlan" styleClass="btn-danger"/>
+                    </HBox>
+                </VBox>
+
+                <!-- RIGHT: TABLE CARD -->
+                <VBox spacing="10" styleClass="card" GridPane.columnIndex="1" GridPane.rowIndex="0"
+                      VBox.vgrow="ALWAYS">
+                    <padding>
+                        <Insets top="16" right="16" bottom="16" left="16"/>
+                    </padding>
+
+                    <Label text="Plans" styleClass="section-title"/>
+
+                    <TableView fx:id="tvPlans" VBox.vgrow="ALWAYS" styleClass="hirely-table">
+                        <columnResizePolicy>
+                            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                        </columnResizePolicy>
+
+                        <columns>
+                            <TableColumn fx:id="colPlanId" text="ID" minWidth="60"/>
+                            <TableColumn fx:id="colUserName" text="User" minWidth="160"/>
+                            <TableColumn fx:id="colStatus" text="Status" minWidth="140"/>
+                            <TableColumn fx:id="colDeadline" text="Deadline" minWidth="140"/>
+                            <TableColumn fx:id="colActions" text="Actions" prefWidth="160"/>
+                        </columns>
+                    </TableView>
+
+                    <HBox styleClass="footer" alignment="CENTER_LEFT">
+                        <Label fx:id="lblStatus" text="Ready" styleClass="footer-label"/>
+                    </HBox>
+                </VBox>
+
+            </GridPane>
+        </StackPane>
+    </center>
+
+</BorderPane>
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67

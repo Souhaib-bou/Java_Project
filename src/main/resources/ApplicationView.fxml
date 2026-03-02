@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.shape.*?>
+<?import javafx.scene.chart.*?>
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="Controllers.ApplicationController"
+            stylesheets="@styles/app.css"
+            styleClass="app-root"
+            prefWidth="900"
+            prefHeight="800">
+
+    <center>
+        <ScrollPane fitToWidth="true" vbarPolicy="AS_NEEDED" hbarPolicy="NEVER" styleClass="main-scroll">
+            <content>
+                <VBox spacing="0">
+
+                    <!-- ═══════════════ HERO HEADER ═══════════════ -->
+                    <VBox styleClass="hero-header" spacing="6">
+                        <padding><Insets top="36" right="40" bottom="36" left="40"/></padding>
+                        <Label text="Applications" styleClass="hero-title"/>
+                        <Label text="Manage and track job applications in one place" styleClass="hero-subtitle"/>
+                    </VBox>
+                    <!-- ════════════════════════════════
+     RECRUITER ONLY — Stats Dashboard
+     ════════════════════════════════ -->
+                    <VBox fx:id="statsCard" styleClass="form-card" spacing="0">
+
+                        <HBox styleClass="card-header" alignment="CENTER_LEFT">
+                            <Label text="Applications Overview" styleClass="card-title"/>
+                        </HBox>
+
+                        <VBox spacing="20">
+                            <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+
+                            <!-- ── Stat Tiles ── -->
+                            <HBox spacing="16">
+
+                                <VBox fx:id="tileTotalBox" styleClass="stat-tile" HBox.hgrow="ALWAYS" alignment="CENTER" spacing="4">
+                                    <Label fx:id="statTotal" text="0" styleClass="stat-number"/>
+                                    <Label text="TOTAL" styleClass="stat-label"/>
+                                </VBox>
+
+                                <VBox fx:id="tilePendingBox" styleClass="stat-tile-yellow" HBox.hgrow="ALWAYS" alignment="CENTER" spacing="4">
+                                    <Label fx:id="statPending" text="0" styleClass="stat-number"/>
+                                    <Label text="PENDING" styleClass="stat-label"/>
+                                </VBox>
+
+                                <VBox fx:id="tileAcceptedBox" styleClass="stat-tile-green" HBox.hgrow="ALWAYS" alignment="CENTER" spacing="4">
+                                    <Label fx:id="statAccepted" text="0" styleClass="stat-number"/>
+                                    <Label text="ACCEPTED" styleClass="stat-label"/>
+                                </VBox>
+
+                                <VBox fx:id="tileRejectedBox" styleClass="stat-tile-red" HBox.hgrow="ALWAYS" alignment="CENTER" spacing="4">
+                                    <Label fx:id="statRejected" text="0" styleClass="stat-number"/>
+                                    <Label text="REJECTED" styleClass="stat-label"/>
+                                </VBox>
+
+                            </HBox>
+
+                            <!-- ── Bar Chart ── -->
+                            <BarChart fx:id="statusChart" prefHeight="220" animated="true">
+                                <xAxis>
+                                    <CategoryAxis label="Status"/>
+                                </xAxis>
+                                <yAxis>
+                                    <NumberAxis label="Count" minorTickVisible="false"/>
+                                </yAxis>
+                            </BarChart>
+
+                        </VBox>
+                    </VBox>
+                    <!-- ════════════════════════════════
+     SEARCH + SORT BAR
+     ════════════════════════════════ -->
+                    <VBox fx:id="searchBar" styleClass="form-card" spacing="0">
+                        <HBox styleClass="card-header" alignment="CENTER_LEFT" spacing="12">
+                            <padding><Insets top="12" right="20" bottom="12" left="20"/></padding>
+                            <TextField fx:id="searchField" promptText="🔍  Search by email, status, cover letter..."
+                                       styleClass="field-input" prefWidth="400"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label text="SORT BY" styleClass="field-label"/>
+                            <ComboBox fx:id="sortCombo" prefWidth="160" styleClass="field-input"/>
+                            <Button fx:id="sortOrderBtn" text="↑ ASC"
+                                    onAction="#handleSortOrder" styleClass="btn-ghost"/>
+                        </HBox>
+                    </VBox>
+
+                    <!-- ═══════════════ CONTENT AREA ═══════════════ -->
+                    <VBox spacing="20">
+                        <padding><Insets top="24" right="24" bottom="32" left="24"/></padding>
+
+                        <!-- ════════════════════════════════════════
+                             CANDIDATE ONLY — Application Form Card
+                             ════════════════════════════════════════ -->
+                        <VBox fx:id="formCard" styleClass="form-card" spacing="0">
+
+                            <HBox styleClass="card-header" alignment="CENTER_LEFT" spacing="12">
+                                <Label text="New Application" styleClass="card-title"/>
+                            </HBox>
+
+                            <VBox spacing="16">
+                                <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+
+                                <!-- Date + Availability -->
+                                <HBox spacing="16">
+                                    <VBox spacing="5" prefWidth="380">
+                                        <Label text="APPLICATION DATE" styleClass="field-label"/>
+                                        <DatePicker fx:id="datePicker" prefWidth="380" styleClass="field-input"/>
+                                    </VBox>
+                                    <VBox spacing="5" prefWidth="380">
+                                        <Label text="AVAILABILITY DATE" styleClass="field-label"/>
+                                        <DatePicker fx:id="availabilityDatePicker" prefWidth="380" styleClass="field-input"/>
+                                    </VBox>
+                                </HBox>
+
+                                <!-- Cover Letter -->
+                                <VBox spacing="5">
+                                    <Label text="COVER LETTER" styleClass="field-label"/>
+                                    <TextArea fx:id="coverLetterField" prefRowCount="3"
+                                              promptText="Write a compelling cover letter..." styleClass="field-textarea"/>
+                                </VBox>
+
+                                <!-- Resume + Portfolio -->
+                                <HBox spacing="16">
+                                    <VBox spacing="5" prefWidth="380">
+                                        <Label text="RESUME" styleClass="field-label"/>
+                                        <HBox spacing="8" alignment="CENTER_LEFT">
+                                            <TextField fx:id="resumeField" promptText="No file selected..."
+                                                       styleClass="field-input" prefWidth="290" editable="false"/>
+                                            <Button fx:id="browseButton" text="Browse..." onAction="#handleBrowseResume"
+                                                    styleClass="btn-ghost"/>
+                                        </HBox>
+                                        <HBox spacing="10" alignment="CENTER_LEFT">
+                                            <Button fx:id="autofillButton" text="✦ Autofill from Resume"
+                                                    onAction="#handleAutofill" styleClass="btn-autofill" disable="true"/>
+                                            <Label fx:id="autofillStatus" text="" styleClass="autofill-status"/>
+                                        </HBox>
+                                    </VBox>
+                                    <VBox spacing="5" prefWidth="380">
+                                        <Label text="PORTFOLIO URL" styleClass="field-label"/>
+                                        <TextField fx:id="portfolioUrlField" promptText="https://yourportfolio.com"
+                                                   styleClass="field-input" prefWidth="380"/>
+                                    </VBox>
+                                </HBox>
+
+                                <!-- Salary + Experience -->
+                                <HBox spacing="16">
+                                    <VBox spacing="5" prefWidth="380">
+                                        <Label text="EXPECTED SALARY (TND)" styleClass="field-label"/>
+                                        <TextField fx:id="expectedSalaryField" promptText="e.g. 3500"
+                                                   styleClass="field-input" prefWidth="380"/>
+                                    </VBox>
+                                    <VBox spacing="5" prefWidth="380">
+                                        <Label text="EXPERIENCE (YEARS)" styleClass="field-label"/>
+                                        <TextField fx:id="experienceYearsField" promptText="e.g. 3"
+                                                   styleClass="field-input" prefWidth="380"/>
+                                    </VBox>
+                                </HBox>
+
+                                <!-- Phone + Email -->
+                                <HBox spacing="16">
+                                    <VBox spacing="5" prefWidth="380">
+                                        <Label text="PHONE" styleClass="field-label"/>
+                                        <TextField fx:id="phoneField" promptText="e.g. 99123456"
+                                                   styleClass="field-input" prefWidth="380"/>
+                                    </VBox>
+                                    <VBox spacing="5" prefWidth="380">
+                                        <Label text="EMAIL ADDRESS" styleClass="field-label"/>
+                                        <TextField fx:id="emailField" promptText="candidate@email.com"
+                                                   styleClass="field-input" prefWidth="380"/>
+                                    </VBox>
+                                </HBox>
+
+                                <!-- Candidate Buttons -->
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <Button text="← Back to Jobs" onAction="#handleBackToJobOffers" styleClass="btn-ghost"/>
+                                    <Region HBox.hgrow="ALWAYS"/>
+                                    <Button fx:id="addButton" text="Submit Application"
+                                            onAction="#addApplication" styleClass="btn-primary"/>
+                                </HBox>
+
+                            </VBox>
+                        </VBox>
+
+                        <!-- ════════════════════════════════════════
+                             RECRUITER ONLY — Review Panel
+                             Hidden by default, appears when recruiter
+                             clicks "Review" on a table row
+                             ════════════════════════════════════════ -->
+                        <VBox fx:id="reviewPanel" styleClass="form-card" spacing="0">
+
+                            <HBox styleClass="card-header" alignment="CENTER_LEFT" spacing="12">
+                                <Label text="Application Review" styleClass="card-title"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Label fx:id="reviewAppId" text="" styleClass="review-id-badge"/>
+                            </HBox>
+
+                            <VBox spacing="16">
+                                <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+
+                                <!-- ── READ-ONLY candidate info ── -->
+                                <Label text="CANDIDATE INFORMATION" styleClass="section-label"/>
+
+                                <HBox spacing="16">
+                                    <VBox spacing="4" prefWidth="380">
+                                        <Label text="EMAIL" styleClass="field-label"/>
+                                        <Label fx:id="viewEmail" styleClass="view-value" maxWidth="380"/>
+                                    </VBox>
+                                    <VBox spacing="4" prefWidth="380">
+                                        <Label text="PHONE" styleClass="field-label"/>
+                                        <Label fx:id="viewPhone" styleClass="view-value" maxWidth="380"/>
+                                    </VBox>
+                                </HBox>
+
+                                <HBox spacing="16">
+                                    <VBox spacing="4" prefWidth="380">
+                                        <Label text="APPLICATION DATE" styleClass="field-label"/>
+                                        <Label fx:id="viewAppDate" styleClass="view-value" maxWidth="380"/>
+                                    </VBox>
+                                    <VBox spacing="4" prefWidth="380">
+                                        <Label text="AVAILABILITY DATE" styleClass="field-label"/>
+                                        <Label fx:id="viewAvailDate" styleClass="view-value" maxWidth="380"/>
+                                    </VBox>
+                                </HBox>
+
+                                <HBox spacing="16">
+                                    <VBox spacing="4" prefWidth="380">
+                                        <Label text="EXPECTED SALARY" styleClass="field-label"/>
+                                        <Label fx:id="viewSalary" styleClass="view-value" maxWidth="380"/>
+                                    </VBox>
+                                    <VBox spacing="4" prefWidth="380">
+                                        <Label text="EXPERIENCE" styleClass="field-label"/>
+                                        <Label fx:id="viewExperience" styleClass="view-value" maxWidth="380"/>
+                                    </VBox>
+                                </HBox>
+
+                                <HBox spacing="16">
+                                    <VBox spacing="4" prefWidth="380">
+                                        <Label text="RESUME" styleClass="field-label"/>
+                                        <Label fx:id="viewResume" styleClass="view-value" maxWidth="380"/>
+                                    </VBox>
+                                    <VBox spacing="4" prefWidth="380">
+                                        <Label text="PORTFOLIO URL" styleClass="field-label"/>
+                                        <Label fx:id="viewPortfolio" styleClass="view-value" maxWidth="380"/>
+                                    </VBox>
+                                </HBox>
+
+                                <VBox spacing="4">
+                                    <Label text="COVER LETTER" styleClass="field-label"/>
+                                    <Label fx:id="viewCoverLetter" styleClass="view-value-multiline"
+                                           wrapText="true" maxWidth="Infinity"/>
+                                </VBox>
+
+                                <!-- Divider -->
+                                <Region prefHeight="1" style="-fx-background-color:#E2E8F0;"/>
+
+                                <!-- ── EDITABLE evaluation fields ── -->
+                                <Label text="RECRUITER EVALUATION" styleClass="section-label"/>
+
+                                <HBox spacing="16">
+                                    <VBox spacing="5" prefWidth="380">
+                                        <Label text="STATUS" styleClass="field-label"/>
+                                        <ComboBox fx:id="statusCombo" prefWidth="380" styleClass="field-input"/>
+                                    </VBox>
+                                    <VBox spacing="5" prefWidth="380">
+                                        <Label text="SCORE (0–100)" styleClass="field-label"/>
+                                        <TextField fx:id="scoreField" promptText="e.g. 87"
+                                                   styleClass="field-input" prefWidth="380"/>
+                                    </VBox>
+                                </HBox>
+
+                                <VBox spacing="5">
+                                    <Label text="REVIEW NOTES" styleClass="field-label"/>
+                                    <TextArea fx:id="reviewNoteField" prefRowCount="3"
+                                              promptText="Internal evaluation notes..." styleClass="field-textarea"/>
+                                </VBox>
+
+                                <!-- Recruiter Buttons -->
+                                <HBox spacing="12" alignment="CENTER_LEFT">
+                                    <Button text="← Back to Jobs" onAction="#handleBackToJobOffers" styleClass="btn-ghost"/>
+                                    <Button text="✕ Cancel" onAction="#handleCancelReview" styleClass="btn-ghost"/>
+                                    <Region HBox.hgrow="ALWAYS"/>
+                                    <Button fx:id="updateButton" text="Save Changes"
+                                            onAction="#updateApplication" styleClass="btn-primary"/>
+                                </HBox>
+
+                            </VBox>
+                        </VBox>
+
+                        <!-- ════════════════════════════════════════
+                             TABLE — both roles see this
+                             Candidate: their own apps, no actions
+                             Recruiter: all apps + Review + Delete
+                             ════════════════════════════════════════ -->
+                        <VBox styleClass="form-card" spacing="0">
+
+                            <HBox styleClass="card-header" alignment="CENTER_LEFT" spacing="12">
+                                <Label text="Application Listings" styleClass="card-title"/>
+                            </HBox>
+
+                            <TableView fx:id="tableView" prefHeight="380" styleClass="app-table">
+                                <columns>
+                                    <TableColumn fx:id="colId" text="ID" prefWidth="50"/>
+                                    <TableColumn fx:id="colDate" text="Date" prefWidth="100"/>
+                                    <TableColumn fx:id="colCoverLetter" text="Cover Letter" prefWidth="220"/>
+                                    <TableColumn fx:id="colResume" text="Resume" prefWidth="160"/>
+                                    <TableColumn fx:id="colStatus" text="Status" prefWidth="90"/>
+                                    <TableColumn fx:id="colAction" text="Actions" prefWidth="140"/>
+                                </columns>
+                                <placeholder>
+                                    <Label text="No applications found." styleClass="table-placeholder"/>
+                                </placeholder>
+                            </TableView>
+
+                        </VBox>
+
+                    </VBox>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </center>
+</BorderPane>

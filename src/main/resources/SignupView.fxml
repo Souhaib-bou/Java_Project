@@ -30,7 +30,12 @@
 
                     <Label text="First name" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
                     <TextField fx:id="txtFirstName" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+<<<<<<< HEAD
 
+=======
+                    <Label text="Role"/>
+                    <ComboBox fx:id="cmbRole"/>
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
                     <Label text="Last name" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="2"/>
                     <TextField fx:id="txtLastName" GridPane.rowIndex="0" GridPane.columnIndex="3"/>
 

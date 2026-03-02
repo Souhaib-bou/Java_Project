@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 package Models;
+=======
+    package Models;
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
 
 import java.util.Date;
 

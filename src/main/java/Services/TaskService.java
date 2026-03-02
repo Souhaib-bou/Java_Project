@@ -28,7 +28,11 @@ public class TaskService {
         ps.setInt(1, task.getPlanId());
         ps.setString(2, task.getTitle());
         ps.setString(3, task.getDescription());
+<<<<<<< HEAD
         ps.setString(4, toDbStatus(task.getStatus()));
+=======
+        ps.setString(4, task.getStatus());
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
 
         if (task.getFilepath() == null || task.getFilepath().trim().isEmpty()) {
             ps.setNull(5, Types.VARCHAR);
@@ -50,7 +54,11 @@ public class TaskService {
         ps.setInt(1, task.getPlanId());
         ps.setString(2, task.getTitle());
         ps.setString(3, task.getDescription());
+<<<<<<< HEAD
         ps.setString(4, toDbStatus(task.getStatus()));
+=======
+        ps.setString(4, task.getStatus());
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
         ps.setString(5, task.getFilepath());
         ps.setInt(6, taskId);
 
@@ -140,6 +148,7 @@ public class TaskService {
 
         return list;
     }
+<<<<<<< HEAD
     private String toDbStatus(String uiStatus) {
         if (uiStatus == null) return "not_started";
 
@@ -154,6 +163,8 @@ public class TaskService {
             default -> "not_started";
         };
     }
+=======
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
 
     // GET TASKS BY STATUS
     /**

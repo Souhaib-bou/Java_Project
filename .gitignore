@@ -14,6 +14,13 @@ target/
 *.ipr
 
 ### Eclipse ###
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+.env
+=======
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
 .apt_generated
 .classpath
 .factorypath
@@ -21,6 +28,14 @@ target/
 .settings
 .springBeans
 .sts4-cache
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+=======
+config.properties
+.env
+>>>>>>> e83af0e702d3bb2c83b5340e20de94cbf3d1e24c
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
 
 ### NetBeans ###
 /nbproject/private/
