@@ -3,31 +3,15 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<?import javafx.scene.image.ImageView?>
 <VBox xmlns="http://javafx.com/javafx/17"
-      xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controllers.UserProfileController"
-            stylesheets="@styles/hirely.css"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="Controllers.UserProfileController"
       spacing="14"
       styleClass="app-root">
 
     <padding>
         <Insets top="0" right="0" bottom="0" left="0"/>
     </padding>
-    <HBox spacing="12" alignment="CENTER_LEFT">
-        <StackPane prefWidth="90" prefHeight="90" styleClass="avatar-large">
-            <ImageView fx:id="imgProfile"
-                       fitWidth="90" fitHeight="90"
-                       preserveRatio="true"/>
-            <Label fx:id="lblProfileInitials" text="U" styleClass="user-chip-initials"/>
-        </StackPane>
-
-        <VBox spacing="8">
-            <Button text="Choose Photo" onAction="#handleChoosePhoto" styleClass="btn-secondary"/>
-            <Label text="PNG / JPG" styleClass="footer-label"/>
-        </VBox>
-    </HBox>
-
-
 
     <VBox styleClass="card" spacing="12" maxWidth="760">
         <Label text="My Profile" styleClass="section-title"/>

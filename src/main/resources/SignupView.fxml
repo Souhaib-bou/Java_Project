@@ -16,68 +16,37 @@
                 <Insets top="30" right="30" bottom="30" left="30"/>
             </padding>
 
-            <VBox styleClass="card" spacing="14" maxWidth="720">
-
+            <VBox styleClass="card" spacing="14" maxWidth="600">
                 <Label text="Create your account" styleClass="section-title"/>
-                <Label text="Sign up to start using Hirely" styleClass="footer-label"/>
+                <Label text="Sign up to start using Hirely" styleClass="form-label"/>
 
-                <GridPane hgap="14" vgap="12">
+                <GridPane hgap="12" vgap="12">
                     <columnConstraints>
-                        <ColumnConstraints minWidth="120" hgrow="NEVER"/>
+                        <ColumnConstraints minWidth="140" hgrow="NEVER"/>
                         <ColumnConstraints hgrow="ALWAYS"/>
-                        <ColumnConstraints minWidth="120" hgrow="NEVER"/>
+                        <ColumnConstraints minWidth="140" hgrow="NEVER"/>
                         <ColumnConstraints hgrow="ALWAYS"/>
                     </columnConstraints>
 
-                    <!-- Row 0 -->
-                    <Label text="First name" styleClass="form-label"
-                           GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-                    <TextField fx:id="txtFirstName"
-                               GridPane.rowIndex="0" GridPane.columnIndex="1"
-                               maxWidth="1.7976931348623157E308"/>
+                    <Label text="First name" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                    <TextField fx:id="txtFirstName" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
-                    <Label text="Last name" styleClass="form-label"
-                           GridPane.rowIndex="0" GridPane.columnIndex="2"/>
-                    <TextField fx:id="txtLastName"
-                               GridPane.rowIndex="0" GridPane.columnIndex="3"
-                               maxWidth="1.7976931348623157E308"/>
+                    <Label text="Last name" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="2"/>
+                    <TextField fx:id="txtLastName" GridPane.rowIndex="0" GridPane.columnIndex="3"/>
 
-                    <!-- Row 1 -->
-                    <Label text="Role" styleClass="form-label"
-                           GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-                    <ComboBox fx:id="cmbRole"
-                              GridPane.rowIndex="1" GridPane.columnIndex="1"
-                              maxWidth="1.7976931348623157E308"/>
-
-                    <Label text="Status" styleClass="form-label"
-                           GridPane.rowIndex="1" GridPane.columnIndex="2"/>
-                    <ComboBox fx:id="cmbStatus"
-                              GridPane.rowIndex="1" GridPane.columnIndex="3"
-                              maxWidth="1.7976931348623157E308"/>
-
-                    <!-- Row 2 -->
-                    <Label text="Email" styleClass="form-label"
-                           GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                    <Label text="Email" styleClass="form-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
                     <TextField fx:id="txtEmail" promptText="name@company.com"
-                               GridPane.rowIndex="2" GridPane.columnIndex="1"
-                               GridPane.columnSpan="3"
-                               maxWidth="1.7976931348623157E308"/>
+                               GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.columnSpan="3"/>
 
-                    <!-- Row 3 -->
-                    <Label text="Password" styleClass="form-label"
-                           GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-                    <PasswordField fx:id="txtPassword"
-                                   GridPane.rowIndex="3" GridPane.columnIndex="1"
-                                   maxWidth="1.7976931348623157E308"/>
+                    <Label text="Password" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                    <PasswordField fx:id="txtPassword" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
 
-                    <Label text="Confirm" styleClass="form-label"
-                           GridPane.rowIndex="3" GridPane.columnIndex="2"/>
-                    <PasswordField fx:id="txtConfirm"
-                                   GridPane.rowIndex="3" GridPane.columnIndex="3"
-                                   maxWidth="1.7976931348623157E308"/>
+                    <Label text="Confirm" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="2"/>
+                    <PasswordField fx:id="txtConfirm" GridPane.rowIndex="2" GridPane.columnIndex="3"/>
+
+                    <Label text="Status" styleClass="form-label" GridPane.rowIndex="3" GridPane.columnIndex="2"/>
+                    <ComboBox fx:id="cmbStatus" GridPane.rowIndex="3" GridPane.columnIndex="3"/>
                 </GridPane>
-
-                <Separator/>
 
                 <HBox alignment="CENTER_RIGHT" spacing="10">
                     <Button text="Back to login" onAction="#handleBackToLogin" styleClass="btn-secondary"/>

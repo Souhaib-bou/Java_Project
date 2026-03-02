@@ -4,8 +4,6 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<?import javafx.scene.image.ImageView?>
-<?import javafx.scene.image.Image?>
 <BorderPane fx:id="root"
             xmlns="http://javafx.com/javafx/17"
             xmlns:fx="http://javafx.com/fxml/1"
@@ -13,86 +11,63 @@
             stylesheets="@styles/hirely.css"
             styleClass="app-root">
 
-    <!-- TOP BAR (UI only) -->
+    <!-- HEADER -->
     <top>
-        <VBox styleClass="topbar-shell">
+        <VBox styleClass="header-shell">
 
-            <StackPane styleClass="topbar-wrap">
-                <HBox styleClass="topbar" alignment="CENTER_LEFT" spacing="16">
+            <!-- TOP ROW -->
+            <HBox styleClass="header-top" alignment="CENTER_LEFT" spacing="12">
 
-                    <!-- Logo -->
-                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="brand">
-                        <ImageView fitHeight="34" preserveRatio="true" styleClass="brand-logo">
-                            <image>
-                                <Image url="@assets/logo-hirely-light.png"/>
-                            </image>
-                        </ImageView>
-                        <Label text="HIRELY" styleClass="brand-text"/>
-                    </HBox>
+                <Label text="Hirely" styleClass="header-app-title"/>
 
-                    <!-- Center nav pills (keep same actions) -->
-                    <HBox alignment="CENTER" spacing="10" styleClass="topbar-nav" HBox.hgrow="ALWAYS">
-                        <Button text="Home" styleClass="nav-pill" onAction="#handleOpenHome"/>
-                        <Button text="Onboarding" styleClass="nav-pill" onAction="#handleOpenOnboarding"/>
-                    </HBox>
-
-                    <!-- Right icons + profile -->
-                    <HBox alignment="CENTER_RIGHT" spacing="10">
-
-                        <StackPane>
-                            <!-- Use XML numeric reference to avoid FXML escape issues -->
-                            <Button text="&#128276;" styleClass="icon-btn" mnemonicParsing="false"/>
-                            <Label text="2" styleClass="badge" StackPane.alignment="TOP_RIGHT"/>
-                        </StackPane>
-
-                        <Button text="&#9993;" styleClass="icon-btn" mnemonicParsing="false"/>
-
-                        <!-- Profile dropdown (existing fx:ids kept) -->
-                        <Button fx:id="btnUserMenu" styleClass="profile-chip" mnemonicParsing="false">
-                            <graphic>
-                                <HBox alignment="CENTER" spacing="10">
-
-                                    <StackPane prefWidth="32" prefHeight="32" styleClass="avatar-small">
-                                        <ImageView fx:id="imgHeaderAvatar" fitWidth="32" fitHeight="32" preserveRatio="true"/>
-                                        <Label fx:id="lblHeaderInitials" text="U" styleClass="user-chip-initials"/>
-                                    </StackPane>
-
-                                    <Label fx:id="lblHeaderUserName" text="User" styleClass="profile-name"/>
-                                    <Label text="▾" styleClass="profile-caret"/>
-                                </HBox>
-                            </graphic>
-                        </Button>
-
-                    </HBox>
-
+                <!-- NAV BUTTONS -->
+                <HBox spacing="8" alignment="CENTER_LEFT">
+                    <Button text="Home" onAction="#handleOpenHome" styleClass="btn-secondary"/>
+                    <Button text="Onboarding" onAction="#handleOpenOnboarding" styleClass="btn-primary"/>
+                    <Button text="Job Offers" onAction="#handleOpenJobOffers" styleClass="btn-secondary"/>
                 </HBox>
-            </StackPane>
 
-            <!-- Optional page label row (keeps your existing bindings) -->
-            <HBox styleClass="page-meta" alignment="CENTER_LEFT" spacing="10">
-                <Label fx:id="lblPageTitle" text="Home" styleClass="page-title"/>
-                <Label fx:id="lblPageSubtitle" text="Welcome" styleClass="page-subtitle"/>
+                <Pane HBox.hgrow="ALWAYS"/>
+
+                <!-- profile dropdown -->
+                <MenuButton fx:id="menuUser"
+                            styleClass="user-chip-menu"
+                            popupSide="BOTTOM"
+                            mnemonicParsing="false">
+
+                    <graphic>
+                        <HBox alignment="CENTER" spacing="10">
+                            <Label fx:id="lblHeaderInitials" text="U" styleClass="user-chip-initials"/>
+                            <Label fx:id="lblHeaderUserName" text="User" styleClass="user-chip-name"/>
+                            <Label text="▾" styleClass="user-chip-caret"/>
+                        </HBox>
+                    </graphic>
+
+                    <items>
+                        <MenuItem text="Profile" onAction="#handleOpenProfile"/>
+                        <SeparatorMenuItem/>
+                        <MenuItem text="Logout" onAction="#handleLogout"/>
+                    </items>
+                </MenuButton>
             </HBox>
 
+            <!-- BOTTOM ROW -->
+            <HBox styleClass="header-bottom" alignment="CENTER_LEFT" spacing="12">
+                <Label fx:id="lblPageTitle" text="Home" styleClass="header-title"/>
+                <Label fx:id="lblPageSubtitle" text="Welcome" styleClass="header-subtitle"/>
+            </HBox>
+
+            <Region styleClass="header-accent"/>
         </VBox>
     </top>
 
     <!-- CONTENT -->
     <center>
-        <ScrollPane fx:id="scrollWrapper"
-                    fitToWidth="true"
-                    hbarPolicy="NEVER">
-
-            <content>
-
-                <StackPane fx:id="contentHost"/>
-
-            </content>
+        <StackPane fx:id="contentHost">
             <padding>
                 <Insets top="18" right="18" bottom="18" left="18"/>
             </padding>
-
-        </ScrollPane>
+        </StackPane>
     </center>
 
 </BorderPane>

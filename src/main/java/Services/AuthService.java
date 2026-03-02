@@ -1,77 +1,54 @@
 package Services;
 
 import Models.User;
-import Utils.UserSession;
-import Utils.api.ApiClient;
+
+import java.sql.SQLException;
 
 public class AuthService {
 
     private final UserService userService = new UserService();
 
-    public User login(String email, String password) throws Exception {
+    public User login(String email, String password) throws SQLException {
 
         String em = (email == null) ? "" : email.trim();
-        String pw = (password == null) ? "" : password;
+        String pw = (password == null) ? "" : password; // keep as-is first
 
-        if (em.isEmpty() || pw.isEmpty()) return null;
-
-        String body = "{"
-                + "\"email\":\"" + escape(em) + "\","
-                + "\"password\":\"" + escape(pw) + "\""
-                + "}";
-
-        // 1) Call backend login
-        String json = ApiClient.post("/api/auth/login", body);
-
-        // 2) Extract token + ids (simple parsing, no extra libs)
-        String token = extractString(json, "token");
-        int userId = extractInt(json, "userId");
-        int roleId = extractInt(json, "roleId");
-
-        if (token == null || token.isBlank() || userId <= 0) {
+        if (em.isEmpty() || pw.isEmpty()) {
             return null;
         }
 
-        // 3) Load user details (from DB for now)
-        User u = userService.findById(userId); // If you don't have findById, tell me and I’ll adjust
+        User u = userService.findByEmail(em);
+
+        // 1) email not found
         if (u == null) {
-            // fallback: at least build a minimal User object
-            u = new User();
-            u.setUserId(userId);
-            u.setRoleId(roleId);
-            u.setEmail(em);
-        } else {
-            u.setRoleId(roleId); // ensure role matches backend
+            System.out.println("❌ LOGIN FAIL: email not found -> [" + em + "]");
+            return null;
         }
 
-        // 4) Save session
-        UserSession.getInstance().setCurrentUser(u);
-        UserSession.getInstance().setToken(token);
+        // 2) inactive
+        String status = (u.getStatus() == null) ? "active" : u.getStatus().trim();
+        if (status.equalsIgnoreCase("inactive")) {
+            System.out.println("❌ LOGIN FAIL: account inactive -> user_id=" + u.getUserId());
+            return null;
+        }
 
-        return u;
-    }
+        // 3) password mismatch
+        String dbPass = (u.getPassword() == null) ? "" : u.getPassword();
 
-    private static String escape(String s) {
-        return s.replace("\\", "\\\\").replace("\"", "\\\"");
-    }
+        // try exact match first
+        if (pw.equals(dbPass)) {
+            System.out.println("✅ LOGIN OK (exact) -> user_id=" + u.getUserId());
+            return u;
+        }
 
-    private static String extractString(String json, String key) {
-        String needle = "\"" + key + "\":\"";
-        int i = json.indexOf(needle);
-        if (i < 0) return null;
-        int start = i + needle.length();
-        int end = json.indexOf("\"", start);
-        if (end < 0) return null;
-        return json.substring(start, end);
-    }
+        // fallback: trimmed compare (helps if you accidentally stored trailing spaces)
+        if (pw.trim().equals(dbPass.trim())) {
+            System.out.println("✅ LOGIN OK (trim fallback) -> user_id=" + u.getUserId());
+            return u;
+        }
 
-    private static int extractInt(String json, String key) {
-        String needle = "\"" + key + "\":";
-        int i = json.indexOf(needle);
-        if (i < 0) return 0;
-        int start = i + needle.length();
-        int end = start;
-        while (end < json.length() && (Character.isDigit(json.charAt(end)) || json.charAt(end) == '-')) end++;
-        return Integer.parseInt(json.substring(start, end));
+        System.out.println("❌ LOGIN FAIL: password mismatch -> user_id=" + u.getUserId()
+                + " | dbLen=" + dbPass.length() + " inputLen=" + pw.length());
+        return null;
     }
 }
