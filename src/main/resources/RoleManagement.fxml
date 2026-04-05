@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<<<<<<< HEAD
+=======
+
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="Controllers.RoleController"
+<<<<<<< HEAD
+      stylesheets="@styles/hirely.css"
+      spacing="14"
+      styleClass="app-root">
+
+    <padding>
+        <Insets top="0" right="0" bottom="0" left="0"/>
+    </padding>
+
+    <!-- ================= CARD ================= -->
+    <VBox styleClass="card" spacing="12" maxWidth="760">
+
+        <Label text="Role Management" styleClass="section-title"/>
+
+        <!-- ================= FORM ================= -->
+        <GridPane hgap="12" vgap="10">
+            <columnConstraints>
+                <ColumnConstraints minWidth="120" hgrow="NEVER"/>
+                <ColumnConstraints hgrow="ALWAYS"/>
+                <ColumnConstraints minWidth="120" hgrow="NEVER"/>
+                <ColumnConstraints hgrow="ALWAYS"/>
+            </columnConstraints>
+
+            <!-- Role Name -->
+            <Label text="Role Name" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+            <TextField fx:id="txtRoleName" promptText="Enter role name" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+            <!-- Status -->
+            <Label text="Status" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="2"/>
+            <ComboBox fx:id="cmbStatus" promptText="Select status" GridPane.rowIndex="0" GridPane.columnIndex="3"/>
+
+            <!-- Dashboard -->
+            <Label text="Dashboard" styleClass="form-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+            <TextField fx:id="txtDashboard" promptText="Enter dashboard" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+            <!-- Description -->
+            <Label text="Description" styleClass="form-label" GridPane.rowIndex="1" GridPane.columnIndex="2"/>
+            <TextArea fx:id="txtDescription" promptText="Enter description" GridPane.rowIndex="1" GridPane.columnIndex="3"/>
+        </GridPane>
+
+        <!-- ================= BUTTONS ================= -->
+        <HBox alignment="CENTER_RIGHT" spacing="10">
+            <Button fx:id="btnBack" text="Back" onAction="#handleBack" styleClass="btn-secondary"/>
+            <Button fx:id="btnAdd" text="Add Role" onAction="#handleAdd" styleClass="btn-primary"/>
+            <Button fx:id="btnUpdate" text="Update Role" onAction="#handleUpdate" styleClass="btn-primary"/>
+            <Button fx:id="btnDelete" text="Delete Role" onAction="#handleDelete" styleClass="btn-danger"/>
+            <Button text="Clear" onAction="#handleClear" styleClass="btn-secondary"/>
+        </HBox>
+
+        <!-- ================= TABLE ================= -->
+        <TableView fx:id="roleTable" VBox.vgrow="ALWAYS">
+            <columns>
+                <TableColumn fx:id="colId" text="ID" prefWidth="80"/>
+                <TableColumn fx:id="colName" text="Role Name"/>
+                <TableColumn fx:id="colStatus" text="Status"/>
+                <TableColumn fx:id="colDashboard" text="Dashboard"/>
+                <TableColumn fx:id="colDescription" text="Description"/>
+            </columns>
+        </TableView>
+
+        <!-- ================= FOOTER ================= -->
+        <Label fx:id="lblMessage" text="" styleClass="footer-label"/>
+    </VBox>
+=======
+      spacing="15"
+      styleClass="app-root">
+
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <!-- ===== FORM CARD ===== -->
+    <VBox spacing="12" styleClass="card">
+
+        <Label text="Role Management" styleClass="section-title"/>
+
+        <GridPane hgap="12" vgap="10">
+
+            <columnConstraints>
+                <ColumnConstraints minWidth="120"/>
+                <ColumnConstraints hgrow="ALWAYS"/>
+            </columnConstraints>
+
+            <Label text="Role Name"/>
+            <TextField fx:id="txtRoleName" GridPane.columnIndex="1"/>
+
+            <Label text="Status" GridPane.rowIndex="1"/>
+            <ComboBox fx:id="cmbStatus"
+                      GridPane.rowIndex="1"
+                      GridPane.columnIndex="1"/>
+
+            <Label text="Dashboard" GridPane.rowIndex="2"/>
+            <TextField fx:id="txtDashboard"
+                       GridPane.rowIndex="2"
+                       GridPane.columnIndex="1"/>
+
+            <Label text="Description" GridPane.rowIndex="3"/>
+            <TextArea fx:id="txtDescription"
+                      prefRowCount="3"
+                      GridPane.rowIndex="3"
+                      GridPane.columnIndex="1"/>
+        </GridPane>
+
+        <HBox spacing="10" alignment="CENTER_RIGHT">
+            <Button text="Add" onAction="#handleAdd"/>
+            <Button text="Update" onAction="#handleUpdate"/>
+            <Button text="Delete" onAction="#handleDelete"/>
+            <Button text="Clear" onAction="#handleClear"/>
+        </HBox>
+
+        <Label fx:id="lblMessage"/>
+    </VBox>
+
+    <!-- ===== TABLE ===== -->
+    <TableView fx:id="roleTable" prefHeight="300">
+
+        <columns>
+            <TableColumn fx:id="colId" text="ID" prefWidth="60"/>
+            <TableColumn fx:id="colName" text="Role Name" prefWidth="150"/>
+            <TableColumn fx:id="colStatus" text="Status" prefWidth="100"/>
+            <TableColumn fx:id="colDashboard" text="Dashboard" prefWidth="150"/>
+            <TableColumn fx:id="colDescription" text="Description" prefWidth="200"/>
+        </columns>
+
+    </TableView>
+
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
+</VBox>

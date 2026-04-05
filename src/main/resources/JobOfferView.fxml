@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="Controllers.JobOfferController"
+            stylesheets="@styles/Joboffer.css"
+            styleClass="jo-root"
+            prefWidth="1100"
+            prefHeight="800">
+
+    <center>
+        <ScrollPane fitToWidth="true" vbarPolicy="AS_NEEDED" hbarPolicy="NEVER" styleClass="jo-scroll">
+            <content>
+                <VBox spacing="0">
+
+                    <!-- ═══════════ HERO HEADER ═══════════ -->
+                    <VBox styleClass="jo-hero" spacing="6">
+                        <padding><Insets top="32" right="40" bottom="32" left="40"/></padding>
+                        <HBox alignment="CENTER_LEFT" spacing="16">
+                            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                                <Label fx:id="heroTitle" text="Job Offers" styleClass="jo-hero-title"/>
+                                <Label fx:id="heroSubtitle" text="Browse open positions" styleClass="jo-hero-subtitle"/>
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                    <VBox fx:id="searchBar" styleClass="jo-card" spacing="0">
+                        <HBox styleClass="jo-card-header" alignment="CENTER_LEFT" spacing="12">
+                            <padding><Insets top="12" right="20" bottom="12" left="20"/></padding>
+                            <TextField fx:id="searchField" promptText="🔍  Search by title, location, contract..."
+                                       styleClass="jo-field-input" prefWidth="400"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <Label text="SORT BY" styleClass="jo-field-label"/>
+                            <ComboBox fx:id="sortCombo" prefWidth="160" styleClass="jo-field-input"/>
+                            <Button text="↑↓" fx:id="sortOrderBtn" onAction="#handleSortOrder" styleClass="jo-btn-map"/>
+                        </HBox>
+                    </VBox>
+
+                    <!-- ═══════════ CONTENT ═══════════ -->
+                    <VBox spacing="20">
+                        <padding><Insets top="24" right="24" bottom="32" left="24"/></padding>
+
+                        <!-- ════════════════════════════════
+                             RECRUITER ONLY — Post Job Card
+                             ════════════════════════════════ -->
+                        <VBox fx:id="formCard" styleClass="jo-card" spacing="0">
+
+                            <HBox styleClass="jo-card-header" alignment="CENTER_LEFT">
+                                <Label text="Post a New Job" styleClass="jo-card-title"/>
+                            </HBox>
+
+                            <VBox spacing="16">
+                                <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+
+                                <!-- Title + Contract -->
+                                <HBox spacing="16">
+                                    <VBox spacing="5" prefWidth="370">
+                                        <Label text="JOB TITLE" styleClass="jo-field-label"/>
+                                        <TextField fx:id="titleField" promptText="e.g. Senior Java Developer"
+                                                   styleClass="jo-field-input" prefWidth="370"/>
+                                    </VBox>
+                                    <VBox spacing="5" prefWidth="370">
+                                        <Label text="CONTRACT TYPE" styleClass="jo-field-label"/>
+                                        <ComboBox fx:id="contractTypeBox" prefWidth="370" styleClass="jo-field-input"/>
+                                    </VBox>
+                                </HBox>
+
+                                <!-- Salary + Experience -->
+                                <HBox spacing="16">
+                                    <VBox spacing="5" prefWidth="370">
+                                        <Label text="SALARY (TND)" styleClass="jo-field-label"/>
+                                        <TextField fx:id="salaryField" promptText="e.g. 4000"
+                                                   styleClass="jo-field-input" prefWidth="370"/>
+                                    </VBox>
+                                    <VBox spacing="5" prefWidth="370">
+                                        <Label text="EXPERIENCE REQUIRED (YEARS)" styleClass="jo-field-label"/>
+                                        <TextField fx:id="experienceField" promptText="e.g. 3"
+                                                   styleClass="jo-field-input" prefWidth="370"/>
+                                    </VBox>
+                                </HBox>
+
+                                <!-- Location + Status -->
+                                <HBox spacing="16">
+                                    <VBox spacing="5" prefWidth="370">
+                                        <Label text="LOCATION" styleClass="jo-field-label"/>
+                                        <HBox spacing="8" alignment="CENTER_LEFT">
+                                            <TextField fx:id="locationField" promptText="e.g. Tunis, Tunisia"
+                                                       styleClass="jo-field-input" prefWidth="280"/>
+                                            <Button text="📍 Select on Map"
+                                                    onAction="#handleSelectOnMap" styleClass="jo-btn-map"/>
+                                        </HBox>
+                                    </VBox>
+                                    <VBox spacing="5" prefWidth="370">
+                                        <Label text="STATUS" styleClass="jo-field-label"/>
+                                        <ComboBox fx:id="statusBox" prefWidth="370" styleClass="jo-field-input"/>
+                                    </VBox>
+                                </HBox>
+
+                                <!-- Publication Date + Description -->
+                                <HBox spacing="16">
+                                    <VBox spacing="5" prefWidth="370">
+                                        <Label text="PUBLICATION DATE" styleClass="jo-field-label"/>
+                                        <DatePicker fx:id="publicationDatePicker" prefWidth="370" styleClass="jo-field-input"/>
+                                    </VBox>
+                                    <VBox spacing="5" prefWidth="370">
+                                        <Label text="DESCRIPTION" styleClass="jo-field-label"/>
+                                        <TextArea fx:id="descriptionField" prefRowCount="3"
+                                                  promptText="Describe the role, responsibilities..."
+                                                  styleClass="jo-field-textarea" prefWidth="370"/>
+                                    </VBox>
+                                </HBox>
+
+                                <!-- Buttons -->
+                                <HBox spacing="12" alignment="CENTER_RIGHT">
+                                    <Button fx:id="addBtn" text="Post Job"
+                                            onAction="#addJobOffer" styleClass="jo-btn-primary"/>
+                                    <Button fx:id="updateBtn" text="Save Changes"
+                                            onAction="#updateJobOffer" styleClass="jo-btn-secondary"/>
+                                </HBox>
+
+                            </VBox>
+                        </VBox>
+
+                        <!-- ════════════════════════════════
+                             TABLE — both roles
+                             ════════════════════════════════ -->
+                        <VBox styleClass="jo-card" spacing="0">
+
+                            <HBox styleClass="jo-card-header" alignment="CENTER_LEFT" spacing="12">
+                                <Label fx:id="tableTitle" text="Available Positions" styleClass="jo-card-title"/>
+                            </HBox>
+
+                            <TableView fx:id="tableView" prefHeight="420" styleClass="jo-table">
+                                <columns>
+                                    <TableColumn fx:id="colId" text="ID" prefWidth="50" visible="false"/>
+                                    <TableColumn fx:id="colUserId" text="Posted By" prefWidth="80" visible="false"/>
+                                    <TableColumn fx:id="colTitle" text="Title" prefWidth="180"/>
+                                    <TableColumn fx:id="colContract" text="Contract" prefWidth="90"/>
+                                    <TableColumn fx:id="colSalary" text="Salary" prefWidth="80"/>
+                                    <TableColumn fx:id="colExperience" text="Exp." prefWidth="50"/>
+                                    <TableColumn fx:id="colLocation" text="Location" prefWidth="120"/>
+                                    <TableColumn fx:id="colStatus" text="Status" prefWidth="80"/>
+                                    <TableColumn fx:id="colAction" text="Actions" prefWidth="260"/>
+                                </columns>
+                                <placeholder>
+                                    <Label text="No job offers found." styleClass="jo-placeholder"/>
+                                </placeholder>
+                            </TableView>
+
+                        </VBox>
+
+                    </VBox>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </center>
+
+</BorderPane>

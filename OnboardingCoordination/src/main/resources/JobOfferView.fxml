@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="Controllers.JobOfferController"
+            stylesheets="@styles/hirely.css"
+            styleClass="app-root"
+            prefWidth="1920"
+            prefHeight="1080">
+
+
+    <!-- ================= MAIN CONTENT ================= -->
+    <center>
+        <VBox spacing="25" >
+        <padding>
+            <Insets top="18" right="18" bottom="18" left="18"/>
+        </padding>
+
+            <!-- TITLE -->
+            <Label text="Manage Job Offers"
+                   styleClass="header-title"/>
+
+            <!-- FORM CARD -->
+            <VBox spacing="20">
+
+                <GridPane hgap="30" vgap="15">
+
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="25"/>
+                        <ColumnConstraints percentWidth="25"/>
+                        <ColumnConstraints percentWidth="25"/>
+                        <ColumnConstraints percentWidth="25"/>
+                    </columnConstraints>
+
+                    <!-- Row 0 -->
+                    <Label text="Title:" GridPane.rowIndex="0"/>
+                    <TextField fx:id="titleField"
+                               GridPane.rowIndex="0"
+                               GridPane.columnIndex="1"/>
+
+                    <Label text="Contract:" GridPane.rowIndex="0" GridPane.columnIndex="2"/>
+                    <ComboBox fx:id="contractTypeBox"
+                              GridPane.rowIndex="0"
+                              GridPane.columnIndex="3"/>
+
+                    <!-- Row 1 -->
+                    <Label text="Salary:" GridPane.rowIndex="1"/>
+                    <TextField fx:id="salaryField"
+                               GridPane.rowIndex="1"
+                               GridPane.columnIndex="1"/>
+
+                    <Label text="Experience:" GridPane.rowIndex="1" GridPane.columnIndex="2"/>
+                    <TextField fx:id="experienceField"
+                               GridPane.rowIndex="1"
+                               GridPane.columnIndex="3"/>
+
+                    <!-- Row 2 -->
+                    <Label text="Location:" GridPane.rowIndex="2"/>
+                    <TextField fx:id="locationField"
+                               GridPane.rowIndex="2"
+                               GridPane.columnIndex="1"/>
+
+                    <Label text="Status:" GridPane.rowIndex="2" GridPane.columnIndex="2"/>
+                    <ComboBox fx:id="statusBox"
+                              GridPane.rowIndex="2"
+                              GridPane.columnIndex="3"/>
+
+                    <!-- Row 3 -->
+                    <Label text="Publication Date:" GridPane.rowIndex="3"/>
+                    <DatePicker fx:id="publicationDatePicker"
+                                GridPane.rowIndex="3"
+                                GridPane.columnIndex="1"/>
+
+                    <Label text="Description:" GridPane.rowIndex="3" GridPane.columnIndex="2"/>
+                    <TextArea fx:id="descriptionField"
+                              prefRowCount="2"
+                              GridPane.rowIndex="3"
+                              GridPane.columnIndex="3"/>
+                </GridPane>
+
+                <!-- BUTTONS -->
+                <HBox spacing="20">
+                    <Button text="Add"
+                            onAction="#addJobOffer"/>
+
+                    <Button text="Update"
+                            onAction="#updateJobOffer"/>
+
+
+                </HBox>
+            </VBox>
+
+            <!-- TABLE CARD -->
+            <VBox spacing="15"
+                  VBox.vgrow="ALWAYS">
+
+                <Label text="Job Listings"
+                       styleClass="section-title"/>
+
+                <TableView fx:id="tableView"
+                           VBox.vgrow="ALWAYS">
+
+                    <columns>
+                        <TableColumn fx:id="colId" text="ID"/>
+                        <TableColumn fx:id="colUserId" text="User ID" />
+                        <TableColumn fx:id="colTitle" text="Title"/>
+                        <TableColumn fx:id="colContract" text="Contract"/>
+                        <TableColumn fx:id="colSalary" text="Salary"/>
+                        <TableColumn fx:id="colExperience" text="Experience"/>
+                        <TableColumn fx:id="colLocation" text="Location"/>
+                        <TableColumn fx:id="colStatus" text="Status"/>
+                        <TableColumn fx:id="colAction" text="Action" prefWidth="120"/>
+                    </columns>
+
+                </TableView>
+            </VBox>
+
+        </VBox>
+    </center>
+
+</BorderPane>

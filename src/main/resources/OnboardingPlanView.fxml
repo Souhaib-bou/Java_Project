@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="Controllers.OnboardingPlanController"
+            stylesheets="@styles/hirely.css"
+            styleClass="app-root">
+
+    <!-- MAIN SHELL already provides the header,
+<<<<<<< HEAD
+         so this view contains only page content -->
+
+    <center>
+        <ScrollPane fx:id="plansScrollPane"
+                    fitToWidth="true"
+                    hbarPolicy="NEVER"
+                    vbarPolicy="AS_NEEDED"
+                    styleClass="card-scroll"
+                    VBox.vgrow="ALWAYS">
+            <content>
+                <VBox spacing="16">
+                    <padding>
+                        <Insets top="18" right="18" bottom="18" left="18"/>
+                    </padding>
+
+
+                    <!-- ================= SUMMARY CARDS ================= -->
+                    <GridPane hgap="12" vgap="12">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="25" hgrow="ALWAYS"/>
+                            <ColumnConstraints percentWidth="25" hgrow="ALWAYS"/>
+                            <ColumnConstraints percentWidth="25" hgrow="ALWAYS"/>
+                            <ColumnConstraints percentWidth="25" hgrow="ALWAYS"/>
+                        </columnConstraints>
+
+                        <VBox spacing="6" styleClass="card metric-card metric-card-accent"
+                              GridPane.columnIndex="0" GridPane.rowIndex="0">
+                            <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
+                            <Label text="Total Plans" styleClass="metric-label"/>
+                            <Label fx:id="lblMetricTotal" text="0" styleClass="metric-value"/>
+                            <Label text="All onboarding plans" styleClass="muted-text"/>
+                        </VBox>
+
+                        <VBox spacing="6" styleClass="card metric-card metric-card-success"
+                              GridPane.columnIndex="1" GridPane.rowIndex="0">
+                            <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
+                            <Label text="Completed" styleClass="metric-label"/>
+                            <Label fx:id="lblMetricCompleted" text="0" styleClass="metric-value"/>
+                            <Label text="Plans finished" styleClass="muted-text"/>
+                        </VBox>
+
+                        <VBox spacing="6" styleClass="card metric-card metric-card-warning"
+                              GridPane.columnIndex="2" GridPane.rowIndex="0">
+                            <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
+                            <Label text="In Progress" styleClass="metric-label"/>
+                            <Label fx:id="lblMetricInProgress" text="0" styleClass="metric-value"/>
+                            <Label text="Currently active" styleClass="muted-text"/>
+                        </VBox>
+
+                        <VBox spacing="6" styleClass="card metric-card metric-card-danger"
+                              GridPane.columnIndex="3" GridPane.rowIndex="0">
+                            <padding><Insets top="14" right="14" bottom="14" left="14"/></padding>
+                            <Label text="Overdue" styleClass="metric-label"/>
+                            <Label fx:id="lblMetricOverdue" text="0" styleClass="metric-value"/>
+                            <Label text="Deadline passed" styleClass="muted-text"/>
+                        </VBox>
+                    </GridPane>
+
+                    <!-- ================= TOOLBAR CARD (SEARCH / FILTER / SORT) ================= -->
+                    <VBox spacing="10" styleClass="card">
+                        <padding>
+                            <Insets top="14" right="14" bottom="14" left="14"/>
+                        </padding>
+
+                        <HBox alignment="CENTER_LEFT" spacing="10">
+                            <Label text="Plan Explorer" styleClass="section-title"/>
+                            <Region HBox.hgrow="ALWAYS"/>
+                            <CheckBox fx:id="chkOverdueOnly" text="Overdue only"/>
+                        </HBox>
+
+                        <GridPane hgap="10" vgap="10">
+                            <columnConstraints>
+                                <ColumnConstraints percentWidth="36" hgrow="ALWAYS"/>
+                                <ColumnConstraints percentWidth="21" hgrow="ALWAYS"/>
+                                <ColumnConstraints percentWidth="25" hgrow="ALWAYS"/>
+                                <ColumnConstraints percentWidth="18" hgrow="ALWAYS"/>
+                            </columnConstraints>
+
+                            <TextField fx:id="txtPlanSearch"
+                                       promptText="Search plans by user, status, or ID..."
+                                       GridPane.columnIndex="0" GridPane.rowIndex="0"
+                                       maxWidth="1.7976931348623157E308"/>
+
+                            <ComboBox fx:id="cmbPlanFilterStatus"
+                                      promptText="Filter status"
+                                      GridPane.columnIndex="1" GridPane.rowIndex="0"
+                                      maxWidth="1.7976931348623157E308"/>
+
+                            <ComboBox fx:id="cmbPlanSort"
+                                      promptText="Sort by"
+                                      GridPane.columnIndex="2" GridPane.rowIndex="0"
+                                      maxWidth="1.7976931348623157E308"/>
+
+                            <Button text="Reset"
+                                    onAction="#handleResetExplorer"
+                                    GridPane.columnIndex="3" GridPane.rowIndex="0"
+                                    styleClass="btn-secondary"
+                                    maxWidth="1.7976931348623157E308"/>
+                        </GridPane>
+                    </VBox>
+
+                    <!-- ================= MAIN CONTENT GRID ================= -->
+                    <GridPane hgap="16" vgap="16" maxWidth="1.7976931348623157E308" VBox.vgrow="ALWAYS">
+                        <columnConstraints>
+                            <ColumnConstraints percentWidth="38" hgrow="ALWAYS"/>
+                            <ColumnConstraints percentWidth="62" hgrow="ALWAYS"/>
+                        </columnConstraints>
+
+                        <!-- LEFT: FORM CARD -->
+                        <VBox spacing="12" styleClass="card"
+                              GridPane.columnIndex="0" GridPane.rowIndex="0">
+                            <padding>
+                                <Insets top="16" right="16" bottom="16" left="16"/>
+                            </padding>
+
+                            <Label text="Plan Details" styleClass="section-title"/>
+
+                            <Separator />
+
+                            <GridPane hgap="12" vgap="12">
+                                <columnConstraints>
+                                    <ColumnConstraints minWidth="90" hgrow="NEVER"/>
+                                    <ColumnConstraints hgrow="ALWAYS"/>
+                                </columnConstraints>
+
+                                <Label text="User" styleClass="form-label"
+                                       GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                                <ComboBox fx:id="cmbUser" promptText="Select a user..."
+                                          GridPane.rowIndex="0" GridPane.columnIndex="1"
+                                          maxWidth="1.7976931348623157E308"/>
+
+                                <Label text="Status" styleClass="form-label"
+                                       GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                                <ComboBox fx:id="cmbStatus"
+                                          GridPane.rowIndex="1" GridPane.columnIndex="1"
+                                          maxWidth="1.7976931348623157E308"/>
+
+                                <Label text="Deadline" styleClass="form-label"
+                                       GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                                <DatePicker fx:id="dpDeadline"
+                                            GridPane.rowIndex="2" GridPane.columnIndex="1"
+                                            maxWidth="1.7976931348623157E308"/>
+                            </GridPane>
+
+                            <Separator />
+
+                            <!-- Action buttons arranged in 2 rows for better responsiveness -->
+                            <GridPane hgap="10" vgap="10">
+                                <columnConstraints>
+                                    <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
+                                    <ColumnConstraints percentWidth="50" hgrow="ALWAYS"/>
+                                </columnConstraints>
+
+                                <Button fx:id="btnAdd"
+                                        text="Add"
+                                        onAction="#handleAddPlan"
+                                        styleClass="btn-primary"
+                                        maxWidth="1.7976931348623157E308"
+                                        GridPane.columnIndex="0" GridPane.rowIndex="0"/>
+
+                                <Button fx:id="btnUpdate"
+                                        text="Update"
+                                        onAction="#handleUpdatePlan"
+                                        styleClass="btn-secondary"
+                                        maxWidth="1.7976931348623157E308"
+                                        GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+
+                                <Button fx:id="btnDelete"
+                                        text="Delete"
+                                        onAction="#handleDeletePlan"
+                                        styleClass="btn-danger"
+                                        maxWidth="1.7976931348623157E308"
+                                        GridPane.columnIndex="0" GridPane.rowIndex="1"/>
+
+                                <Button fx:id="btnClear"
+                                        text="Clear"
+                                        onAction="#handleClear"
+                                        styleClass="btn-secondary"
+                                        maxWidth="1.7976931348623157E308"
+                                        GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+
+                                <Button fx:id="btnSaveStatus"
+                                        text="Save Status"
+                                        onAction="#handleSaveStatus"
+                                        styleClass="btn-primary"
+                                        maxWidth="1.7976931348623157E308"
+                                        GridPane.columnIndex="0" GridPane.rowIndex="2"
+                                        GridPane.columnSpan="2"/>
+                            </GridPane>
+
+                            <Label text="Tip: Select a plan in the table to edit or open tasks."
+                                   wrapText="true"
+                                   styleClass="muted-text"/>
+                        </VBox>
+
+                        <!-- RIGHT: TABLE CARD -->
+                        <VBox spacing="10" styleClass="card"
+                              GridPane.columnIndex="1" GridPane.rowIndex="0"
+                              VBox.vgrow="ALWAYS">
+                            <padding>
+                                <Insets top="16" right="16" bottom="16" left="16"/>
+                            </padding>
+
+                            <HBox alignment="CENTER_LEFT" spacing="10">
+                                <Label text="Plans" styleClass="section-title"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Button text="Refresh"
+                                        styleClass="btn-secondary"
+                                        onAction="#handleRefreshPlans"/>
+                            </HBox>
+
+                            <ScrollPane fitToWidth="true"
+                                        hbarPolicy="NEVER"
+                                        vbarPolicy="AS_NEEDED"
+                                        styleClass="card-scroll"
+                                        VBox.vgrow="ALWAYS">
+                                <content>
+                                    <VBox fx:id="plansCardsContainer" spacing="10" fillWidth="true">
+                                        <padding>
+                                            <Insets top="2" right="2" bottom="2" left="2"/>
+                                        </padding>
+                                    </VBox>
+                                </content>
+                            </ScrollPane>
+                            <HBox styleClass="footer" alignment="CENTER_LEFT">
+                                <Label fx:id="lblStatus" text="Ready" styleClass="footer-label"/>
+                            </HBox>
+                        </VBox>
+                    </GridPane>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </center>
+
+</BorderPane>
+=======
+         so this view should ONLY contain the page content. -->
+
+    <center>
+        <StackPane>
+            <padding>
+                <Insets top="18" right="18" bottom="18" left="18"/>
+            </padding>
+
+            <GridPane hgap="16" vgap="16" maxWidth="1.7976931348623157E308">
+                <!-- Make columns responsive -->
+                <columnConstraints>
+                    <ColumnConstraints percentWidth="40" hgrow="ALWAYS"/>
+                    <ColumnConstraints percentWidth="60" hgrow="ALWAYS"/>
+                </columnConstraints>
+
+                <!-- LEFT: FORM CARD -->
+                <VBox spacing="12" styleClass="card" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                    <padding>
+                        <Insets top="16" right="16" bottom="16" left="16"/>
+                    </padding>
+
+                    <Label text="Plan Details" styleClass="section-title"/>
+
+                    <GridPane hgap="12" vgap="12">
+                        <columnConstraints>
+                            <ColumnConstraints minWidth="90" hgrow="NEVER"/>
+                            <ColumnConstraints hgrow="ALWAYS"/>
+                        </columnConstraints>
+
+                        <Label text="User" styleClass="form-label"
+                               GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                        <ComboBox fx:id="cmbUser" promptText="Select a user..."
+                                  GridPane.rowIndex="0" GridPane.columnIndex="1"
+                                  maxWidth="1.7976931348623157E308"/>
+
+                        <Label text="Status" styleClass="form-label"
+                               GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                        <ComboBox fx:id="cmbStatus"
+                                  GridPane.rowIndex="1" GridPane.columnIndex="1"
+                                  maxWidth="1.7976931348623157E308"/>
+
+                        <Label text="Deadline" styleClass="form-label"
+                               GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                        <DatePicker fx:id="dpDeadline"
+                                    GridPane.rowIndex="2" GridPane.columnIndex="1"
+                                    maxWidth="1.7976931348623157E308"/>
+                    </GridPane>
+
+                    <HBox spacing="10" alignment="CENTER_RIGHT">
+                        <Button text="Clear" onAction="#handleClear" styleClass="btn-secondary"/>
+                        <Button text="Add" onAction="#handleAddPlan" styleClass="btn-primary"/>
+                        <Button text="Update" onAction="#handleUpdatePlan" styleClass="btn-secondary"/>
+                        <Button text="Delete" onAction="#handleDeletePlan" styleClass="btn-danger"/>
+                    </HBox>
+                </VBox>
+
+                <!-- RIGHT: TABLE CARD -->
+                <VBox spacing="10" styleClass="card" GridPane.columnIndex="1" GridPane.rowIndex="0"
+                      VBox.vgrow="ALWAYS">
+                    <padding>
+                        <Insets top="16" right="16" bottom="16" left="16"/>
+                    </padding>
+
+                    <Label text="Plans" styleClass="section-title"/>
+
+                    <TableView fx:id="tvPlans" VBox.vgrow="ALWAYS" styleClass="hirely-table">
+                        <columnResizePolicy>
+                            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                        </columnResizePolicy>
+
+                        <columns>
+                            <TableColumn fx:id="colPlanId" text="ID" minWidth="60"/>
+                            <TableColumn fx:id="colUserName" text="User" minWidth="160"/>
+                            <TableColumn fx:id="colStatus" text="Status" minWidth="140"/>
+                            <TableColumn fx:id="colDeadline" text="Deadline" minWidth="140"/>
+                            <TableColumn fx:id="colActions" text="Actions" prefWidth="160"/>
+                        </columns>
+                    </TableView>
+
+                    <HBox styleClass="footer" alignment="CENTER_LEFT">
+                        <Label fx:id="lblStatus" text="Ready" styleClass="footer-label"/>
+                    </HBox>
+                </VBox>
+
+            </GridPane>
+        </StackPane>
+    </center>
+
+</BorderPane>
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67

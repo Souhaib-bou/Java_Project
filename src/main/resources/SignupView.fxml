@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="Controllers.SignupController"
+            stylesheets="@styles/hirely.css"
+            styleClass="app-root">
+
+    <center>
+        <VBox alignment="CENTER" spacing="16">
+            <padding>
+                <Insets top="30" right="30" bottom="30" left="30"/>
+            </padding>
+
+            <VBox styleClass="card" spacing="14" maxWidth="600">
+                <Label text="Create your account" styleClass="section-title"/>
+                <Label text="Sign up to start using Hirely" styleClass="form-label"/>
+
+                <GridPane hgap="12" vgap="12">
+                    <columnConstraints>
+                        <ColumnConstraints minWidth="140" hgrow="NEVER"/>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                        <ColumnConstraints minWidth="140" hgrow="NEVER"/>
+                        <ColumnConstraints hgrow="ALWAYS"/>
+                    </columnConstraints>
+
+                    <Label text="First name" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+                    <TextField fx:id="txtFirstName" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+<<<<<<< HEAD
+
+=======
+                    <Label text="Role"/>
+                    <ComboBox fx:id="cmbRole"/>
+>>>>>>> 6583a07f403729f05366fbaae91babf1e4568b67
+                    <Label text="Last name" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="2"/>
+                    <TextField fx:id="txtLastName" GridPane.rowIndex="0" GridPane.columnIndex="3"/>
+
+                    <Label text="Email" styleClass="form-label" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+                    <TextField fx:id="txtEmail" promptText="name@company.com"
+                               GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.columnSpan="3"/>
+
+                    <Label text="Password" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+                    <PasswordField fx:id="txtPassword" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+                    <Label text="Confirm" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="2"/>
+                    <PasswordField fx:id="txtConfirm" GridPane.rowIndex="2" GridPane.columnIndex="3"/>
+
+                    <Label text="Status" styleClass="form-label" GridPane.rowIndex="3" GridPane.columnIndex="2"/>
+                    <ComboBox fx:id="cmbStatus" GridPane.rowIndex="3" GridPane.columnIndex="3"/>
+                </GridPane>
+
+                <HBox alignment="CENTER_RIGHT" spacing="10">
+                    <Button text="Back to login" onAction="#handleBackToLogin" styleClass="btn-secondary"/>
+                    <Button text="Create account" onAction="#handleSignup" styleClass="btn-primary"/>
+                </HBox>
+
+                <Label fx:id="lblMsg" text="" styleClass="footer-label"/>
+            </VBox>
+        </VBox>
+    </center>
+
+</BorderPane>
