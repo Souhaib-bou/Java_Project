@@ -1,0 +1,53 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Onboarding Plans{% endblock %}
+
+{% block admin_content %}
+<div class="page-header">
+    <h1 class="page-title">Onboarding Plans</h1>
+    <p class="muted-text">Manage onboarding plans assigned to users.</p>
+</div>
+
+<div class="card">
+    <div class="section-header">
+        <h2 class="section-title">Plans List</h2>
+        <a href="{{ path('app_admin_plans_new') }}" class="btn-primary">Add Plan</a>
+    </div>
+
+    <div class="placeholder-table">
+        <div class="placeholder-row placeholder-head plan-grid">
+            <span>Plan ID</span>
+            <span>User</span>
+            <span>Status</span>
+            <span>Deadline</span>
+            <span>Actions</span>
+        </div>
+
+        {% for plan in plans %}
+            <div class="placeholder-row plan-grid">
+                <span>#{{ plan.planId }}</span>
+                <span>
+                    {{ plan.user.firstName }} {{ plan.user.lastName }}
+                </span>
+                <span>{{ plan.status }}</span>
+                <span>
+                    {{ plan.deadline ? plan.deadline|date('Y-m-d') : 'No deadline' }}
+                </span>
+                <span class="actions-cell">
+                    <a href="{{ path('app_admin_plans_edit', {id: plan.planId}) }}" class="btn-secondary">Edit</a>
+                    <a href="#" class="btn-primary">Tasks</a>
+
+                    <form method="post" action="{{ path('app_admin_plans_delete', {id: plan.planId}) }}" style="display:inline;">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete_plan_' ~ plan.planId) }}">
+                        <button type="submit" class="btn-danger">Delete</button>
+                    </form>
+                </span>
+            </div>
+        {% else %}
+            <div class="placeholder-row">
+                <span>No onboarding plans found.</span>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

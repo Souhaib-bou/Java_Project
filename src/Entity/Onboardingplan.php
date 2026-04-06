@@ -15,7 +15,7 @@ class Onboardingplan
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(name: 'planId', type: 'integer')]
     private ?int $planId = null;
 
     public function getPlanId(): ?int
@@ -29,17 +29,18 @@ class Onboardingplan
         return $this;
     }
 
-    #[ORM\Column(type: 'integer', nullable: false)]
-    private ?int $user_id = null;
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'user_id', nullable: false)]
+    private ?User $user = null;
 
-    public function getUser_id(): ?int
+    public function getUser(): ?User
     {
-        return $this->user_id;
+        return $this->user;
     }
 
-    public function setUser_id(int $user_id): self
+    public function setUser(?User $user): self
     {
-        $this->user_id = $user_id;
+        $this->user = $user;
         return $this;
     }
 
@@ -82,18 +83,6 @@ class Onboardingplan
     public function setQr_token(?string $qr_token): self
     {
         $this->qr_token = $qr_token;
-        return $this;
-    }
-
-    public function getUserId(): ?int
-    {
-        return $this->user_id;
-    }
-
-    public function setUserId(int $user_id): static
-    {
-        $this->user_id = $user_id;
-
         return $this;
     }
 

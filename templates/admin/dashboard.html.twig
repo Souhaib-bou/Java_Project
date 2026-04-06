@@ -3,8 +3,37 @@
 {% block title %}Admin Dashboard{% endblock %}
 
 {% block admin_content %}
-<div class="card">
+<div class="page-header">
     <h1 class="page-title">Dashboard</h1>
-    <p class="muted-text">Welcome to the Hirely onboarding dashboard.</p>
+    <p class="muted-text">Overview of the onboarding coordination module.</p>
+</div>
+
+<div class="metrics-grid">
+    <div class="metric-card">
+        <div class="metric-label">Total Plans</div>
+        <div class="metric-value">12</div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-label">Completed Plans</div>
+        <div class="metric-value">5</div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-label">In Progress Tasks</div>
+        <div class="metric-value">18</div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-label">Pending Tasks</div>
+        <div class="metric-value">9</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2 class="section-title">Welcome</h2>
+    <p class="muted-text">
+        This dashboard will later display real onboarding statistics and recent activity.
+    </p>
 </div>
 {% endblock %}

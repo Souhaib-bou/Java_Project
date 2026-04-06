@@ -14,12 +14,6 @@ final class AdminController extends AbstractController
         return $this->render('admin/dashboard.html.twig');
     }
 
-    #[Route('/admin/plans', name: 'app_admin_plans')]
-    public function plans(): Response
-    {
-        return $this->render('admin/plans.html.twig');
-    }
-
     #[Route('/admin/tasks', name: 'app_admin_tasks')]
     public function tasks(): Response
     {

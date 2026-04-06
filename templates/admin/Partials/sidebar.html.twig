@@ -8,8 +8,8 @@
     </div>
 
     <nav class="sidebar-nav">
-        <a href="{{ path('app_admin') }}" class="sidebar-link">Dashboard</a>
-        <a href="{{ path('app_admin_plans') }}" class="sidebar-link">Onboarding Plans</a>
-        <a href="{{ path('app_admin_tasks') }}" class="sidebar-link">Onboarding Tasks</a>
+        <a href="{{ path('app_admin') }}" class="sidebar-link {{ app.request.attributes.get('_route') == 'app_admin' ? 'active' : '' }}">Dashboard</a>
+        <a href="{{ path('app_admin_plans') }}" class="sidebar-link {{ app.request.attributes.get('_route') == 'app_admin_plans' ? 'active' : '' }}">Onboarding Plans</a>
+        <a href="{{ path('app_admin_tasks') }}" class="sidebar-link {{ app.request.attributes.get('_route') == 'app_admin_tasks' ? 'active' : '' }}">Onboarding Tasks</a>
     </nav>
 </aside>

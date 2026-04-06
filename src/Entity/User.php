@@ -129,14 +129,14 @@ class User
     }
 
     #[ORM\Column(type: 'blob', nullable: true)]
-    private ?string $face_data = null;
+    private $face_data = null;
 
-    public function getFace_data(): ?string
+    public function getFaceData()
     {
         return $this->face_data;
     }
 
-    public function setFace_data(?string $face_data): self
+    public function setFaceData($face_data): self
     {
         $this->face_data = $face_data;
         return $this;
@@ -408,6 +408,8 @@ class User
         $this->editedForumPosts = new ArrayCollection();
         $this->joboffers = new ArrayCollection();
         $this->passwordResetOtps = new ArrayCollection();
+        $this->onboardingplans = new ArrayCollection();
+        $this->onboardingtasks = new ArrayCollection();
     }
 
     /**
@@ -476,18 +478,6 @@ class User
         return $this;
     }
 
-    public function getFaceData(): mixed
-    {
-        return $this->face_data;
-    }
-
-    public function setFaceData(mixed $face_data): static
-    {
-        $this->face_data = $face_data;
-
-        return $this;
-    }
-
     public function getGoogleId(): ?string
     {
         return $this->google_id;
@@ -500,4 +490,28 @@ class User
         return $this;
     }
 
+    #[ORM\OneToMany(targetEntity: Onboardingplan::class, mappedBy: 'user')]
+    private Collection $onboardingplans;
+
+    public function getOnboardingplans(): Collection
+    {
+        if (!$this->onboardingplans instanceof Collection) {
+            $this->onboardingplans = new ArrayCollection();
+        }
+        return $this->onboardingplans;
+    }
+
+    public function addOnboardingplan(Onboardingplan $onboardingplan): self
+    {
+        if (!$this->getOnboardingplans()->contains($onboardingplan)) {
+            $this->getOnboardingplans()->add($onboardingplan);
+        }
+        return $this;
+    }
+
+    public function removeOnboardingplan(Onboardingplan $onboardingplan): self
+    {
+        $this->getOnboardingplans()->removeElement($onboardingplan);
+        return $this;
+    }
 }

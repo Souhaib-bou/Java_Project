@@ -3,8 +3,38 @@
 {% block title %}Onboarding Tasks{% endblock %}
 
 {% block admin_content %}
-<div class="card">
+<div class="page-header">
     <h1 class="page-title">Onboarding Tasks</h1>
-    <p class="muted-text">This page will display onboarding tasks.</p>
+    <p class="muted-text">Track and manage onboarding tasks by plan.</p>
+</div>
+
+<div class="card">
+    <div class="section-header">
+        <h2 class="section-title">Tasks List</h2>
+        <button class="btn-primary">Add Task</button>
+    </div>
+
+    <div class="placeholder-table">
+        <div class="placeholder-row placeholder-head">
+            <span>Task ID</span>
+            <span>Title</span>
+            <span>Status</span>
+            <span>Deadline</span>
+        </div>
+
+        <div class="placeholder-row">
+            <span>#201</span>
+            <span>Submit Documents</span>
+            <span>Pending</span>
+            <span>2026-04-12</span>
+        </div>
+
+        <div class="placeholder-row">
+            <span>#202</span>
+            <span>Complete Orientation</span>
+            <span>Completed</span>
+            <span>2026-04-15</span>
+        </div>
+    </div>
 </div>
 {% endblock %}

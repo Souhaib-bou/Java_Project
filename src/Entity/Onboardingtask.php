@@ -29,17 +29,18 @@ class Onboardingtask
         return $this;
     }
 
-    #[ORM\Column(type: 'integer', nullable: false)]
-    private ?int $planId = null;
+    #[ORM\ManyToOne(targetEntity: Onboardingplan::class)]
+    #[ORM\JoinColumn(name: 'planId', referencedColumnName: 'planId', nullable: false)]
+    private ?Onboardingplan $plan = null;
 
-    public function getPlanId(): ?int
+    public function getPlan(): ?Onboardingplan
     {
-        return $this->planId;
+        return $this->plan;
     }
 
-    public function setPlanId(int $planId): self
+    public function setPlan(?Onboardingplan $plan): self
     {
-        $this->planId = $planId;
+        $this->plan = $plan;
         return $this;
     }
 

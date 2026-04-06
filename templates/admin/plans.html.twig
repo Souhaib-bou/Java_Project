@@ -3,8 +3,38 @@
 {% block title %}Onboarding Plans{% endblock %}
 
 {% block admin_content %}
-<div class="card">
+<div class="page-header">
     <h1 class="page-title">Onboarding Plans</h1>
-    <p class="muted-text">This page will display onboarding plans.</p>
+    <p class="muted-text">Manage onboarding plans assigned to users.</p>
+</div>
+
+<div class="card">
+    <div class="section-header">
+        <h2 class="section-title">Plans List</h2>
+        <button class="btn-primary">Add Plan</button>
+    </div>
+
+    <div class="placeholder-table">
+        <div class="placeholder-row placeholder-head">
+            <span>Plan ID</span>
+            <span>User</span>
+            <span>Status</span>
+            <span>Deadline</span>
+        </div>
+
+        <div class="placeholder-row">
+            <span>#101</span>
+            <span>John Doe</span>
+            <span>Pending</span>
+            <span>2026-04-20</span>
+        </div>
+
+        <div class="placeholder-row">
+            <span>#102</span>
+            <span>Jane Smith</span>
+            <span>In Progress</span>
+            <span>2026-04-25</span>
+        </div>
+    </div>
 </div>
 {% endblock %}
