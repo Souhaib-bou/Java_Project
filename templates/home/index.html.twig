@@ -1,0 +1,23 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hirely Home{% endblock %}
+
+{% block body %}
+<div class="home-wrap">
+    <div class="card home-card">
+        <div class="brand-row">
+            <img src="{{ asset('assets/img/logo-hirely-light.png') }}" alt="Hirely Logo" class="brand-logo">
+            <div>
+                <h1 class="page-title">Hirely Symfony</h1>
+                <div class="page-subtitle">Onboarding Coordination Module</div>
+            </div>
+        </div>
+
+        <div style="margin-top: 24px;">
+            <p class="muted-text">
+                This is the first integrated Symfony page using the Hirely stylesheet and branding.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

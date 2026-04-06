@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hirely Admin{% endblock %}
+
+{% block body %}
+<div class="admin-shell">
+    {% include 'admin/Partials/sidebar.html.twig' %}
+
+    <div class="admin-main">
+        {% include 'admin/Partials/navbar.html.twig' %}
+
+        <main class="admin-content">
+            {% block admin_content %}{% endblock %}
+        </main>
+    </div>
+</div>
+{% endblock %}
