@@ -5,8 +5,31 @@
         document.querySelectorAll('.custom-select-root.is-open').forEach((root) => {
             if (root !== exceptRoot) {
                 root.classList.remove('is-open');
+                root.classList.remove('is-open-upward');
+                const trigger = root.querySelector('.custom-select-trigger');
+                if (trigger) {
+                    trigger.setAttribute('aria-expanded', 'false');
+                }
             }
         });
+    };
+
+    const positionMenu = (wrapper, trigger, list) => {
+        const rect = trigger.getBoundingClientRect();
+        const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+        const spaceBelow = viewportHeight - rect.bottom - 24;
+        const spaceAbove = rect.top - 24;
+        const openUpward = spaceBelow < 220 && spaceAbove > spaceBelow;
+        const availableSpace = openUpward ? spaceAbove : spaceBelow;
+        const maxHeight = Math.max(140, Math.min(320, availableSpace));
+
+        wrapper.classList.toggle('is-open-upward', openUpward);
+        list.style.maxHeight = `${maxHeight}px`;
+
+        const selectedOption = list.querySelector('.custom-select-option.is-selected');
+        if (selectedOption) {
+            selectedOption.scrollIntoView({ block: 'nearest' });
+        }
     };
 
     const createOptionButton = (select, option, list, trigger) => {
@@ -114,6 +137,11 @@
             closeAll(wrapper);
             wrapper.classList.toggle('is-open', willOpen);
             trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            if (willOpen) {
+                positionMenu(wrapper, trigger, list);
+            } else {
+                wrapper.classList.remove('is-open-upward');
+            }
         });
 
         trigger.addEventListener('keydown', (event) => {
@@ -144,6 +172,11 @@
                 closeAll(wrapper);
                 wrapper.classList.toggle('is-open', !isOpen);
                 trigger.setAttribute('aria-expanded', !isOpen ? 'true' : 'false');
+                if (!isOpen) {
+                    positionMenu(wrapper, trigger, list);
+                } else {
+                    wrapper.classList.remove('is-open-upward');
+                }
             }
         });
 
@@ -159,6 +192,16 @@
         if (!event.target.closest('.custom-select-root')) {
             closeAll();
         }
+    });
+
+    window.addEventListener('resize', () => {
+        document.querySelectorAll('.custom-select-root.is-open').forEach((wrapper) => {
+            const trigger = wrapper.querySelector('.custom-select-trigger');
+            const list = wrapper.querySelector('.custom-select-list');
+            if (trigger && list) {
+                positionMenu(wrapper, trigger, list);
+            }
+        });
     });
 
     document.querySelectorAll(SELECTOR).forEach(buildCustomSelect);
