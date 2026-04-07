@@ -4,26 +4,55 @@
 {% set delete_plan_route = admin_area ? 'app_admin_plans_delete' : 'app_workspace_plans_delete' %}
 {% set qr_route = admin_area ? 'app_admin_plans_qr' : 'app_workspace_plans_qr' %}
 
+<div class="explorer-metrics">
+    <div class="explorer-metric-card">
+        <span class="explorer-metric-label">Visible plans</span>
+        <strong class="explorer-metric-value">{{ plan_metrics.total }}</strong>
+    </div>
+    <div class="explorer-metric-card">
+        <span class="explorer-metric-label">In progress</span>
+        <strong class="explorer-metric-value">{{ plan_metrics.active }}</strong>
+    </div>
+    <div class="explorer-metric-card">
+        <span class="explorer-metric-label">Completed</span>
+        <strong class="explorer-metric-value">{{ plan_metrics.completed }}</strong>
+    </div>
+    <div class="explorer-metric-card">
+        <span class="explorer-metric-label">Need attention</span>
+        <strong class="explorer-metric-value">{{ plan_metrics.overdue }}</strong>
+    </div>
+</div>
+
 {% if plans is not empty %}
     <div class="record-grid">
         {% for plan in plans %}
-            <article class="record-card">
+            <article class="record-card plan-card">
                 <div class="record-card-top">
-                    <div>
+                    <div class="record-heading">
                         <p class="record-eyebrow">Plan #{{ plan.planId }}</p>
                         <h3 class="record-title">{{ plan.user.firstName }} {{ plan.user.lastName }}</h3>
+                        <p class="record-subtitle">{{ plan.user.email ?: 'Assigned candidate' }}</p>
                     </div>
-                    <span class="status-pill">{{ plan.status|replace({'_': ' '})|title }}</span>
+                    <div class="record-chip-stack">
+                        <span class="status-pill">{{ plan.status|replace({'_': ' '})|title }}</span>
+                        <span class="status-chip {{ plan.isOverdue ? 'overdue' : 'on-track' }}">
+                            {{ plan.isOverdue ? 'Overdue' : 'On Track' }}
+                        </span>
+                    </div>
                 </div>
 
-                <div class="record-meta">
-                    <div class="record-meta-item">
-                        <span class="record-meta-label">Deadline</span>
-                        <span class="record-meta-value">{{ plan.deadline ? plan.deadline|date('Y-m-d') : 'No deadline' }}</span>
+                <div class="record-stats record-stats-plan">
+                    <div class="record-stat">
+                        <span class="record-stat-label">Deadline</span>
+                        <span class="record-stat-value">{{ plan.deadline ? plan.deadline|date('Y-m-d') : 'No deadline' }}</span>
                     </div>
-                    <div class="record-meta-item">
-                        <span class="record-meta-label">QR Token</span>
-                        <span class="record-meta-value">{{ plan.qrToken ?: 'Not generated yet' }}</span>
+                    <div class="record-stat">
+                        <span class="record-stat-label">Tasks</span>
+                        <span class="record-stat-value">{{ plan.onboardingtasks|length }} task(s)</span>
+                    </div>
+                    <div class="record-stat record-stat-wide">
+                        <span class="record-stat-label">QR access</span>
+                        <span class="record-stat-value">{{ plan.qrToken ? 'Ready' : 'Generate on open' }}</span>
                     </div>
                 </div>
 
@@ -50,7 +79,7 @@
         {% if search_term is defined and search_term is not empty %}
             <p class="record-eyebrow">No matching plans</p>
             <h3 class="record-title">No plans found for "{{ search_term }}"</h3>
-            <p class="muted-text">Try another keyword or clear the search to see the full onboarding plan list again.</p>
+            <p class="muted-text">Try another keyword, change the filters, or clear the search to see all plans again.</p>
         {% else %}
             <p class="record-eyebrow">No plans yet</p>
             <h3 class="record-title">Start your onboarding coordination flow</h3>

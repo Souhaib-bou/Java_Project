@@ -1,10 +1,13 @@
 {% set admin_area = app.request.attributes.get('_route') starts with 'app_admin' %}
+{% set dashboard_route = admin_area ? 'app_admin' : 'app_workspace' %}
+{% set plans_route = admin_area ? 'app_admin_plans' : 'app_workspace_plans' %}
+{% set plans_active = app.request.attributes.get('_route') starts with (admin_area ? 'app_admin_plans' : 'app_workspace_plans') or app.request.attributes.get('_route') starts with (admin_area ? 'app_admin_plan_tasks' : 'app_workspace_plan_tasks') %}
 
 <header class="topbar">
     <div class="topbar-layout">
         <div>
             <div class="topbar-title">{{ admin_area ? 'Admin Dashboard' : viewer_context.workspaceTitle }}</div>
-            <div class="topbar-subtitle">{{ admin_area ? 'Back-office onboarding management' : 'Front-office onboarding workspace' }}</div>
+            <div class="topbar-subtitle">Onboarding coordination</div>
         </div>
 
         <div class="viewer-panel">
@@ -14,4 +17,13 @@
             </div>
         </div>
     </div>
+
+    {% if not admin_area %}
+        <nav class="workspace-nav">
+            <a href="{{ path(dashboard_route) }}" class="workspace-nav-link {{ app.request.attributes.get('_route') == dashboard_route ? 'active' : '' }}">Dashboard</a>
+            <a href="{{ path(plans_route) }}" class="workspace-nav-link {{ plans_active ? 'active' : '' }}">
+                {{ viewer_context.candidate ? 'My Onboarding' : 'Onboarding Plans' }}
+            </a>
+        </nav>
+    {% endif %}
 </header>

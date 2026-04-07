@@ -15,7 +15,7 @@
     <p class="muted-text">
         {{ viewer_context.candidate
             ? 'Track your onboarding plan, tasks, and attachment progress.'
-            : 'Overview of onboarding plans, tasks, and candidate activity for this module.'
+            : 'A focused overview of onboarding plans, tasks, and recent activity.'
         }}
     </p>
 </div>
@@ -45,25 +45,21 @@
 <div class="dashboard-grid">
     <div class="card dashboard-panel">
         <div class="section-header">
-            <h2 class="section-title">Role Permissions</h2>
-            <span class="{{ viewer_context.roleBadgeClass }}">{{ viewer_context.roleName }}</span>
+            <h2 class="section-title">Workspace Snapshot</h2>
         </div>
 
-        {% if viewer_context.candidate %}
-            <ul class="permission-list">
-                <li>View only your own onboarding plans and their tasks.</li>
-                <li>Update your plan status only.</li>
-                <li>Update task status and attachment only.</li>
-                <li>Create and delete actions are hidden and blocked.</li>
-            </ul>
-        {% else %}
-            <ul class="permission-list">
-                <li>View, create, update, and delete onboarding plans.</li>
-                <li>Open any plan and manage its tasks.</li>
-                <li>Generate or view plan QR codes.</li>
-                <li>Manage task status, details, and attachments for every plan.</li>
-            </ul>
-        {% endif %}
+        <div class="quick-links">
+            <article class="quick-link-card">
+                <span class="record-eyebrow">Current role</span>
+                <strong>{{ viewer_context.roleName }}</strong>
+                <span class="muted-text">{{ viewer_context.currentUserDisplayName }}</span>
+            </article>
+            <article class="quick-link-card">
+                <span class="record-eyebrow">Focus</span>
+                <strong>{{ viewer_context.candidate ? 'My onboarding flow' : 'Team onboarding flow' }}</strong>
+                <span class="muted-text">{{ viewer_context.candidate ? 'Status updates, tasks, and attachments in one place.' : 'Plans, task progress, and QR access in one place.' }}</span>
+            </article>
+        </div>
     </div>
 
     <div class="card dashboard-panel">

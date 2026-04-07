@@ -18,7 +18,7 @@
 
         <div class="home-intro">
             <p class="muted-text">
-                This frontend now reflects the onboarding role permissions. Switch the active user below to preview the Admin, Recruiter, and Candidate experiences before the authentication module is connected.
+                Choose an account below to preview the onboarding experience before authentication is connected.
             </p>
         </div>
 
@@ -47,7 +47,7 @@
             <article class="record-card compact">
                 <p class="record-eyebrow">Dashboard</p>
                 <h3 class="record-title">{{ viewer_context.admin ? 'Admin Backend' : viewer_context.workspaceTitle }}</h3>
-                <p class="muted-text">Open the separate area that matches the selected account instead of mixing admin with candidate or recruiter pages.</p>
+                <p class="muted-text">Open the area that matches the selected account.</p>
                 <div class="record-actions actions-cell">
                     <a href="{{ path(dashboard_route) }}" class="btn-primary">Open Dashboard</a>
                     <a href="{{ path(plans_route) }}" class="btn-secondary">Open Plans</a>

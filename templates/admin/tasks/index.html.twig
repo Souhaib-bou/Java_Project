@@ -12,13 +12,16 @@
 <div class="page-header">
     <h1 class="page-title">{{ viewer_context.candidate ? 'My Plan Tasks' : 'Plan Tasks' }}</h1>
     <p class="muted-text">
-        Tasks for plan #{{ plan.planId }} - {{ plan.user.firstName }} {{ plan.user.lastName }}
+        {{ plan.user.firstName }} {{ plan.user.lastName }} · Plan #{{ plan.planId }}
     </p>
 </div>
 
-<div class="card">
+<div class="card card-immersive">
     <div class="section-header">
-        <h2 class="section-title">Tasks List</h2>
+        <div>
+            <h2 class="section-title">Task Flow</h2>
+            <p class="section-kicker">Stay focused on progress, deadlines, attachment status, and the next useful action.</p>
+        </div>
         <div class="section-actions">
             <a href="{{ path(plans_route) }}" class="btn-secondary">Back to Plans</a>
             {% if viewer_context.canCreateTasks %}
@@ -27,8 +30,8 @@
         </div>
     </div>
 
-    <form method="get" action="{{ path(admin_area ? 'app_admin_plan_tasks' : 'app_workspace_plan_tasks', {id: plan.planId}) }}" class="search-form" data-live-search-form>
-        <label for="tasks-search" class="search-label">Search tasks</label>
+    <form method="get" action="{{ path(admin_area ? 'app_admin_plan_tasks' : 'app_workspace_plan_tasks', {id: plan.planId}) }}" class="search-form search-form-panel" data-live-search-form>
+        <label for="tasks-search" class="search-label">Find a task</label>
         <div class="search-controls">
             <input
                 id="tasks-search"
@@ -37,7 +40,7 @@
                 value="{{ search_term|default('') }}"
                 class="search-input"
                 autocomplete="off"
-                placeholder="Search by task ID, title, status, or attachment"
+                placeholder="Search by task number, title, status, or attachment"
                 data-live-search-input
             >
             <input type="hidden" name="case_sensitive" value="{{ case_sensitive ? '1' : '0' }}" data-live-search-case-sensitive>
@@ -49,11 +52,28 @@
             >
                 {{ case_sensitive ? 'Case Sensitive: On' : 'Case Sensitive: Off' }}
             </button>
+            <select name="status" class="search-select">
+                <option value="">All statuses</option>
+                {% for label, value in task_status_choices %}
+                    <option value="{{ value }}" {{ selected_status == value ? 'selected' : '' }}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <select name="sort" class="search-select">
+                <option value="newest" {{ selected_sort == 'newest' ? 'selected' : '' }}>Newest</option>
+                <option value="title" {{ selected_sort == 'title' ? 'selected' : '' }}>Title</option>
+                <option value="status" {{ selected_sort == 'status' ? 'selected' : '' }}>Status</option>
+                <option value="deadline" {{ selected_sort == 'deadline' ? 'selected' : '' }}>Deadline</option>
+            </select>
+            <label class="search-check">
+                <input type="checkbox" name="attachment_only" value="1" {{ attachment_only ? 'checked' : '' }}>
+                Has attachment only
+            </label>
             <button type="button" class="btn-secondary" data-live-search-clear>Clear</button>
             <noscript>
                 <button type="submit" class="btn-primary">Search</button>
             </noscript>
         </div>
+        <p class="search-hint">Use search and filters to narrow the task flow instantly.</p>
     </form>
 
     <div data-live-search-results>

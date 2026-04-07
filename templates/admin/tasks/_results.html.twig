@@ -1,36 +1,99 @@
 {% set admin_area = app.request.attributes.get('_route') starts with 'app_admin' %}
 {% set tasks_edit_route = admin_area ? 'app_admin_plan_tasks_edit' : 'app_workspace_plan_tasks_edit' %}
 {% set tasks_delete_route = admin_area ? 'app_admin_plan_tasks_delete' : 'app_workspace_plan_tasks_delete' %}
+{% set tasks_list_route = admin_area ? 'app_admin_plan_tasks' : 'app_workspace_plan_tasks' %}
+
+<div class="explorer-metrics">
+    <div class="explorer-metric-card">
+        <span class="explorer-metric-label">All tasks</span>
+        <strong class="explorer-metric-value">{{ task_metrics.total }}</strong>
+    </div>
+    <div class="explorer-metric-card">
+        <span class="explorer-metric-label">Completed</span>
+        <strong class="explorer-metric-value">{{ task_metrics.completed }}</strong>
+    </div>
+    <div class="explorer-metric-card">
+        <span class="explorer-metric-label">In Progress</span>
+        <strong class="explorer-metric-value">{{ task_metrics.in_progress }}</strong>
+    </div>
+    <div class="explorer-metric-card">
+        <span class="explorer-metric-label">Blocked</span>
+        <strong class="explorer-metric-value">{{ task_metrics.blocked }}</strong>
+    </div>
+    <div class="explorer-metric-card">
+        <span class="explorer-metric-label">Files linked</span>
+        <strong class="explorer-metric-value">{{ task_metrics.attachments }}</strong>
+    </div>
+</div>
+
+{% if task_recommendations is not empty %}
+    <div class="card insight-panel">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">Decision Guide</h2>
+                <p class="section-kicker">Quick recommendations based on the current task statuses.</p>
+            </div>
+        </div>
+
+        <div class="insight-list">
+            {% for recommendation in task_recommendations %}
+                <article class="insight-item {{ recommendation.priority }}">
+                    <div class="insight-copy">
+                        <p class="insight-title">{{ recommendation.message }}</p>
+                        <p class="insight-text">{{ recommendation.reason }}</p>
+                    </div>
+                    <div class="insight-action">
+                        {% if recommendation.taskId and recommendation.actionType in ['open_update', 'select_task'] %}
+                            <a href="{{ path(tasks_edit_route, {id: recommendation.taskId}) }}" class="btn-secondary">{{ recommendation.actionLabel }}</a>
+                        {% else %}
+                            <a href="{{ path(tasks_list_route, {id: plan.planId}) }}" class="btn-secondary">{{ recommendation.actionLabel }}</a>
+                        {% endif %}
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
 
 {% if tasks is not empty %}
     <div class="record-grid">
         {% for task in tasks %}
-            <article class="record-card">
+            <article class="record-card task-card compact">
                 <div class="record-card-top">
-                    <div>
+                    <div class="record-heading">
                         <p class="record-eyebrow">Task #{{ task.taskId }}</p>
                         <h3 class="record-title">{{ task.title ?: 'Untitled task' }}</h3>
+                        <p class="record-subtitle">{{ task.hasAttachment ? 'Attachment ready' : 'No attachment linked yet' }}</p>
                     </div>
-                    <span class="status-pill">{{ task.status|replace({'_': ' '})|title }}</span>
-                </div>
-
-                <p class="record-description">
-                    {{ task.description ?: 'No description added for this task yet.' }}
-                </p>
-
-                <div class="record-meta">
-                    <div class="record-meta-item">
-                        <span class="record-meta-label">Deadline</span>
-                        <span class="record-meta-value">{{ task.deadline ? task.deadline|date('Y-m-d') : 'No deadline' }}</span>
-                    </div>
-                    <div class="record-meta-item">
-                        <span class="record-meta-label">File Path</span>
-                        <span class="record-meta-value">{{ task.filePath ?: 'No file linked' }}</span>
+                    <div class="record-chip-stack">
+                        <span class="status-pill">{{ task.status|replace({'_': ' '})|title }}</span>
+                        <span class="status-chip {{ task.hasAttachment ? 'on-track' : 'neutral' }}">
+                            {{ task.hasAttachment ? 'File linked' : 'No file' }}
+                        </span>
                     </div>
                 </div>
 
-                {% if task.filePath %}
-                    <a href="{{ task.filePath }}" target="_blank" rel="noreferrer" class="attachment-link">Open attachment</a>
+                {% if task.description %}
+                    <p class="record-description record-description-clamp">{{ task.description }}</p>
+                {% endif %}
+
+                <div class="record-stats record-stats-task">
+                    <div class="record-stat">
+                        <span class="record-stat-label">Deadline</span>
+                        <span class="record-stat-value">{{ task.deadline ? task.deadline|date('Y-m-d') : 'No deadline' }}</span>
+                    </div>
+                    <div class="record-stat">
+                        <span class="record-stat-label">Attachment</span>
+                        <span class="record-stat-value">{{ task.hasAttachment ? task.attachmentLabel : 'Not attached' }}</span>
+                    </div>
+                </div>
+
+                {% if task.hasAttachment %}
+                    {% include 'shared/_attachment_preview.html.twig' with {
+                        task: task,
+                        preview_class: 'attachment-preview'
+                    } only %}
+                    <a href="{{ task.filePath }}" target="_blank" rel="noreferrer" class="attachment-link">Open file</a>
                 {% endif %}
 
                 <div class="actions-cell record-actions">

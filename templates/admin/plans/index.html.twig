@@ -15,15 +15,18 @@
     <h1 class="page-title">{{ viewer_context.candidate ? 'My Onboarding Plans' : 'Onboarding Plans' }}</h1>
     <p class="muted-text">
         {{ viewer_context.candidate
-            ? 'View your assigned plans, update your status, and open the tasks inside each plan.'
-            : 'Manage onboarding plans assigned to users across the module.'
+            ? 'Track your onboarding progress, update your plan status, and open the tasks inside each plan.'
+            : 'Review assigned plans, spot what needs attention, and open the related task flow quickly.'
         }}
     </p>
 </div>
 
-<div class="card">
+<div class="card card-immersive">
     <div class="section-header">
-        <h2 class="section-title">Plans List</h2>
+        <div>
+            <h2 class="section-title">Plans Overview</h2>
+            <p class="section-kicker">Only the essentials are shown here: owner, status, deadline, tasks, and QR access.</p>
+        </div>
         <div class="section-actions">
             {% if viewer_context.canCreatePlans %}
                 <a href="{{ path(new_plan_route) }}" class="btn-primary">Add Plan</a>
@@ -31,8 +34,8 @@
         </div>
     </div>
 
-    <form method="get" action="{{ path(plans_route) }}" class="search-form" data-live-search-form>
-        <label for="plans-search" class="search-label">Search plans</label>
+    <form method="get" action="{{ path(plans_route) }}" class="search-form search-form-panel" data-live-search-form>
+        <label for="plans-search" class="search-label">Find a plan</label>
         <div class="search-controls">
             <input
                 id="plans-search"
@@ -41,7 +44,7 @@
                 value="{{ search_term|default('') }}"
                 class="search-input"
                 autocomplete="off"
-                placeholder="Search by plan ID, user, email, status, or QR token"
+                placeholder="Search by plan number, person, email, status, or QR token"
                 data-live-search-input
             >
             <input type="hidden" name="case_sensitive" value="{{ case_sensitive ? '1' : '0' }}" data-live-search-case-sensitive>
@@ -53,11 +56,28 @@
             >
                 {{ case_sensitive ? 'Case Sensitive: On' : 'Case Sensitive: Off' }}
             </button>
+            <select name="status" class="search-select">
+                <option value="">All statuses</option>
+                {% for label, value in plan_status_choices %}
+                    <option value="{{ value }}" {{ selected_status == value ? 'selected' : '' }}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <select name="sort" class="search-select">
+                <option value="newest" {{ selected_sort == 'newest' ? 'selected' : '' }}>Newest</option>
+                <option value="deadline" {{ selected_sort == 'deadline' ? 'selected' : '' }}>Deadline</option>
+                <option value="status" {{ selected_sort == 'status' ? 'selected' : '' }}>Status</option>
+                <option value="user" {{ selected_sort == 'user' ? 'selected' : '' }}>User name</option>
+            </select>
+            <label class="search-check">
+                <input type="checkbox" name="overdue_only" value="1" {{ overdue_only ? 'checked' : '' }}>
+                Overdue only
+            </label>
             <button type="button" class="btn-secondary" data-live-search-clear>Clear</button>
             <noscript>
                 <button type="submit" class="btn-primary">Search</button>
             </noscript>
         </div>
+        <p class="search-hint">Live search refreshes the cards while you type.</p>
     </form>
 
     <div data-live-search-results>
