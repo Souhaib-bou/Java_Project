@@ -29,189 +29,182 @@ final class TaskDecisionGuideService
             ];
         }
 
-        $blockedCount = 0;
-        $inProgressCount = 0;
-        $completedCount = 0;
-        $notStartedCount = 0;
-        $onHoldCount = 0;
-        $completedMissingAttachmentCount = 0;
-
-        $firstBlocked = null;
-        $firstInProgress = null;
-        $firstNotStarted = null;
-        $firstOnHold = null;
-        $firstCompletedMissingAttachment = null;
+        $blockedTasks = [];
+        $inProgressTasks = [];
+        $notStartedTasks = [];
+        $onHoldTasks = [];
+        $completedMissingAttachmentTasks = [];
 
         foreach ($tasks as $task) {
             $status = $task->getStatus() ?? '';
 
             switch ($status) {
                 case Onboardingtask::STATUS_BLOCKED:
-                    ++$blockedCount;
-                    $firstBlocked ??= $task;
+                    $blockedTasks[] = $task;
                     break;
 
                 case Onboardingtask::STATUS_IN_PROGRESS:
-                    ++$inProgressCount;
-                    $firstInProgress ??= $task;
+                    $inProgressTasks[] = $task;
                     break;
 
                 case Onboardingtask::STATUS_COMPLETED:
-                    ++$completedCount;
                     if (!$task->hasAttachment()) {
-                        ++$completedMissingAttachmentCount;
-                        $firstCompletedMissingAttachment ??= $task;
+                        $completedMissingAttachmentTasks[] = $task;
                     }
                     break;
 
                 case Onboardingtask::STATUS_NOT_STARTED:
-                    ++$notStartedCount;
-                    $firstNotStarted ??= $task;
+                    $notStartedTasks[] = $task;
                     break;
 
                 case Onboardingtask::STATUS_ON_HOLD:
-                    ++$onHoldCount;
-                    $firstOnHold ??= $task;
+                    $onHoldTasks[] = $task;
                     break;
             }
         }
 
+        $blockedCount = \count($blockedTasks);
+        $notStartedCount = \count($notStartedTasks);
+        $onHoldCount = \count($onHoldTasks);
+
         if (ViewerContext::ROLE_CANDIDATE === $roleId) {
-            if ($firstBlocked) {
-                $recommendations[] = new TaskRecommendation(
+            foreach ($this->sliceTasks($blockedTasks, 2) as $index => $task) {
+                $recommendations[] = $this->buildRecommendation(
                     TaskRecommendation::PRIORITY_HIGH,
-                    'review_blocked_task',
-                    'A blocked task needs your attention: Task #' . $firstBlocked->getTaskId(),
+                    'review_blocked_task_' . $task->getTaskId(),
+                    'A blocked task needs your attention: Task #' . $task->getTaskId(),
                     'Blocked tasks prevent progress and should be reviewed first.',
-                    $firstBlocked->getTaskId(),
+                    $task,
                     'Open Update',
                     TaskRecommendation::ACTION_OPEN_UPDATE,
-                    100
+                    100 - ($index * 4)
                 );
             }
 
-            if ($firstCompletedMissingAttachment) {
-                $recommendations[] = new TaskRecommendation(
+            foreach ($this->sliceTasks($completedMissingAttachmentTasks, 2) as $index => $task) {
+                $recommendations[] = $this->buildRecommendation(
                     TaskRecommendation::PRIORITY_HIGH,
-                    'upload_missing_attachment',
-                    'Completed task is missing attachment: Task #' . $firstCompletedMissingAttachment->getTaskId(),
+                    'upload_missing_attachment_' . $task->getTaskId(),
+                    'Completed task is missing proof: Task #' . $task->getTaskId(),
                     'Completed work should include its supporting file or proof link.',
-                    $firstCompletedMissingAttachment->getTaskId(),
+                    $task,
                     'Add Attachment',
                     TaskRecommendation::ACTION_OPEN_UPDATE,
-                    95
+                    95 - ($index * 3)
                 );
             }
 
-            if ($firstInProgress) {
-                $recommendations[] = new TaskRecommendation(
+            foreach ($this->sliceTasks($inProgressTasks, 2) as $index => $task) {
+                $recommendations[] = $this->buildRecommendation(
                     TaskRecommendation::PRIORITY_MEDIUM,
-                    'continue_task',
-                    'Continue your in-progress task: Task #' . $firstInProgress->getTaskId(),
+                    'continue_task_' . $task->getTaskId(),
+                    'Continue your in-progress task: Task #' . $task->getTaskId(),
                     'You already started this task, so continuing it is usually the fastest progress.',
-                    $firstInProgress->getTaskId(),
+                    $task,
                     'Open Task',
                     TaskRecommendation::ACTION_SELECT_TASK,
-                    75
+                    75 - ($index * 4)
                 );
             }
 
-            if ($firstNotStarted) {
-                $recommendations[] = new TaskRecommendation(
+            foreach ($this->sliceTasks($notStartedTasks, 2) as $index => $task) {
+                $recommendations[] = $this->buildRecommendation(
                     TaskRecommendation::PRIORITY_MEDIUM,
-                    'start_next_task',
-                    'Start your next task: Task #' . $firstNotStarted->getTaskId(),
+                    'start_next_task_' . $task->getTaskId(),
+                    'Start your next task: Task #' . $task->getTaskId(),
                     'No blocker is currently visible on this not-started task.',
-                    $firstNotStarted->getTaskId(),
+                    $task,
                     'Open Task',
                     TaskRecommendation::ACTION_SELECT_TASK,
-                    70
+                    70 - ($index * 5)
                 );
             }
         } elseif (ViewerContext::ROLE_RECRUITER === $roleId) {
-            if ($firstBlocked) {
-                $recommendations[] = new TaskRecommendation(
+            foreach ($this->sliceTasks($blockedTasks, 2) as $index => $task) {
+                $recommendations[] = $this->buildRecommendation(
                     TaskRecommendation::PRIORITY_HIGH,
-                    'review_blocked_task',
-                    'Review blocked task: Task #' . $firstBlocked->getTaskId(),
+                    'review_blocked_task_' . $task->getTaskId(),
+                    'Review blocked task: Task #' . $task->getTaskId(),
                     'A blocked task may require recruiter clarification or follow-up.',
-                    $firstBlocked->getTaskId(),
+                    $task,
                     'Open Task',
                     TaskRecommendation::ACTION_SELECT_TASK,
-                    100
+                    100 - ($index * 5)
                 );
             }
 
-            if ($notStartedCount >= 2 && $firstNotStarted) {
+            if ($notStartedCount >= 2 && isset($notStartedTasks[0])) {
                 $recommendations[] = new TaskRecommendation(
                     TaskRecommendation::PRIORITY_HIGH,
                     'follow_up_progress',
                     'Multiple tasks are still not started (' . $notStartedCount . '). Follow up with the candidate.',
                     'Several tasks remain untouched, which may indicate onboarding delay.',
-                    $firstNotStarted->getTaskId(),
+                    $notStartedTasks[0]->getTaskId(),
                     'Open Task',
                     TaskRecommendation::ACTION_SELECT_TASK,
                     90
                 );
             }
 
-            if ($firstCompletedMissingAttachment) {
-                $recommendations[] = new TaskRecommendation(
+            foreach ($this->sliceTasks($completedMissingAttachmentTasks, 2) as $index => $task) {
+                $recommendations[] = $this->buildRecommendation(
                     TaskRecommendation::PRIORITY_MEDIUM,
-                    'request_attachment',
-                    'Completed task missing file: Task #' . $firstCompletedMissingAttachment->getTaskId(),
+                    'request_attachment_' . $task->getTaskId(),
+                    'Completed task missing file: Task #' . $task->getTaskId(),
                     'Recruiter review is easier when completed tasks include proof or an attachment.',
-                    $firstCompletedMissingAttachment->getTaskId(),
+                    $task,
                     'Open Update',
                     TaskRecommendation::ACTION_OPEN_UPDATE,
-                    70
+                    70 - ($index * 4)
                 );
             }
         } else {
-            if ($blockedCount > 1 && $firstBlocked) {
+            if ($blockedCount > 1 && isset($blockedTasks[0])) {
                 $recommendations[] = new TaskRecommendation(
                     TaskRecommendation::PRIORITY_HIGH,
                     'plan_needs_intervention',
                     'Multiple blocked tasks detected (' . $blockedCount . '). This plan may need intervention.',
                     'Multiple blockers can indicate a systemic issue or coordination problem.',
-                    $firstBlocked->getTaskId(),
+                    $blockedTasks[0]->getTaskId(),
                     'Open Task',
                     TaskRecommendation::ACTION_SELECT_TASK,
                     100
                 );
-            } elseif ($firstBlocked) {
-                $recommendations[] = new TaskRecommendation(
-                    TaskRecommendation::PRIORITY_HIGH,
-                    'review_blocked_task',
-                    'Blocked task detected: Task #' . $firstBlocked->getTaskId(),
-                    'A blocker is visible and should be reviewed before it spreads.',
-                    $firstBlocked->getTaskId(),
-                    'Open Task',
-                    TaskRecommendation::ACTION_SELECT_TASK,
-                    92
-                );
+            } else {
+                foreach ($this->sliceTasks($blockedTasks, 2) as $index => $task) {
+                    $recommendations[] = $this->buildRecommendation(
+                        TaskRecommendation::PRIORITY_HIGH,
+                        'review_blocked_task_' . $task->getTaskId(),
+                        'Blocked task detected: Task #' . $task->getTaskId(),
+                        'A blocker is visible and should be reviewed before it spreads.',
+                        $task,
+                        'Open Task',
+                        TaskRecommendation::ACTION_SELECT_TASK,
+                        92 - ($index * 5)
+                    );
+                }
             }
 
-            if ($firstCompletedMissingAttachment) {
-                $recommendations[] = new TaskRecommendation(
+            foreach ($this->sliceTasks($completedMissingAttachmentTasks, 2) as $index => $task) {
+                $recommendations[] = $this->buildRecommendation(
                     TaskRecommendation::PRIORITY_MEDIUM,
-                    'missing_completion_artifact',
-                    'Completed task missing attachment: Task #' . $firstCompletedMissingAttachment->getTaskId(),
+                    'missing_completion_artifact_' . $task->getTaskId(),
+                    'Completed task missing attachment: Task #' . $task->getTaskId(),
                     'Completion checks are stronger when the proof link or file is present.',
-                    $firstCompletedMissingAttachment->getTaskId(),
+                    $task,
                     'Open Update',
                     TaskRecommendation::ACTION_OPEN_UPDATE,
-                    72
+                    72 - ($index * 4)
                 );
             }
 
-            if ($notStartedCount === \count($tasks) && $firstNotStarted) {
+            if ($notStartedCount === \count($tasks) && isset($notStartedTasks[0])) {
                 $recommendations[] = new TaskRecommendation(
                     TaskRecommendation::PRIORITY_MEDIUM,
                     'no_progress',
                     'All tasks are still not started. Review execution progress.',
                     'No tasks have started yet across the loaded task list.',
-                    $firstNotStarted->getTaskId(),
+                    $notStartedTasks[0]->getTaskId(),
                     'Open Task',
                     TaskRecommendation::ACTION_SELECT_TASK,
                     68
@@ -219,16 +212,16 @@ final class TaskDecisionGuideService
             }
         }
 
-        if ($onHoldCount > 0 && $firstOnHold) {
-            $recommendations[] = new TaskRecommendation(
+        foreach ($this->sliceTasks($onHoldTasks, 1) as $index => $task) {
+            $recommendations[] = $this->buildRecommendation(
                 TaskRecommendation::PRIORITY_LOW,
-                'on_hold_follow_up',
+                'on_hold_follow_up_' . $task->getTaskId(),
                 'There are ' . $onHoldCount . ' on-hold task(s). Review their blockers.',
                 'On-hold tasks often need dependency resolution or clarification.',
-                $firstOnHold->getTaskId(),
+                $task,
                 'Review',
                 TaskRecommendation::ACTION_SELECT_TASK,
-                35
+                35 - ($index * 3)
             );
         }
 
@@ -248,5 +241,36 @@ final class TaskDecisionGuideService
         usort($recommendations, static fn (TaskRecommendation $left, TaskRecommendation $right): int => $right->getScore() <=> $left->getScore());
 
         return $recommendations;
+    }
+
+    /**
+     * @param Onboardingtask[] $tasks
+     * @return Onboardingtask[]
+     */
+    private function sliceTasks(array $tasks, int $limit): array
+    {
+        return \array_slice($tasks, 0, $limit);
+    }
+
+    private function buildRecommendation(
+        string $priority,
+        string $type,
+        string $message,
+        string $reason,
+        Onboardingtask $task,
+        string $actionLabel,
+        string $actionType,
+        int $score,
+    ): TaskRecommendation {
+        return new TaskRecommendation(
+            $priority,
+            $type,
+            $message,
+            $reason,
+            $task->getTaskId(),
+            $actionLabel,
+            $actionType,
+            $score
+        );
     }
 }

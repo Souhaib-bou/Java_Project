@@ -74,6 +74,8 @@ final class OnboardingTaskController extends AbstractController
             'attachment_only' => $request->query->getBoolean('attachment_only'),
         ];
         $tasks = $taskRepository->findByPlan($plan, $searchTerm, $caseSensitive, $filters);
+        $taskMetrics = $this->buildTaskMetrics($tasks);
+        $taskRecommendations = \array_slice($taskDecisionGuideService->buildRecommendations($viewerContext->getRoleId() ?? ViewerContext::ROLE_CANDIDATE, $tasks), 0, 5);
         $viewData = [
             'plan' => $plan,
             'tasks' => $tasks,
@@ -82,8 +84,9 @@ final class OnboardingTaskController extends AbstractController
             'selected_status' => $filters['status'],
             'selected_sort' => $filters['sort'],
             'attachment_only' => $filters['attachment_only'],
-            'task_metrics' => $this->buildTaskMetrics($tasks),
-            'task_recommendations' => \array_slice($taskDecisionGuideService->buildRecommendations($viewerContext->getRoleId() ?? ViewerContext::ROLE_CANDIDATE, $tasks), 0, 4),
+            'task_metrics' => $taskMetrics,
+            'task_recommendations' => $taskRecommendations,
+            'task_guide_overview' => $this->buildTaskGuideOverview($tasks, $taskMetrics, $taskRecommendations),
             'task_status_choices' => Onboardingtask::getStatusChoices(),
         ];
 
@@ -270,13 +273,15 @@ final class OnboardingTaskController extends AbstractController
 
     /**
      * @param Onboardingtask[] $tasks
-     * @return array{total: int, completed: int, in_progress: int, blocked: int, attachments: int}
+     * @return array{total: int, completed: int, in_progress: int, blocked: int, on_hold: int, not_started: int, attachments: int}
      */
     private function buildTaskMetrics(array $tasks): array
     {
         $completed = 0;
         $inProgress = 0;
         $blocked = 0;
+        $onHold = 0;
+        $notStarted = 0;
         $attachments = 0;
 
         foreach ($tasks as $task) {
@@ -292,6 +297,14 @@ final class OnboardingTaskController extends AbstractController
                 ++$blocked;
             }
 
+            if (Onboardingtask::STATUS_ON_HOLD === $task->getStatus()) {
+                ++$onHold;
+            }
+
+            if (Onboardingtask::STATUS_NOT_STARTED === $task->getStatus()) {
+                ++$notStarted;
+            }
+
             if ($task->hasAttachment()) {
                 ++$attachments;
             }
@@ -302,7 +315,90 @@ final class OnboardingTaskController extends AbstractController
             'completed' => $completed,
             'in_progress' => $inProgress,
             'blocked' => $blocked,
+            'on_hold' => $onHold,
+            'not_started' => $notStarted,
             'attachments' => $attachments,
+        ];
+    }
+
+    /**
+     * @param Onboardingtask[] $tasks
+     * @param array{total: int, completed: int, in_progress: int, blocked: int, on_hold: int, not_started: int, attachments: int} $taskMetrics
+     * @param TaskRecommendation[] $taskRecommendations
+     * @return array{health_score: int, health_label: string, focus_label: string, due_soon_count: int, missing_proof_count: int, urgent_actions: int, next_deadline_label: string}
+     */
+    private function buildTaskGuideOverview(array $tasks, array $taskMetrics, array $taskRecommendations): array
+    {
+        $dueSoonCount = 0;
+        $missingProofCount = 0;
+        $urgentActions = 0;
+        $nextDeadline = null;
+        $today = new \DateTimeImmutable('today');
+        $soonLimit = $today->modify('+3 days');
+
+        foreach ($tasks as $task) {
+            $deadline = $task->getDeadline();
+            if ($deadline && Onboardingtask::STATUS_COMPLETED !== $task->getStatus()) {
+                $deadlineDate = \DateTimeImmutable::createFromInterface($deadline)->setTime(0, 0);
+                if ($deadlineDate <= $soonLimit) {
+                    ++$dueSoonCount;
+                }
+
+                if (null === $nextDeadline || $deadlineDate < $nextDeadline) {
+                    $nextDeadline = $deadlineDate;
+                }
+            }
+
+            if (Onboardingtask::STATUS_COMPLETED === $task->getStatus() && !$task->hasAttachment()) {
+                ++$missingProofCount;
+            }
+        }
+
+        foreach ($taskRecommendations as $recommendation) {
+            if (TaskRecommendation::PRIORITY_HIGH === $recommendation->getPriority()) {
+                ++$urgentActions;
+            }
+        }
+
+        $healthScore = 100;
+        $healthScore -= ($taskMetrics['blocked'] * 18);
+        $healthScore -= ($taskMetrics['on_hold'] * 10);
+        $healthScore -= ($taskMetrics['not_started'] * 6);
+        $healthScore -= ($missingProofCount * 7);
+        $healthScore += ($taskMetrics['completed'] * 4);
+        $healthScore += ($taskMetrics['attachments'] * 2);
+        $healthScore = max(18, min(96, $healthScore));
+
+        if ($healthScore >= 80) {
+            $healthLabel = 'Healthy flow';
+        } elseif ($healthScore >= 60) {
+            $healthLabel = 'Watch closely';
+        } else {
+            $healthLabel = 'Needs attention';
+        }
+
+        if ($taskMetrics['blocked'] > 0) {
+            $focusLabel = 'Resolve blockers';
+        } elseif ($missingProofCount > 0) {
+            $focusLabel = 'Collect missing proof';
+        } elseif ($taskMetrics['in_progress'] > 0) {
+            $focusLabel = 'Push active work forward';
+        } elseif ($taskMetrics['not_started'] > 0) {
+            $focusLabel = 'Kick off pending work';
+        } else {
+            $focusLabel = 'Maintain momentum';
+        }
+
+        $nextDeadlineLabel = $nextDeadline ? $nextDeadline->format('Y-m-d') : 'No active deadline';
+
+        return [
+            'health_score' => $healthScore,
+            'health_label' => $healthLabel,
+            'focus_label' => $focusLabel,
+            'due_soon_count' => $dueSoonCount,
+            'missing_proof_count' => $missingProofCount,
+            'urgent_actions' => $urgentActions,
+            'next_deadline_label' => $nextDeadlineLabel,
         ];
     }
 }

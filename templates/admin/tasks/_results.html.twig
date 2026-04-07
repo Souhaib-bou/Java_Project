@@ -31,7 +31,46 @@
         <div class="section-header">
             <div>
                 <h2 class="section-title">Decision Guide</h2>
-                <p class="section-kicker">Quick recommendations based on the current task statuses.</p>
+                <p class="section-kicker">Live guidance based on task status mix, missing proof, urgency, and the next deadline.</p>
+            </div>
+        </div>
+
+        <div class="guide-overview">
+            <article class="guide-hero-card">
+                <div class="guide-hero-copy">
+                    <span class="guide-kicker">Guide Health</span>
+                    <h3 class="guide-hero-title">{{ task_guide_overview.health_label }}</h3>
+                    <p class="guide-hero-text">Current focus: {{ task_guide_overview.focus_label|lower }}. The guide updates from the visible task list and current filters.</p>
+                </div>
+                <div class="guide-score-wrap">
+                    <div class="guide-score-ring">
+                        <strong class="guide-score-value">{{ task_guide_overview.health_score }}</strong>
+                        <span class="guide-score-label">score</span>
+                    </div>
+                </div>
+            </article>
+
+            <div class="guide-signal-grid">
+                <article class="guide-signal-card">
+                    <span class="guide-signal-label">Urgent actions</span>
+                    <strong class="guide-signal-value">{{ task_guide_overview.urgent_actions }}</strong>
+                    <span class="guide-signal-note">High-priority recommendations visible now</span>
+                </article>
+                <article class="guide-signal-card">
+                    <span class="guide-signal-label">Due soon</span>
+                    <strong class="guide-signal-value">{{ task_guide_overview.due_soon_count }}</strong>
+                    <span class="guide-signal-note">Tasks due within the next 3 days</span>
+                </article>
+                <article class="guide-signal-card">
+                    <span class="guide-signal-label">Missing proof</span>
+                    <strong class="guide-signal-value">{{ task_guide_overview.missing_proof_count }}</strong>
+                    <span class="guide-signal-note">Completed tasks still missing evidence</span>
+                </article>
+                <article class="guide-signal-card">
+                    <span class="guide-signal-label">Next deadline</span>
+                    <strong class="guide-signal-value guide-signal-value-date">{{ task_guide_overview.next_deadline_label }}</strong>
+                    <span class="guide-signal-note">Earliest active deadline in this plan</span>
+                </article>
             </div>
         </div>
 
@@ -39,6 +78,12 @@
             {% for recommendation in task_recommendations %}
                 <article class="insight-item {{ recommendation.priority }}">
                     <div class="insight-copy">
+                        <div class="insight-meta-row">
+                            <span class="guide-priority-badge {{ recommendation.priority }}">{{ recommendation.priority|upper }}</span>
+                            {% if recommendation.taskId %}
+                                <span class="guide-task-ref">Task #{{ recommendation.taskId }}</span>
+                            {% endif %}
+                        </div>
                         <p class="insight-title">{{ recommendation.message }}</p>
                         <p class="insight-text">{{ recommendation.reason }}</p>
                     </div>
