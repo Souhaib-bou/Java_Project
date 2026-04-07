@@ -1,4 +1,21 @@
 {% extends 'admin/base_admin.html.twig' %}
+{% macro render_field(field) %}
+    {% if field is defined %}
+        <div class="form-field {{ field.vars.errors|length ? 'has-error' : '' }}">
+            {{ form_label(field, null, {'label_attr': {'class': 'form-label'}}) }}
+            <div class="form-widget">
+                {{ form_widget(field, {'attr': {'class': ((field.vars.attr.class|default('') ~ ' form-control')|trim)}}) }}
+            </div>
+            {% if field.vars.help %}
+                <p class="form-help">{{ field.vars.help }}</p>
+            {% endif %}
+            {% if field.vars.errors|length %}
+                <div class="form-error-list">{{ form_errors(field) }}</div>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endmacro %}
+{% import _self as form_ui %}
 
 {% block title %}{{ page_title }}{% endblock %}
 
@@ -13,11 +30,19 @@
     </p>
 </div>
 
-<div class="card">
-    {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
-        {{ form_errors(form) }}
+<div class="card card-immersive">
+    {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'class': 'form-shell'}}) }}
+        {% if not form.vars.valid %}
+            <div class="form-error-banner">
+                <div class="form-error-banner-title">Please review the highlighted fields</div>
+                <p class="form-error-banner-text">Some task details still need attention before this update can be saved.</p>
+                {% if form.vars.errors|length %}
+                    <div class="form-error-list">{{ form_errors(form) }}</div>
+                {% endif %}
+            </div>
+        {% endif %}
         {% if limited_editor and task is defined %}
-            <div class="record-meta" style="margin-bottom: 16px;">
+            <div class="record-meta form-meta-grid">
                 <div class="record-meta-item">
                     <span class="record-meta-label">Title</span>
                     <span class="record-meta-value">{{ task.title ?: 'Untitled task' }}</span>
@@ -28,11 +53,11 @@
                 </div>
             </div>
         {% endif %}
-        <div style="display:grid; gap:16px;">
-            {% if form.title is defined %}{{ form_row(form.title) }}{% endif %}
-            {% if form.description is defined %}{{ form_row(form.description) }}{% endif %}
-            {{ form_row(form.status) }}
-            {% if form.deadline is defined %}{{ form_row(form.deadline) }}{% endif %}
+        <div class="form-grid">
+            {% if form.title is defined %}{{ form_ui.render_field(form.title) }}{% endif %}
+            {% if form.description is defined %}{{ form_ui.render_field(form.description) }}{% endif %}
+            {{ form_ui.render_field(form.status) }}
+            {% if form.deadline is defined %}{{ form_ui.render_field(form.deadline) }}{% endif %}
 
             <section
                 class="attachment-uploader"
@@ -100,7 +125,7 @@
             {{ form_widget(form.contentType, {attr: {'data-cloudinary-content-type': ''}}) }}
         </div>
 
-        <div style="margin-top: 20px; display:flex; gap:12px;">
+        <div class="form-actions">
             <button type="submit" class="btn-primary">Save</button>
             <a href="{{ path(tasks_route, {id: plan.planId}) }}" class="btn-secondary">Cancel</a>
         </div>

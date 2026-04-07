@@ -122,6 +122,10 @@
                 if ('hidden' !== element.type) {
                     element.value = '';
                 }
+
+                if ('SELECT' === element.tagName) {
+                    element.dispatchEvent(new Event('change', { bubbles: true }));
+                }
             });
 
             input.focus();
