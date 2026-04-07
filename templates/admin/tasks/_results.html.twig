@@ -1,0 +1,64 @@
+{% set admin_area = app.request.attributes.get('_route') starts with 'app_admin' %}
+{% set tasks_edit_route = admin_area ? 'app_admin_plan_tasks_edit' : 'app_workspace_plan_tasks_edit' %}
+{% set tasks_delete_route = admin_area ? 'app_admin_plan_tasks_delete' : 'app_workspace_plan_tasks_delete' %}
+
+{% if tasks is not empty %}
+    <div class="record-grid">
+        {% for task in tasks %}
+            <article class="record-card">
+                <div class="record-card-top">
+                    <div>
+                        <p class="record-eyebrow">Task #{{ task.taskId }}</p>
+                        <h3 class="record-title">{{ task.title ?: 'Untitled task' }}</h3>
+                    </div>
+                    <span class="status-pill">{{ task.status|replace({'_': ' '})|title }}</span>
+                </div>
+
+                <p class="record-description">
+                    {{ task.description ?: 'No description added for this task yet.' }}
+                </p>
+
+                <div class="record-meta">
+                    <div class="record-meta-item">
+                        <span class="record-meta-label">Deadline</span>
+                        <span class="record-meta-value">{{ task.deadline ? task.deadline|date('Y-m-d') : 'No deadline' }}</span>
+                    </div>
+                    <div class="record-meta-item">
+                        <span class="record-meta-label">File Path</span>
+                        <span class="record-meta-value">{{ task.filePath ?: 'No file linked' }}</span>
+                    </div>
+                </div>
+
+                {% if task.filePath %}
+                    <a href="{{ task.filePath }}" target="_blank" rel="noreferrer" class="attachment-link">Open attachment</a>
+                {% endif %}
+
+                <div class="actions-cell record-actions">
+                    {% if viewer_context.canEditTask(task) %}
+                        <a href="{{ path(tasks_edit_route, {id: task.taskId}) }}" class="btn-secondary">
+                            {{ viewer_context.canFullyEditTask(task) ? 'Edit' : 'Update' }}
+                        </a>
+                    {% endif %}
+                    {% if viewer_context.canDeleteTask(task) %}
+                        <form method="post" action="{{ path(tasks_delete_route, {id: task.taskId}) }}" class="inline-form">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete_task_' ~ task.taskId) }}">
+                            <button type="submit" class="btn-danger">Delete</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state-card">
+        {% if search_term is defined and search_term is not empty %}
+            <p class="record-eyebrow">No matching tasks</p>
+            <h3 class="record-title">No tasks found for "{{ search_term }}"</h3>
+            <p class="muted-text">Try another keyword or clear the search to bring back the full task list for this plan.</p>
+        {% else %}
+            <p class="record-eyebrow">No tasks yet</p>
+            <h3 class="record-title">This plan is ready for its first task</h3>
+            <p class="muted-text">Add a task to define the next onboarding action for this plan.</p>
+        {% endif %}
+    </div>
+{% endif %}

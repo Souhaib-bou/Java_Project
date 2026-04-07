@@ -2,21 +2,103 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-
 use App\Repository\OnboardingtaskRepository;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: OnboardingtaskRepository::class)]
 #[ORM\Table(name: 'onboardingtask')]
 class Onboardingtask
 {
+    public const STATUS_NOT_STARTED = 'not_started';
+    public const STATUS_IN_PROGRESS = 'in_progress';
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_BLOCKED = 'blocked';
+    public const STATUS_ON_HOLD = 'on_hold';
+
+    public const STATUS_VALUES = [
+        self::STATUS_NOT_STARTED,
+        self::STATUS_IN_PROGRESS,
+        self::STATUS_COMPLETED,
+        self::STATUS_BLOCKED,
+        self::STATUS_ON_HOLD,
+    ];
+
+    public const STATUS_CHOICES = [
+        'Not Started' => self::STATUS_NOT_STARTED,
+        'In Progress' => self::STATUS_IN_PROGRESS,
+        'Completed' => self::STATUS_COMPLETED,
+        'Blocked' => self::STATUS_BLOCKED,
+        'On Hold' => self::STATUS_ON_HOLD,
+    ];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
+    #[ORM\Column(name: 'taskId', type: 'integer')]
     private ?int $taskId = null;
+
+    #[ORM\ManyToOne(targetEntity: Onboardingplan::class, inversedBy: 'onboardingtasks')]
+    #[ORM\JoinColumn(name: 'planId', referencedColumnName: 'planId', nullable: false)]
+    #[Assert\NotNull(message: 'This task must belong to an onboarding plan.')]
+    private ?Onboardingplan $plan = null;
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\NotBlank(message: 'Please enter a task title.')]
+    #[Assert\Length(
+        max: 255,
+        maxMessage: 'The task title cannot be longer than {{ limit }} characters.'
+    )]
+    private ?string $title = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    #[Assert\NotBlank(message: 'Please enter a task description.')]
+    #[Assert\Length(
+        min: 10,
+        minMessage: 'The task description must be at least {{ limit }} characters long.',
+        max: 5000,
+        maxMessage: 'The task description cannot be longer than {{ limit }} characters.'
+    )]
+    private ?string $description = null;
+
+    #[ORM\Column(type: 'string', nullable: false)]
+    #[Assert\NotBlank(message: 'Please choose a task status.')]
+    #[Assert\Choice(choices: self::STATUS_VALUES, message: 'Please choose a valid task status.')]
+    private ?string $status = self::STATUS_NOT_STARTED;
+
+    #[ORM\Column(type: 'date', nullable: true)]
+    #[Assert\GreaterThanOrEqual(
+        value: 'today',
+        message: 'The deadline cannot be in the past.'
+    )]
+    private ?\DateTimeInterface $deadline = null;
+
+    #[ORM\Column(name: 'filePath', type: 'string', nullable: true)]
+    #[Assert\Length(
+        max: 255,
+        maxMessage: 'The file path cannot be longer than {{ limit }} characters.'
+    )]
+    private ?string $filePath = null;
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\Length(
+        max: 255,
+        maxMessage: 'The Cloudinary public ID cannot be longer than {{ limit }} characters.'
+    )]
+    private ?string $cloudinary_public_id = null;
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\Length(
+        max: 255,
+        maxMessage: 'The original file name cannot be longer than {{ limit }} characters.'
+    )]
+    private ?string $original_file_name = null;
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\Length(
+        max: 120,
+        maxMessage: 'The content type cannot be longer than {{ limit }} characters.'
+    )]
+    private ?string $content_type = null;
 
     public function getTaskId(): ?int
     {
@@ -29,10 +111,6 @@ class Onboardingtask
         return $this;
     }
 
-    #[ORM\ManyToOne(targetEntity: Onboardingplan::class)]
-    #[ORM\JoinColumn(name: 'planId', referencedColumnName: 'planId', nullable: false)]
-    private ?Onboardingplan $plan = null;
-
     public function getPlan(): ?Onboardingplan
     {
         return $this->plan;
@@ -44,9 +122,6 @@ class Onboardingtask
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $title = null;
-
     public function getTitle(): ?string
     {
         return $this->title;
@@ -54,12 +129,9 @@ class Onboardingtask
 
     public function setTitle(?string $title): self
     {
-        $this->title = $title;
+        $this->title = null !== $title ? trim($title) : null;
         return $this;
     }
-
-    #[ORM\Column(type: 'text', nullable: true)]
-    private ?string $description = null;
 
     public function getDescription(): ?string
     {
@@ -68,26 +140,20 @@ class Onboardingtask
 
     public function setDescription(?string $description): self
     {
-        $this->description = $description;
+        $this->description = null !== $description ? trim($description) : null;
         return $this;
     }
-
-    #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $status = null;
 
     public function getStatus(): ?string
     {
         return $this->status;
     }
 
-    public function setStatus(string $status): self
+    public function setStatus(?string $status): self
     {
-        $this->status = $status;
+        $this->status = null !== $status ? trim($status) : null;
         return $this;
     }
-
-    #[ORM\Column(type: 'date', nullable: true)]
-    private ?\DateTimeInterface $deadline = null;
 
     public function getDeadline(): ?\DateTimeInterface
     {
@@ -100,9 +166,6 @@ class Onboardingtask
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $filePath = null;
-
     public function getFilePath(): ?string
     {
         return $this->filePath;
@@ -110,49 +173,7 @@ class Onboardingtask
 
     public function setFilePath(?string $filePath): self
     {
-        $this->filePath = $filePath;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $cloudinary_public_id = null;
-
-    public function getCloudinary_public_id(): ?string
-    {
-        return $this->cloudinary_public_id;
-    }
-
-    public function setCloudinary_public_id(?string $cloudinary_public_id): self
-    {
-        $this->cloudinary_public_id = $cloudinary_public_id;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $original_file_name = null;
-
-    public function getOriginal_file_name(): ?string
-    {
-        return $this->original_file_name;
-    }
-
-    public function setOriginal_file_name(?string $original_file_name): self
-    {
-        $this->original_file_name = $original_file_name;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $content_type = null;
-
-    public function getContent_type(): ?string
-    {
-        return $this->content_type;
-    }
-
-    public function setContent_type(?string $content_type): self
-    {
-        $this->content_type = $content_type;
+        $this->filePath = null !== $filePath ? trim($filePath) : null;
         return $this;
     }
 
@@ -161,10 +182,9 @@ class Onboardingtask
         return $this->cloudinary_public_id;
     }
 
-    public function setCloudinaryPublicId(?string $cloudinary_public_id): static
+    public function setCloudinaryPublicId(?string $cloudinary_public_id): self
     {
-        $this->cloudinary_public_id = $cloudinary_public_id;
-
+        $this->cloudinary_public_id = null !== $cloudinary_public_id ? trim($cloudinary_public_id) : null;
         return $this;
     }
 
@@ -173,10 +193,9 @@ class Onboardingtask
         return $this->original_file_name;
     }
 
-    public function setOriginalFileName(?string $original_file_name): static
+    public function setOriginalFileName(?string $original_file_name): self
     {
-        $this->original_file_name = $original_file_name;
-
+        $this->original_file_name = null !== $original_file_name ? trim($original_file_name) : null;
         return $this;
     }
 
@@ -185,11 +204,24 @@ class Onboardingtask
         return $this->content_type;
     }
 
-    public function setContentType(?string $content_type): static
+    public function setContentType(?string $content_type): self
     {
-        $this->content_type = $content_type;
+        $this->content_type = null !== $content_type ? trim($content_type) : null;
+        return $this;
+    }
+
+    public function clearAttachment(): self
+    {
+        $this->filePath = null;
+        $this->cloudinary_public_id = null;
+        $this->original_file_name = null;
+        $this->content_type = null;
 
         return $this;
     }
 
+    public static function getStatusChoices(): array
+    {
+        return self::STATUS_CHOICES;
+    }
 }

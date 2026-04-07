@@ -10,6 +10,11 @@
         {% include 'admin/Partials/navbar.html.twig' %}
 
         <main class="admin-content">
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="flash-message {{ label }}">{{ message }}</div>
+                {% endfor %}
+            {% endfor %}
             {% block admin_content %}{% endblock %}
         </main>
     </div>

@@ -1,0 +1,60 @@
+{% set admin_area = app.request.attributes.get('_route') starts with 'app_admin' %}
+{% set edit_plan_route = admin_area ? 'app_admin_plans_edit' : 'app_workspace_plans_edit' %}
+{% set tasks_route = admin_area ? 'app_admin_plan_tasks' : 'app_workspace_plan_tasks' %}
+{% set delete_plan_route = admin_area ? 'app_admin_plans_delete' : 'app_workspace_plans_delete' %}
+{% set qr_route = admin_area ? 'app_admin_plans_qr' : 'app_workspace_plans_qr' %}
+
+{% if plans is not empty %}
+    <div class="record-grid">
+        {% for plan in plans %}
+            <article class="record-card">
+                <div class="record-card-top">
+                    <div>
+                        <p class="record-eyebrow">Plan #{{ plan.planId }}</p>
+                        <h3 class="record-title">{{ plan.user.firstName }} {{ plan.user.lastName }}</h3>
+                    </div>
+                    <span class="status-pill">{{ plan.status|replace({'_': ' '})|title }}</span>
+                </div>
+
+                <div class="record-meta">
+                    <div class="record-meta-item">
+                        <span class="record-meta-label">Deadline</span>
+                        <span class="record-meta-value">{{ plan.deadline ? plan.deadline|date('Y-m-d') : 'No deadline' }}</span>
+                    </div>
+                    <div class="record-meta-item">
+                        <span class="record-meta-label">QR Token</span>
+                        <span class="record-meta-value">{{ plan.qrToken ?: 'Not generated yet' }}</span>
+                    </div>
+                </div>
+
+                <div class="actions-cell record-actions">
+                    {% if viewer_context.canEditPlan(plan) %}
+                        <a href="{{ path(edit_plan_route, {id: plan.planId}) }}" class="btn-secondary">
+                            {{ viewer_context.canFullyEditPlan(plan) ? 'Edit' : 'Update Status' }}
+                        </a>
+                    {% endif %}
+                    <a href="{{ path(tasks_route, {id: plan.planId}) }}" class="btn-primary">Tasks</a>
+                    <a href="{{ path(qr_route, {id: plan.planId}) }}" class="btn-secondary">QR Code</a>
+                    {% if viewer_context.canDeletePlan(plan) %}
+                        <form method="post" action="{{ path(delete_plan_route, {id: plan.planId}) }}" class="inline-form">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete_plan_' ~ plan.planId) }}">
+                            <button type="submit" class="btn-danger">Delete</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state-card">
+        {% if search_term is defined and search_term is not empty %}
+            <p class="record-eyebrow">No matching plans</p>
+            <h3 class="record-title">No plans found for "{{ search_term }}"</h3>
+            <p class="muted-text">Try another keyword or clear the search to see the full onboarding plan list again.</p>
+        {% else %}
+            <p class="record-eyebrow">No plans yet</p>
+            <h3 class="record-title">Start your onboarding coordination flow</h3>
+            <p class="muted-text">Create the first onboarding plan to assign a user, set a status, and organize plan-specific tasks.</p>
+        {% endif %}
+    </div>
+{% endif %}

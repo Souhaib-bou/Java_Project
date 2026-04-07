@@ -2,6 +2,9 @@
 
 {% block title %}Hirely Home{% endblock %}
 
+{% set dashboard_route = viewer_context.admin ? 'app_admin' : 'app_workspace' %}
+{% set plans_route = viewer_context.admin ? 'app_admin_plans' : 'app_workspace_plans' %}
+
 {% block body %}
 <div class="home-wrap">
     <div class="card home-card">
@@ -13,10 +16,43 @@
             </div>
         </div>
 
-        <div style="margin-top: 24px;">
+        <div class="home-intro">
             <p class="muted-text">
-                This is the first integrated Symfony page using the Hirely stylesheet and branding.
+                This frontend now reflects the onboarding role permissions. Switch the active user below to preview the Admin, Recruiter, and Candidate experiences before the authentication module is connected.
             </p>
+        </div>
+
+        <div class="home-switcher">
+            <form method="post" action="{{ path('app_viewer_switch') }}" class="viewer-switcher home">
+                <input type="hidden" name="_token" value="{{ csrf_token('switch_viewer') }}">
+                <input type="hidden" name="redirect_to" value="{{ app.request.requestUri }}">
+                <label class="viewer-switcher-label" for="home_viewer_user_id">Preview as</label>
+                <select id="home_viewer_user_id" name="viewer_user_id" class="viewer-select" onchange="this.form.submit()">
+                    {% for user in viewer_context.availableUsers %}
+                        <option value="{{ user.userId }}" {{ viewer_context.currentUser and viewer_context.currentUser.userId == user.userId ? 'selected' : '' }}>
+                            {{ user.firstName }} {{ user.lastName }} • {{ user.role.name|capitalize }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </form>
+        </div>
+
+        <div class="record-grid" style="margin-top: 26px;">
+            <article class="record-card compact">
+                <p class="record-eyebrow">Active Role</p>
+                <h3 class="record-title">{{ viewer_context.roleName }}</h3>
+                <p class="muted-text">Current viewer: {{ viewer_context.currentUserDisplayName }}</p>
+            </article>
+
+            <article class="record-card compact">
+                <p class="record-eyebrow">Dashboard</p>
+                <h3 class="record-title">{{ viewer_context.admin ? 'Admin Backend' : viewer_context.workspaceTitle }}</h3>
+                <p class="muted-text">Open the separate area that matches the selected account instead of mixing admin with candidate or recruiter pages.</p>
+                <div class="record-actions actions-cell">
+                    <a href="{{ path(dashboard_route) }}" class="btn-primary">Open Dashboard</a>
+                    <a href="{{ path(plans_route) }}" class="btn-secondary">Open Plans</a>
+                </div>
+            </article>
         </div>
     </div>
 </div>

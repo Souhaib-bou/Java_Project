@@ -14,6 +14,8 @@
 <body class="app-root">
     {% block body %}{% endblock %}
 
-    {% block javascripts %}{% endblock %}
+    {% block javascripts %}
+        <script src="{{ asset('assets/js/live-search.js') }}" defer></script>
+    {% endblock %}
 </body>
 </html>

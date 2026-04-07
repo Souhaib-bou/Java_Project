@@ -397,20 +397,19 @@ class User
     #[ORM\OneToMany(targetEntity: PasswordResetOtp::class, mappedBy: 'user')]
     private Collection $passwordResetOtps;
 
-    public function __construct()
-    {
-        $this->applications = new ArrayCollection();
-        $this->forumComments = new ArrayCollection();
-        $this->editedForumComments = new ArrayCollection();
+     public function __construct()
+     {
+         $this->applications = new ArrayCollection();
+         $this->forumComments = new ArrayCollection();
+         $this->editedForumComments = new ArrayCollection();
         $this->forumNotifications = new ArrayCollection();
         $this->actorForumNotifications = new ArrayCollection();
         $this->forumPosts = new ArrayCollection();
-        $this->editedForumPosts = new ArrayCollection();
-        $this->joboffers = new ArrayCollection();
-        $this->passwordResetOtps = new ArrayCollection();
-        $this->onboardingplans = new ArrayCollection();
-        $this->onboardingtasks = new ArrayCollection();
-    }
+         $this->editedForumPosts = new ArrayCollection();
+         $this->joboffers = new ArrayCollection();
+         $this->passwordResetOtps = new ArrayCollection();
+         $this->onboardingplans = new ArrayCollection();
+     }
 
     /**
      * @return Collection<int, PasswordResetOtp>

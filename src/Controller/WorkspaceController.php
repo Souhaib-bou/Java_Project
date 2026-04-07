@@ -12,19 +12,16 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-final class AdminController extends AbstractController
+final class WorkspaceController extends AbstractController
 {
-    #[Route('/admin', name: 'app_admin')]
+    #[Route('/workspace', name: 'app_workspace')]
     public function index(
         OnboardingplanRepository $planRepository,
         OnboardingtaskRepository $taskRepository,
         ViewerContext $viewerContext,
-    ): Response|RedirectResponse
-    {
-        if (!$viewerContext->isAdmin()) {
-            $this->addFlash('error', 'The admin backend is reserved for admin accounts.');
-
-            return $this->redirectToRoute('app_workspace');
+    ): Response|RedirectResponse {
+        if ($viewerContext->isAdmin()) {
+            return $this->redirectToRoute('app_admin');
         }
 
         $viewer = $viewerContext->getCurrentUser();
@@ -45,11 +42,5 @@ final class AdminController extends AbstractController
                 'attachments' => count($attachments),
             ],
         ]);
-    }
-
-    #[Route('/admin/tasks', name: 'app_admin_tasks')]
-    public function tasks(): RedirectResponse
-    {
-        return $this->redirectToRoute('app_admin_plans');
     }
 }

@@ -2,23 +2,34 @@
 
 {% block title %}{{ page_title }}{% endblock %}
 
+{% set admin_area = app.request.attributes.get('_route') starts with 'app_admin' %}
+{% set plans_route = admin_area ? 'app_admin_plans' : 'app_workspace_plans' %}
+
 {% block admin_content %}
 <div class="page-header">
     <h1 class="page-title">{{ page_title }}</h1>
-    <p class="muted-text">Create or update an onboarding plan.</p>
+    <p class="muted-text">
+        {{ limited_editor ? 'Candidates can update only the status of their own plan.' : 'Create or update an onboarding plan.' }}
+    </p>
 </div>
 
 <div class="card">
-    {{ form_start(form) }}
+    {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+        {{ form_errors(form) }}
+        {% if limited_editor and plan is defined %}
+            <div class="permission-hint">
+                <strong>Locked fields:</strong> user, deadline, and QR token are preserved and cannot be changed from this role.
+            </div>
+        {% endif %}
         <div style="display:grid; gap:16px;">
-            {{ form_row(form.user) }}
+            {% if form.user is defined %}{{ form_row(form.user) }}{% endif %}
             {{ form_row(form.status) }}
-            {{ form_row(form.deadline) }}
+            {% if form.deadline is defined %}{{ form_row(form.deadline) }}{% endif %}
         </div>
 
         <div style="margin-top: 20px; display:flex; gap:12px;">
             <button type="submit" class="btn-primary">Save</button>
-            <a href="{{ path('app_admin_plans') }}" class="btn-secondary">Cancel</a>
+            <a href="{{ path(plans_route) }}" class="btn-secondary">Cancel</a>
         </div>
     {{ form_end(form) }}
 </div>

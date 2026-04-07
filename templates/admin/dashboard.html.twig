@@ -2,38 +2,128 @@
 
 {% block title %}Admin Dashboard{% endblock %}
 
+{% set admin_area = app.request.attributes.get('_route') starts with 'app_admin' %}
+{% set dashboard_route = admin_area ? 'app_admin' : 'app_workspace' %}
+{% set plans_route = admin_area ? 'app_admin_plans' : 'app_workspace_plans' %}
+{% set new_plan_route = admin_area ? 'app_admin_plans_new' : 'app_workspace_plans_new' %}
+{% set qr_route = admin_area ? 'app_admin_plans_qr' : 'app_workspace_plans_qr' %}
+{% set tasks_route = admin_area ? 'app_admin_plan_tasks' : 'app_workspace_plan_tasks' %}
+
 {% block admin_content %}
 <div class="page-header">
     <h1 class="page-title">Dashboard</h1>
-    <p class="muted-text">Overview of the onboarding coordination module.</p>
+    <p class="muted-text">
+        {{ viewer_context.candidate
+            ? 'Track your onboarding plan, tasks, and attachment progress.'
+            : 'Overview of onboarding plans, tasks, and candidate activity for this module.'
+        }}
+    </p>
 </div>
 
 <div class="metrics-grid">
     <div class="metric-card">
-        <div class="metric-label">Total Plans</div>
-        <div class="metric-value">12</div>
+        <div class="metric-label">{{ viewer_context.candidate ? 'My Plans' : 'Visible Plans' }}</div>
+        <div class="metric-value">{{ metrics.plans }}</div>
     </div>
 
     <div class="metric-card">
         <div class="metric-label">Completed Plans</div>
-        <div class="metric-value">5</div>
+        <div class="metric-value">{{ metrics.completed_plans }}</div>
     </div>
 
     <div class="metric-card">
-        <div class="metric-label">In Progress Tasks</div>
-        <div class="metric-value">18</div>
+        <div class="metric-label">{{ viewer_context.candidate ? 'My Active Tasks' : 'In Progress Tasks' }}</div>
+        <div class="metric-value">{{ metrics.active_tasks }}</div>
     </div>
 
     <div class="metric-card">
-        <div class="metric-label">Pending Tasks</div>
-        <div class="metric-value">9</div>
+        <div class="metric-label">{{ viewer_context.candidate ? 'My Attachments' : 'Tasks With Attachments' }}</div>
+        <div class="metric-value">{{ metrics.attachments }}</div>
     </div>
 </div>
 
-<div class="card">
-    <h2 class="section-title">Welcome</h2>
-    <p class="muted-text">
-        This dashboard will later display real onboarding statistics and recent activity.
-    </p>
+<div class="dashboard-grid">
+    <div class="card dashboard-panel">
+        <div class="section-header">
+            <h2 class="section-title">Role Permissions</h2>
+            <span class="{{ viewer_context.roleBadgeClass }}">{{ viewer_context.roleName }}</span>
+        </div>
+
+        {% if viewer_context.candidate %}
+            <ul class="permission-list">
+                <li>View only your own onboarding plans and their tasks.</li>
+                <li>Update your plan status only.</li>
+                <li>Update task status and attachment only.</li>
+                <li>Create and delete actions are hidden and blocked.</li>
+            </ul>
+        {% else %}
+            <ul class="permission-list">
+                <li>View, create, update, and delete onboarding plans.</li>
+                <li>Open any plan and manage its tasks.</li>
+                <li>Generate or view plan QR codes.</li>
+                <li>Manage task status, details, and attachments for every plan.</li>
+            </ul>
+        {% endif %}
+    </div>
+
+    <div class="card dashboard-panel">
+        <div class="section-header">
+            <h2 class="section-title">{{ viewer_context.candidate ? 'Quick Access' : 'Management Shortcuts' }}</h2>
+        </div>
+
+        <div class="quick-links">
+            <a href="{{ path(plans_route) }}" class="quick-link-card">
+                <span class="record-eyebrow">{{ viewer_context.candidate ? 'My plans' : 'All plans' }}</span>
+                <strong>Open onboarding plans</strong>
+                <span class="muted-text">Go to the role-filtered plans workspace.</span>
+            </a>
+
+            {% if viewer_context.canCreatePlans %}
+                <a href="{{ path(new_plan_route) }}" class="quick-link-card">
+                    <span class="record-eyebrow">Create</span>
+                    <strong>Add a new onboarding plan</strong>
+                    <span class="muted-text">Assign a user, set a deadline, and prepare task tracking.</span>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 24px;">
+    <div class="section-header">
+        <h2 class="section-title">{{ viewer_context.candidate ? 'My Recent Plans' : 'Recent Plans' }}</h2>
+    </div>
+
+    {% if recent_plans is not empty %}
+        <div class="record-grid">
+            {% for plan in recent_plans %}
+                <article class="record-card compact">
+                    <div class="record-card-top">
+                        <div>
+                            <p class="record-eyebrow">Plan #{{ plan.planId }}</p>
+                            <h3 class="record-title">{{ plan.user.firstName }} {{ plan.user.lastName }}</h3>
+                        </div>
+                        <span class="status-pill">{{ plan.status|replace({'_': ' '})|title }}</span>
+                    </div>
+                    <div class="record-meta">
+                        <div class="record-meta-item">
+                            <span class="record-meta-label">Deadline</span>
+                            <span class="record-meta-value">{{ plan.deadline ? plan.deadline|date('Y-m-d') : 'No deadline' }}</span>
+                        </div>
+                        <div class="record-meta-item">
+                            <span class="record-meta-label">QR</span>
+                            <span class="record-meta-value">{{ plan.qrToken ? 'Ready' : 'Will be generated on demand' }}</span>
+                        </div>
+                    </div>
+                    <div class="actions-cell record-actions">
+                        <a href="{{ path(tasks_route, {id: plan.planId}) }}" class="btn-primary">Open Tasks</a>
+                        <a href="{{ path(qr_route, {id: plan.planId}) }}" class="btn-secondary">QR Code</a>
+                    </div>
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="muted-text">No onboarding plans are available for this role yet.</p>
+    {% endif %}
 </div>
 {% endblock %}

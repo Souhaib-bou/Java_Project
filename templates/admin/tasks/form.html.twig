@@ -1,0 +1,48 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% set admin_area = app.request.attributes.get('_route') starts with 'app_admin' %}
+{% set tasks_route = admin_area ? 'app_admin_plan_tasks' : 'app_workspace_plan_tasks' %}
+
+{% block admin_content %}
+<div class="page-header">
+    <h1 class="page-title">{{ page_title }}</h1>
+    <p class="muted-text">
+        Plan #{{ plan.planId }} - {{ plan.user.firstName }} {{ plan.user.lastName }}
+    </p>
+</div>
+
+<div class="card">
+    {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+        {{ form_errors(form) }}
+        {% if limited_editor and task is defined %}
+            <div class="permission-hint">
+                <strong>Candidate mode:</strong> only task status and attachment can be updated from this screen.
+            </div>
+            <div class="record-meta" style="margin-bottom: 16px;">
+                <div class="record-meta-item">
+                    <span class="record-meta-label">Title</span>
+                    <span class="record-meta-value">{{ task.title ?: 'Untitled task' }}</span>
+                </div>
+                <div class="record-meta-item">
+                    <span class="record-meta-label">Deadline</span>
+                    <span class="record-meta-value">{{ task.deadline ? task.deadline|date('Y-m-d') : 'No deadline' }}</span>
+                </div>
+            </div>
+        {% endif %}
+        <div style="display:grid; gap:16px;">
+            {% if form.title is defined %}{{ form_row(form.title) }}{% endif %}
+            {% if form.description is defined %}{{ form_row(form.description) }}{% endif %}
+            {{ form_row(form.status) }}
+            {% if form.deadline is defined %}{{ form_row(form.deadline) }}{% endif %}
+            {{ form_row(form.filePath) }}
+        </div>
+
+        <div style="margin-top: 20px; display:flex; gap:12px;">
+            <button type="submit" class="btn-primary">Save</button>
+            <a href="{{ path(tasks_route, {id: plan.planId}) }}" class="btn-secondary">Cancel</a>
+        </div>
+    {{ form_end(form) }}
+</div>
+{% endblock %}

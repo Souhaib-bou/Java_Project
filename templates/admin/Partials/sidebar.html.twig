@@ -1,15 +1,20 @@
+{% set admin_area = app.request.attributes.get('_route') starts with 'app_admin' %}
+{% set dashboard_route = admin_area ? 'app_admin' : 'app_workspace' %}
+{% set plans_route = admin_area ? 'app_admin_plans' : 'app_workspace_plans' %}
+
 <aside class="sidebar">
     <div class="sidebar-brand">
         <img src="{{ asset('assets/img/logo-hirely-light.png') }}" alt="Hirely Logo" class="sidebar-logo">
         <div>
             <div class="sidebar-title">Hirely</div>
-            <div class="sidebar-subtitle">Admin Panel</div>
+            <div class="sidebar-subtitle">{{ admin_area ? 'Admin Backend' : 'Frontend Workspace' }}</div>
         </div>
     </div>
 
     <nav class="sidebar-nav">
-        <a href="{{ path('app_admin') }}" class="sidebar-link {{ app.request.attributes.get('_route') == 'app_admin' ? 'active' : '' }}">Dashboard</a>
-        <a href="{{ path('app_admin_plans') }}" class="sidebar-link {{ app.request.attributes.get('_route') == 'app_admin_plans' ? 'active' : '' }}">Onboarding Plans</a>
-        <a href="{{ path('app_admin_tasks') }}" class="sidebar-link {{ app.request.attributes.get('_route') == 'app_admin_tasks' ? 'active' : '' }}">Onboarding Tasks</a>
+        <a href="{{ path(dashboard_route) }}" class="sidebar-link {{ app.request.attributes.get('_route') == dashboard_route ? 'active' : '' }}">Dashboard</a>
+        <a href="{{ path(plans_route) }}" class="sidebar-link {{ app.request.attributes.get('_route') starts with (admin_area ? 'app_admin_plans' : 'app_workspace_plans') or app.request.attributes.get('_route') starts with (admin_area ? 'app_admin_plan_tasks' : 'app_workspace_plan_tasks') ? 'active' : '' }}">
+            {{ viewer_context.candidate ? 'My Onboarding' : 'Onboarding Plans' }}
+        </a>
     </nav>
 </aside>
