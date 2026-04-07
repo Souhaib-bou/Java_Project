@@ -39,24 +39,26 @@ class Onboardingtask
 
     #[ORM\ManyToOne(targetEntity: Onboardingplan::class, inversedBy: 'onboardingtasks')]
     #[ORM\JoinColumn(name: 'planId', referencedColumnName: 'planId', nullable: false)]
-    #[Assert\NotNull(message: 'This task must belong to an onboarding plan.')]
+    #[Assert\NotNull(message: 'This task must belong to an onboarding plan.', groups: ['full_edit'])]
     private ?Onboardingplan $plan = null;
 
     #[ORM\Column(type: 'string', nullable: true)]
-    #[Assert\NotBlank(message: 'Please enter a task title.')]
+    #[Assert\NotBlank(message: 'Please enter a task title.', groups: ['full_edit'])]
     #[Assert\Length(
         max: 255,
-        maxMessage: 'The task title cannot be longer than {{ limit }} characters.'
+        maxMessage: 'The task title cannot be longer than {{ limit }} characters.',
+        groups: ['full_edit']
     )]
     private ?string $title = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
-    #[Assert\NotBlank(message: 'Please enter a task description.')]
+    #[Assert\NotBlank(message: 'Please enter a task description.', groups: ['full_edit'])]
     #[Assert\Length(
         min: 10,
         minMessage: 'The task description must be at least {{ limit }} characters long.',
         max: 5000,
-        maxMessage: 'The task description cannot be longer than {{ limit }} characters.'
+        maxMessage: 'The task description cannot be longer than {{ limit }} characters.',
+        groups: ['full_edit']
     )]
     private ?string $description = null;
 
@@ -68,7 +70,8 @@ class Onboardingtask
     #[ORM\Column(type: 'date', nullable: true)]
     #[Assert\GreaterThanOrEqual(
         value: 'today',
-        message: 'The deadline cannot be in the past.'
+        message: 'The deadline cannot be in the past.',
+        groups: ['full_edit']
     )]
     private ?\DateTimeInterface $deadline = null;
 

@@ -10,6 +10,7 @@ use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class OnboardingTaskType extends AbstractType
@@ -69,6 +70,11 @@ class OnboardingTaskType extends AbstractType
         $resolver->setDefaults([
             'data_class' => Onboardingtask::class,
             'editor_mode' => self::EDITOR_MODE_FULL,
+            'validation_groups' => static function (FormInterface $form): array {
+                return self::EDITOR_MODE_FULL === $form->getConfig()->getOption('editor_mode')
+                    ? ['Default', 'full_edit']
+                    : ['Default'];
+            },
         ]);
 
         $resolver->setAllowedValues('editor_mode', [

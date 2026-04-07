@@ -15,6 +15,11 @@ final class ViewerContext
     public const ROLE_ADMIN = 3;
 
     private const SESSION_KEY = 'onboarding_viewer_user_id';
+    private const DEMO_USERS_BY_ROLE = [
+        self::ROLE_ADMIN => 99,
+        self::ROLE_RECRUITER => 4,
+        self::ROLE_CANDIDATE => 7,
+    ];
 
     public function __construct(
         private readonly RequestStack $requestStack,
@@ -58,19 +63,18 @@ final class ViewerContext
      */
     public function getAvailableUsers(): array
     {
-        return $this->userRepository->createQueryBuilder('user')
-            ->leftJoin('user.role', 'role')
-            ->addSelect('role')
-            ->andWhere('role.role_id IN (:roles)')
-            ->setParameter('roles', [
-                self::ROLE_ADMIN,
-                self::ROLE_RECRUITER,
-                self::ROLE_CANDIDATE,
-            ])
-            ->addOrderBy('role.role_id', 'DESC')
-            ->addOrderBy('user.user_id', 'ASC')
-            ->getQuery()
-            ->getResult();
+        $users = [];
+
+        foreach (self::DEMO_USERS_BY_ROLE as $roleId => $userId) {
+            $user = $this->userRepository->find($userId);
+            if (!$user || $roleId !== $user->getRole()?->getRoleId()) {
+                continue;
+            }
+
+            $users[] = $user;
+        }
+
+        return $users;
     }
 
     public function setViewerUserId(?int $viewerUserId): bool
@@ -237,6 +241,10 @@ final class ViewerContext
 
         $roleId = $user->getRole()?->getRoleId();
         if (!\in_array($roleId, [self::ROLE_ADMIN, self::ROLE_RECRUITER, self::ROLE_CANDIDATE], true)) {
+            return null;
+        }
+
+        if (($user->getUserId() ?? 0) !== (self::DEMO_USERS_BY_ROLE[$roleId] ?? 0)) {
             return null;
         }
 

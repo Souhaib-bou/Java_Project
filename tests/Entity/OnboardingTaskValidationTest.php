@@ -28,7 +28,7 @@ class OnboardingTaskValidationTest extends TestCase
         $task->setStatus('pending');
         $task->setDeadline(new DateTimeImmutable('yesterday'));
 
-        $violations = $this->validator->validate($task);
+        $violations = $this->validator->validate($task, null, ['Default', 'full_edit']);
         $properties = $this->getViolationProperties($violations);
 
         self::assertContains('plan', $properties);
@@ -48,9 +48,24 @@ class OnboardingTaskValidationTest extends TestCase
         $task->setDeadline(new DateTimeImmutable('tomorrow'));
         $task->setFilePath('https://res.cloudinary.com/hirely-demo/image/upload/onboarding-checklist.pdf');
 
-        $violations = $this->validator->validate($task);
+        $violations = $this->validator->validate($task, null, ['Default', 'full_edit']);
 
         self::assertCount(0, $violations);
+    }
+
+    public function testCandidateValidationAllowsStatusOnlyUpdatesOnPastDeadline(): void
+    {
+        $task = new Onboardingtask();
+        $task->setStatus(Onboardingtask::STATUS_COMPLETED);
+        $task->setDeadline(new DateTimeImmutable('yesterday'));
+
+        $violations = $this->validator->validate($task);
+        $properties = $this->getViolationProperties($violations);
+
+        self::assertNotContains('deadline', $properties);
+        self::assertNotContains('title', $properties);
+        self::assertNotContains('description', $properties);
+        self::assertNotContains('plan', $properties);
     }
 
     private function getViolationProperties(iterable $violations): array

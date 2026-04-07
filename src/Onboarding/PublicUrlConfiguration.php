@@ -14,9 +14,9 @@ final class PublicUrlConfiguration
 
     public function resolveBaseUrl(Request $request): string
     {
-        $configuredBaseUrl = trim((string) $this->publicBaseUrl);
-        if ('' !== $configuredBaseUrl && self::AUTO_VALUE !== strtolower($configuredBaseUrl)) {
-            return rtrim($configuredBaseUrl, '/');
+        $configuredBaseUrl = $this->resolveConfiguredBaseUrl();
+        if (null !== $configuredBaseUrl) {
+            return $configuredBaseUrl;
         }
 
         $requestHost = (string) $request->getHost();
@@ -24,16 +24,55 @@ final class PublicUrlConfiguration
             return rtrim($request->getSchemeAndHttpHost(), '/');
         }
 
+        $detectedHostname = $this->detectStableHostName();
+        if (null !== $detectedHostname) {
+            return $this->buildBaseUrl($request, $detectedHostname);
+        }
+
         $detectedHost = $this->detectLanHost();
         if (null === $detectedHost) {
             return rtrim($request->getSchemeAndHttpHost(), '/');
         }
 
+        return $this->buildBaseUrl($request, $detectedHost);
+    }
+
+    public function isUsingConfiguredPublicBaseUrl(): bool
+    {
+        return null !== $this->resolveConfiguredBaseUrl();
+    }
+
+    private function buildBaseUrl(Request $request, string $host): string
+    {
         $scheme = $request->isSecure() ? 'https' : 'http';
         $port = $request->getPort();
         $portSuffix = $this->shouldAppendPort($scheme, $port) ? ':' . $port : '';
 
-        return sprintf('%s://%s%s', $scheme, $detectedHost, $portSuffix);
+        return sprintf('%s://%s%s', $scheme, $host, $portSuffix);
+    }
+
+    private function resolveConfiguredBaseUrl(): ?string
+    {
+        $configuredBaseUrl = trim((string) $this->publicBaseUrl);
+        if ('' === $configuredBaseUrl || self::AUTO_VALUE === strtolower($configuredBaseUrl)) {
+            return null;
+        }
+
+        if (!preg_match('#^https?://#i', $configuredBaseUrl)) {
+            $configuredBaseUrl = 'https://' . ltrim($configuredBaseUrl, '/');
+        }
+
+        return rtrim($configuredBaseUrl, '/');
+    }
+
+    private function detectStableHostName(): ?string
+    {
+        $hostname = trim((string) gethostname());
+        if (!$this->isReachableHost($hostname)) {
+            return null;
+        }
+
+        return $hostname;
     }
 
     private function detectLanHost(): ?string

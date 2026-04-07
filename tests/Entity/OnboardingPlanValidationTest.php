@@ -26,7 +26,7 @@ class OnboardingPlanValidationTest extends TestCase
         $plan->setStatus('invalid_status');
         $plan->setDeadline(new DateTimeImmutable('yesterday'));
 
-        $violations = $this->validator->validate($plan);
+        $violations = $this->validator->validate($plan, null, ['Default', 'full_edit']);
         $properties = $this->getViolationProperties($violations);
 
         self::assertContains('user', $properties);
@@ -41,9 +41,22 @@ class OnboardingPlanValidationTest extends TestCase
         $plan->setStatus(Onboardingplan::STATUS_PENDING);
         $plan->setDeadline(new DateTimeImmutable('today'));
 
-        $violations = $this->validator->validate($plan);
+        $violations = $this->validator->validate($plan, null, ['Default', 'full_edit']);
 
         self::assertCount(0, $violations);
+    }
+
+    public function testCandidateValidationAllowsStatusOnlyUpdatesOnPastDeadline(): void
+    {
+        $plan = new Onboardingplan();
+        $plan->setStatus(Onboardingplan::STATUS_COMPLETED);
+        $plan->setDeadline(new DateTimeImmutable('yesterday'));
+
+        $violations = $this->validator->validate($plan);
+        $properties = $this->getViolationProperties($violations);
+
+        self::assertNotContains('deadline', $properties);
+        self::assertNotContains('user', $properties);
     }
 
     private function getViolationProperties(iterable $violations): array

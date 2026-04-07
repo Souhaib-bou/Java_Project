@@ -38,7 +38,7 @@ class Onboardingplan
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'onboardingplans')]
     #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'user_id', nullable: false)]
-    #[Assert\NotNull(message: 'Please select a user for this onboarding plan.')]
+    #[Assert\NotNull(message: 'Please select a user for this onboarding plan.', groups: ['full_edit'])]
     private ?User $user = null;
 
     #[ORM\Column(type: 'string', nullable: false)]
@@ -49,7 +49,8 @@ class Onboardingplan
     #[ORM\Column(type: 'date', nullable: true)]
     #[Assert\GreaterThanOrEqual(
         value: 'today',
-        message: 'The deadline cannot be in the past.'
+        message: 'The deadline cannot be in the past.',
+        groups: ['full_edit']
     )]
     private ?\DateTimeInterface $deadline = null;
 
