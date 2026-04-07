@@ -1,0 +1,25 @@
+{% if task.hasAttachment %}
+    {% set preview_class = preview_class|default('attachment-preview') %}
+    {% set preview_kind = task.attachmentPreviewKind %}
+
+    <div class="{{ preview_class }} attachment-preview-{{ preview_kind }}">
+        {% if preview_kind == 'image' %}
+            <img src="{{ task.filePath }}" alt="{{ task.attachmentLabel }}" class="attachment-preview-media">
+        {% elseif preview_kind == 'pdf' %}
+            <iframe src="{{ task.filePath }}" title="{{ task.attachmentLabel }}" class="attachment-preview-media attachment-preview-frame"></iframe>
+        {% elseif preview_kind == 'video' %}
+            <video controls preload="metadata" class="attachment-preview-media">
+                <source src="{{ task.filePath }}">
+            </video>
+        {% elseif preview_kind == 'audio' %}
+            <audio controls preload="metadata" class="attachment-preview-audio">
+                <source src="{{ task.filePath }}">
+            </audio>
+        {% else %}
+            <div class="attachment-preview-file">
+                <span class="attachment-preview-icon">File</span>
+                <span class="attachment-preview-name">{{ task.attachmentLabel }}</span>
+            </div>
+        {% endif %}
+    </div>
+{% endif %}

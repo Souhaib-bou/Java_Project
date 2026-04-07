@@ -164,4 +164,22 @@ class Onboardingplan
     {
         return self::STATUS_CHOICES;
     }
+
+    public function isCompleted(): bool
+    {
+        return self::STATUS_COMPLETED === $this->status;
+    }
+
+    public function isOverdue(?\DateTimeInterface $referenceDate = null): bool
+    {
+        if (null === $this->deadline || $this->isCompleted()) {
+            return false;
+        }
+
+        $referenceDate ??= new \DateTimeImmutable('today');
+        $deadline = \DateTimeImmutable::createFromInterface($this->deadline)->setTime(0, 0);
+        $reference = \DateTimeImmutable::createFromInterface($referenceDate)->setTime(0, 0);
+
+        return $deadline < $reference;
+    }
 }

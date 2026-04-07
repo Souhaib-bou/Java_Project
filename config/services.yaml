@@ -4,6 +4,9 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    onboarding.cloudinary.cloud_name: '%env(default::CLOUDINARY_CLOUD_NAME)%'
+    onboarding.cloudinary.unsigned_preset: '%env(default::CLOUDINARY_UNSIGNED_PRESET)%'
+    onboarding.public_base_url: '%env(default::ONBOARDING_PUBLIC_BASE_URL)%'
 
 services:
     # default configuration for services in *this* file
@@ -22,3 +25,15 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+    App\Onboarding\AttachmentUploadConfiguration:
+        arguments:
+            $cloudName: '%onboarding.cloudinary.cloud_name%'
+            $unsignedPreset: '%onboarding.cloudinary.unsigned_preset%'
+
+    App\Onboarding\PublicUrlConfiguration:
+        arguments:
+            $publicBaseUrl: '%onboarding.public_base_url%'
+
+    App\Onboarding\LocalTaskAttachmentStorage:
+        arguments:
+            $projectDir: '%kernel.project_dir%'

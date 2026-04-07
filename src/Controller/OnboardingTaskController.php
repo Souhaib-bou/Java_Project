@@ -5,10 +5,15 @@ namespace App\Controller;
 use App\Entity\Onboardingplan;
 use App\Entity\Onboardingtask;
 use App\Form\OnboardingTaskType;
+use App\Onboarding\AttachmentUploadConfiguration;
+use App\Onboarding\LocalTaskAttachmentStorage;
+use App\Onboarding\TaskDecisionGuideService;
+use App\Onboarding\TaskRecommendation;
 use App\Onboarding\ViewerContext;
 use App\Repository\OnboardingtaskRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,9 +21,40 @@ use Symfony\Component\Routing\Attribute\Route;
 
 final class OnboardingTaskController extends AbstractController
 {
+    #[Route('/attachments/upload', name: 'app_task_attachment_upload', methods: ['POST'])]
+    public function uploadAttachment(Request $request, ViewerContext $viewerContext, AttachmentUploadConfiguration $attachmentUploadConfiguration, LocalTaskAttachmentStorage $localTaskAttachmentStorage): JsonResponse
+    {
+        if (!$viewerContext->getCurrentUser()) {
+            return $this->json(['error' => ['message' => 'No active user found for this session.']], Response::HTTP_FORBIDDEN);
+        }
+
+        $uploadedFile = $request->files->get('file');
+        if (!$uploadedFile) {
+            return $this->json(['error' => ['message' => 'Choose a file before uploading.']], Response::HTTP_BAD_REQUEST);
+        }
+
+        if ($attachmentUploadConfiguration->isEnabled()) {
+            return $this->json([
+                'error' => ['message' => 'Direct browser upload should use the configured external provider.'],
+            ], Response::HTTP_BAD_REQUEST);
+        }
+
+        $storedFile = $localTaskAttachmentStorage->store($uploadedFile);
+        $publicUrl = rtrim($request->getSchemeAndHttpHost(), '/') . $storedFile['public_path'];
+
+        return $this->json([
+            'secure_url' => $publicUrl,
+            'public_id' => 'local/' . $storedFile['stored_name'],
+            'original_filename' => pathinfo($storedFile['original_name'], \PATHINFO_FILENAME),
+            'format' => pathinfo($storedFile['stored_name'], \PATHINFO_EXTENSION),
+            'resource_type' => 'raw',
+            'content_type' => $storedFile['content_type'],
+        ]);
+    }
+
     #[Route('/admin/plans/{id}/tasks', name: 'app_admin_plan_tasks')]
     #[Route('/workspace/plans/{id}/tasks', name: 'app_workspace_plan_tasks')]
-    public function index(Request $request, Onboardingplan $plan, OnboardingtaskRepository $taskRepository, ViewerContext $viewerContext): Response|RedirectResponse
+    public function index(Request $request, Onboardingplan $plan, OnboardingtaskRepository $taskRepository, ViewerContext $viewerContext, TaskDecisionGuideService $taskDecisionGuideService): Response|RedirectResponse
     {
         if ($redirect = $this->redirectForArea($request, $viewerContext)) {
             return $redirect;
@@ -32,11 +68,23 @@ final class OnboardingTaskController extends AbstractController
 
         $searchTerm = trim((string) $request->query->get('q', ''));
         $caseSensitive = $request->query->getBoolean('case_sensitive');
+        $filters = [
+            'status' => trim((string) $request->query->get('status', '')),
+            'sort' => trim((string) $request->query->get('sort', 'newest')),
+            'attachment_only' => $request->query->getBoolean('attachment_only'),
+        ];
+        $tasks = $taskRepository->findByPlan($plan, $searchTerm, $caseSensitive, $filters);
         $viewData = [
             'plan' => $plan,
-            'tasks' => $taskRepository->findByPlan($plan, $searchTerm, $caseSensitive),
+            'tasks' => $tasks,
             'search_term' => $searchTerm,
             'case_sensitive' => $caseSensitive,
+            'selected_status' => $filters['status'],
+            'selected_sort' => $filters['sort'],
+            'attachment_only' => $filters['attachment_only'],
+            'task_metrics' => $this->buildTaskMetrics($tasks),
+            'task_recommendations' => \array_slice($taskDecisionGuideService->buildRecommendations($viewerContext->getRoleId() ?? ViewerContext::ROLE_CANDIDATE, $tasks), 0, 4),
+            'task_status_choices' => Onboardingtask::getStatusChoices(),
         ];
 
         if ($request->isXmlHttpRequest()) {
@@ -48,7 +96,7 @@ final class OnboardingTaskController extends AbstractController
 
     #[Route('/admin/plans/{id}/tasks/new', name: 'app_admin_plan_tasks_new')]
     #[Route('/workspace/plans/{id}/tasks/new', name: 'app_workspace_plan_tasks_new')]
-    public function new(Onboardingplan $plan, Request $request, EntityManagerInterface $entityManager, ViewerContext $viewerContext): Response|RedirectResponse
+    public function new(Onboardingplan $plan, Request $request, EntityManagerInterface $entityManager, ViewerContext $viewerContext, AttachmentUploadConfiguration $attachmentUploadConfiguration): Response|RedirectResponse
     {
         if ($redirect = $this->redirectForArea($request, $viewerContext)) {
             return $redirect;
@@ -93,12 +141,13 @@ final class OnboardingTaskController extends AbstractController
             'page_title' => 'Add Task',
             'limited_editor' => false,
             'task' => $task,
+            'attachment_upload' => $this->buildAttachmentUploadViewData($attachmentUploadConfiguration),
         ]);
     }
 
     #[Route('/admin/tasks/{id}/edit', name: 'app_admin_plan_tasks_edit')]
     #[Route('/workspace/tasks/{id}/edit', name: 'app_workspace_plan_tasks_edit')]
-    public function edit(Onboardingtask $task, Request $request, EntityManagerInterface $entityManager, ViewerContext $viewerContext): Response|RedirectResponse
+    public function edit(Onboardingtask $task, Request $request, EntityManagerInterface $entityManager, ViewerContext $viewerContext, AttachmentUploadConfiguration $attachmentUploadConfiguration): Response|RedirectResponse
     {
         if ($redirect = $this->redirectForArea($request, $viewerContext)) {
             return $redirect;
@@ -143,6 +192,7 @@ final class OnboardingTaskController extends AbstractController
             'page_title' => $limitedEditor ? 'Update Task Progress' : 'Edit Task',
             'limited_editor' => $limitedEditor,
             'task' => $task,
+            'attachment_upload' => $this->buildAttachmentUploadViewData($attachmentUploadConfiguration),
         ]);
     }
 
@@ -202,5 +252,57 @@ final class OnboardingTaskController extends AbstractController
     private function planTasksRoute(Request $request): string
     {
         return $this->isAdminArea($request) ? 'app_admin_plan_tasks' : 'app_workspace_plan_tasks';
+    }
+
+    /**
+     * @return array{enabled: bool, provider: string, cloud_name: string, unsigned_preset: string, upload_url: string}
+     */
+    private function buildAttachmentUploadViewData(AttachmentUploadConfiguration $attachmentUploadConfiguration): array
+    {
+        $provider = $attachmentUploadConfiguration->isEnabled() ? 'cloudinary' : 'local';
+
+        return $attachmentUploadConfiguration->toViewData() + [
+            'enabled' => true,
+            'provider' => $provider,
+            'upload_url' => $this->generateUrl('app_task_attachment_upload'),
+        ];
+    }
+
+    /**
+     * @param Onboardingtask[] $tasks
+     * @return array{total: int, completed: int, in_progress: int, blocked: int, attachments: int}
+     */
+    private function buildTaskMetrics(array $tasks): array
+    {
+        $completed = 0;
+        $inProgress = 0;
+        $blocked = 0;
+        $attachments = 0;
+
+        foreach ($tasks as $task) {
+            if (Onboardingtask::STATUS_COMPLETED === $task->getStatus()) {
+                ++$completed;
+            }
+
+            if (Onboardingtask::STATUS_IN_PROGRESS === $task->getStatus()) {
+                ++$inProgress;
+            }
+
+            if (Onboardingtask::STATUS_BLOCKED === $task->getStatus()) {
+                ++$blocked;
+            }
+
+            if ($task->hasAttachment()) {
+                ++$attachments;
+            }
+        }
+
+        return [
+            'total' => \count($tasks),
+            'completed' => $completed,
+            'in_progress' => $inProgress,
+            'blocked' => $blocked,
+            'attachments' => $attachments,
+        ];
     }
 }

@@ -1,0 +1,73 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Onboarding Plan{% endblock %}
+
+{% block body %}
+<div class="home-wrap">
+    <div class="card home-card public-qr-card">
+        <div class="page-header">
+            <p class="record-eyebrow">Hirely Mobile View</p>
+            <h1 class="page-title">Onboarding Plan #{{ plan.planId }}</h1>
+            <p class="muted-text">Assigned to {{ plan.user.firstName }} {{ plan.user.lastName }}</p>
+        </div>
+
+        <div class="explorer-metrics">
+            <div class="explorer-metric-card">
+                <span class="explorer-metric-label">Status</span>
+                <strong class="explorer-metric-value">{{ plan.status|replace({'_': ' '})|title }}</strong>
+            </div>
+            <div class="explorer-metric-card">
+                <span class="explorer-metric-label">Deadline</span>
+                <strong class="explorer-metric-value">{{ plan.deadline ? plan.deadline|date('Y-m-d') : 'No deadline' }}</strong>
+            </div>
+            <div class="explorer-metric-card">
+                <span class="explorer-metric-label">Tasks</span>
+                <strong class="explorer-metric-value">{{ tasks|length }}</strong>
+            </div>
+        </div>
+
+        {% if tasks is not empty %}
+            <div class="record-grid">
+                {% for task in tasks %}
+                    <article class="record-card">
+                        <div class="record-card-top">
+                            <div>
+                                <p class="record-eyebrow">Task #{{ task.taskId }}</p>
+                                <h2 class="record-title">{{ task.title ?: 'Untitled task' }}</h2>
+                            </div>
+                            <span class="status-pill">{{ task.status|replace({'_': ' '})|title }}</span>
+                        </div>
+
+                        <p class="record-description">{{ task.description ?: 'No description added for this task yet.' }}</p>
+
+                        <div class="record-meta">
+                            <div class="record-meta-item">
+                                <span class="record-meta-label">Deadline</span>
+                                <span class="record-meta-value">{{ task.deadline ? task.deadline|date('Y-m-d') : 'No deadline' }}</span>
+                            </div>
+                            <div class="record-meta-item">
+                                <span class="record-meta-label">Attachment</span>
+                                <span class="record-meta-value">{{ task.hasAttachment ? task.attachmentLabel : 'No attachment' }}</span>
+                            </div>
+                        </div>
+
+                        {% if task.hasAttachment %}
+                            {% include 'shared/_attachment_preview.html.twig' with {
+                                task: task,
+                                preview_class: 'attachment-preview'
+                            } only %}
+                            <a href="{{ task.filePath }}" target="_blank" rel="noreferrer" class="attachment-link">Open file</a>
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state-card">
+                <p class="record-eyebrow">No tasks yet</p>
+                <h2 class="record-title">This onboarding plan has no tasks yet.</h2>
+                <p class="muted-text">When tasks are added, they will appear here with any linked attachments.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

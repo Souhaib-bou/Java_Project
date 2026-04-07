@@ -21,7 +21,7 @@ class OnboardingplanRepository extends ServiceEntityRepository
     /**
      * @return Onboardingplan[]
      */
-    public function findVisibleFor(User $viewer, ?string $search = null, bool $caseSensitive = false): array
+    public function findVisibleFor(User $viewer, ?string $search = null, bool $caseSensitive = false, array $filters = []): array
     {
         $builder = $this->createQueryBuilder('plan')
             ->leftJoin('plan.user', 'user')
@@ -35,8 +35,22 @@ class OnboardingplanRepository extends ServiceEntityRepository
         }
 
         $this->applySearch($builder, $search, $caseSensitive);
+        $this->applyFilters($builder, $filters);
+        $this->applySorting($builder, (string) ($filters['sort'] ?? 'newest'));
 
         return $builder->getQuery()->getResult();
+    }
+
+    public function findOneByQrToken(string $token): ?Onboardingplan
+    {
+        return $this->createQueryBuilder('plan')
+            ->leftJoin('plan.user', 'user')
+            ->leftJoin('plan.onboardingtasks', 'task')
+            ->addSelect('user', 'task')
+            ->andWhere('plan.qr_token = :token')
+            ->setParameter('token', trim($token))
+            ->getQuery()
+            ->getOneOrNullResult();
     }
 
     private function applySearch(QueryBuilder $builder, ?string $search, bool $caseSensitive): void
@@ -90,6 +104,68 @@ class OnboardingplanRepository extends ServiceEntityRepository
         }
 
         return sprintf('LOWER(%s) LIKE :%s', $fullNameExpression, $parameterName);
+    }
+
+    private function applyFilters(QueryBuilder $builder, array $filters): void
+    {
+        $status = trim((string) ($filters['status'] ?? ''));
+        if ('' !== $status) {
+            $builder
+                ->andWhere('plan.status = :status')
+                ->setParameter('status', $status);
+        }
+
+        if (!empty($filters['overdue_only'])) {
+            $builder
+                ->andWhere('plan.deadline IS NOT NULL')
+                ->andWhere('plan.deadline < :today')
+                ->andWhere('plan.status != :completedStatus')
+                ->setParameter('today', new \DateTimeImmutable('today'))
+                ->setParameter('completedStatus', Onboardingplan::STATUS_COMPLETED);
+        }
+    }
+
+    private function applySorting(QueryBuilder $builder, string $sort): void
+    {
+        switch ($sort) {
+            case 'deadline':
+                $builder
+                    ->resetDQLPart('orderBy')
+                    ->addOrderBy('CASE WHEN plan.deadline IS NULL THEN 1 ELSE 0 END', 'ASC')
+                    ->addOrderBy('plan.deadline', 'ASC')
+                    ->addOrderBy('plan.planId', 'DESC');
+                break;
+
+            case 'status':
+                $builder
+                    ->resetDQLPart('orderBy')
+                    ->addOrderBy('plan.status', 'ASC')
+                    ->addOrderBy('plan.deadline', 'ASC')
+                    ->addOrderBy('plan.planId', 'DESC');
+                break;
+
+            case 'user':
+                $builder
+                    ->resetDQLPart('orderBy')
+                    ->addOrderBy('user.first_name', 'ASC')
+                    ->addOrderBy('user.last_name', 'ASC')
+                    ->addOrderBy('plan.planId', 'DESC');
+                break;
+
+            case 'completion':
+                $builder
+                    ->resetDQLPart('orderBy')
+                    ->addOrderBy('plan.status', 'DESC')
+                    ->addOrderBy('plan.planId', 'DESC');
+                break;
+
+            case 'newest':
+            default:
+                $builder
+                    ->resetDQLPart('orderBy')
+                    ->addOrderBy('plan.planId', 'DESC');
+                break;
+        }
     }
 
     //    /**

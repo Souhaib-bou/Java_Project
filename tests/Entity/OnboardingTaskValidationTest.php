@@ -46,7 +46,7 @@ class OnboardingTaskValidationTest extends TestCase
         $task->setDescription('Prepare the checklist, documents, and first-day tasks.');
         $task->setStatus(Onboardingtask::STATUS_NOT_STARTED);
         $task->setDeadline(new DateTimeImmutable('tomorrow'));
-        $task->setFilePath('resumes/onboarding-checklist.pdf');
+        $task->setFilePath('https://res.cloudinary.com/hirely-demo/image/upload/onboarding-checklist.pdf');
 
         $violations = $this->validator->validate($task);
 

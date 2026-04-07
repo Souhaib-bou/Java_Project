@@ -5,6 +5,7 @@
 {% set admin_area = app.request.attributes.get('_route') starts with 'app_admin' %}
 {% set plans_route = admin_area ? 'app_admin_plans' : 'app_workspace_plans' %}
 {% set tasks_route = admin_area ? 'app_admin_plan_tasks' : 'app_workspace_plan_tasks' %}
+{% set public_qr_url = public_qr_base_url ~ path('app_public_plan_qr', {token: plan.qrToken}) %}
 
 {% block admin_content %}
 <div class="page-header">
@@ -15,7 +16,7 @@
 <div class="card qr-card">
     <div class="qr-preview">
         <img
-            src="https://api.qrserver.com/v1/create-qr-code/?size=260x260&data={{ plan.qrToken|url_encode }}"
+            src="https://api.qrserver.com/v1/create-qr-code/?size=260x260&data={{ public_qr_url|url_encode }}"
             alt="QR code for onboarding plan {{ plan.planId }}"
             class="qr-image"
         >
@@ -24,7 +25,7 @@
     <div class="qr-details">
         <p class="record-eyebrow">QR Token</p>
         <h2 class="section-title">Ready to share</h2>
-        <p class="muted-text">This token is generated server-side when missing and can be used to identify the onboarding plan.</p>
+        <p class="muted-text">This QR now opens a public token-based page showing the plan details, task list, and attachment links for mobile viewing.</p>
 
         <div class="record-meta">
             <div class="record-meta-item">
@@ -39,11 +40,16 @@
                 <span class="record-meta-label">Token</span>
                 <span class="record-meta-value">{{ plan.qrToken }}</span>
             </div>
+            <div class="record-meta-item" style="grid-column: 1 / -1;">
+                <span class="record-meta-label">Mobile URL</span>
+                <span class="record-meta-value">{{ public_qr_url }}</span>
+            </div>
         </div>
 
         <div class="actions-cell record-actions">
             <a href="{{ path(plans_route) }}" class="btn-secondary">Back to Plans</a>
             <a href="{{ path(tasks_route, {id: plan.planId}) }}" class="btn-primary">Open Tasks</a>
+            <a href="{{ public_qr_url }}" target="_blank" rel="noreferrer" class="btn-secondary">Open Public View</a>
         </div>
     </div>
 </div>

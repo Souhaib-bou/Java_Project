@@ -73,6 +73,10 @@ class Onboardingtask
     private ?\DateTimeInterface $deadline = null;
 
     #[ORM\Column(name: 'filePath', type: 'string', nullable: true)]
+    #[Assert\Url(
+        protocols: ['http', 'https'],
+        message: 'Please provide a valid attachment link.'
+    )]
     #[Assert\Length(
         max: 255,
         maxMessage: 'The file path cannot be longer than {{ limit }} characters.'
@@ -218,6 +222,51 @@ class Onboardingtask
         $this->content_type = null;
 
         return $this;
+    }
+
+    public function hasAttachment(): bool
+    {
+        return null !== $this->filePath && '' !== trim($this->filePath);
+    }
+
+    public function getAttachmentLabel(): string
+    {
+        if ($this->original_file_name && '' !== trim($this->original_file_name)) {
+            return $this->original_file_name;
+        }
+
+        if ($this->filePath && '' !== trim($this->filePath)) {
+            $path = parse_url($this->filePath, \PHP_URL_PATH);
+            if (\is_string($path) && '' !== trim($path)) {
+                return basename($path);
+            }
+        }
+
+        return 'Attachment';
+    }
+
+    public function getAttachmentPreviewKind(): string
+    {
+        $contentType = strtolower((string) $this->content_type);
+        $extension = strtolower(pathinfo($this->getAttachmentLabel(), \PATHINFO_EXTENSION));
+
+        if (str_starts_with($contentType, 'image/') || \in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'], true)) {
+            return 'image';
+        }
+
+        if ('application/pdf' === $contentType || 'pdf' === $extension) {
+            return 'pdf';
+        }
+
+        if (str_starts_with($contentType, 'video/') || \in_array($extension, ['mp4', 'webm', 'mov', 'avi', 'mkv'], true)) {
+            return 'video';
+        }
+
+        if (str_starts_with($contentType, 'audio/') || \in_array($extension, ['mp3', 'wav', 'ogg', 'm4a'], true)) {
+            return 'audio';
+        }
+
+        return 'file';
     }
 
     public static function getStatusChoices(): array

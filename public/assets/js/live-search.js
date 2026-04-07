@@ -30,18 +30,15 @@
 
         const buildUrl = () => {
             const url = new URL(form.action, window.location.origin);
-            const searchTerm = input.value.trim();
+            const formData = new FormData(form);
 
-            if (searchTerm) {
-                url.searchParams.set('q', searchTerm);
-            } else {
-                url.searchParams.delete('q');
-            }
-
-            if ('1' === caseSensitiveField.value) {
-                url.searchParams.set('case_sensitive', '1');
-            } else {
-                url.searchParams.delete('case_sensitive');
+            url.search = '';
+            for (const [key, value] of formData.entries()) {
+                const normalizedValue = typeof value === 'string' ? value.trim() : value;
+                if ('' === normalizedValue) {
+                    continue;
+                }
+                url.searchParams.append(key, normalizedValue);
             }
 
             return url;
@@ -111,9 +108,29 @@
         });
 
         clearButton.addEventListener('click', () => {
-            input.value = '';
+            form.querySelectorAll('input, select, textarea').forEach((element) => {
+                if (element === caseSensitiveField) {
+                    element.value = '0';
+                    return;
+                }
+
+                if ('checkbox' === element.type || 'radio' === element.type) {
+                    element.checked = false;
+                    return;
+                }
+
+                if ('hidden' !== element.type) {
+                    element.value = '';
+                }
+            });
+
             input.focus();
+            syncToggleState();
             renderResults();
+        });
+
+        form.querySelectorAll('select, input[type="checkbox"]').forEach((element) => {
+            element.addEventListener('change', renderResults);
         });
     });
 })();

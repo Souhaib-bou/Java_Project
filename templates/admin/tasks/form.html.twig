@@ -17,9 +17,6 @@
     {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
         {{ form_errors(form) }}
         {% if limited_editor and task is defined %}
-            <div class="permission-hint">
-                <strong>Candidate mode:</strong> only task status and attachment can be updated from this screen.
-            </div>
             <div class="record-meta" style="margin-bottom: 16px;">
                 <div class="record-meta-item">
                     <span class="record-meta-label">Title</span>
@@ -36,7 +33,71 @@
             {% if form.description is defined %}{{ form_row(form.description) }}{% endif %}
             {{ form_row(form.status) }}
             {% if form.deadline is defined %}{{ form_row(form.deadline) }}{% endif %}
-            {{ form_row(form.filePath) }}
+
+            <section
+                class="attachment-uploader"
+                data-cloudinary-upload
+                data-cloudinary-enabled="{{ attachment_upload.enabled ? 'true' : 'false' }}"
+                data-cloudinary-provider="{{ attachment_upload.provider }}"
+                data-cloudinary-cloud-name="{{ attachment_upload.cloud_name }}"
+                data-cloudinary-unsigned-preset="{{ attachment_upload.unsigned_preset }}"
+                data-cloudinary-upload-url="{{ attachment_upload.upload_url }}"
+            >
+                <div class="attachment-uploader-header">
+                    <div>
+                        <p class="record-eyebrow">Task Attachment</p>
+                        <h2 class="section-title">Upload supporting proof</h2>
+                        <p class="muted-text">
+                            {{ limited_editor
+                                ? 'Update the file linked to this task.'
+                                : 'Upload a file and keep it attached directly to this task.'
+                            }}
+                        </p>
+                    </div>
+                </div>
+
+                <div class="attachment-panel">
+                    <div class="attachment-input-row">
+                        <input type="file" class="attachment-file-input" data-cloudinary-file-input>
+                        <button type="button" class="btn-secondary" data-cloudinary-upload-button>Upload Attachment</button>
+                        <button type="button" class="btn-danger" data-cloudinary-clear-button>Remove Attachment</button>
+                    </div>
+
+                    <p class="attachment-status muted-text" data-cloudinary-status>
+                        {% if task.hasAttachment %}
+                            Attachment ready: {{ task.attachmentLabel }}
+                        {% elseif attachment_upload.provider == 'cloudinary' %}
+                            Select any file from your device to attach it.
+                        {% else %}
+                            Select any file from your device to attach it.
+                        {% endif %}
+                    </p>
+
+                    <div class="attachment-current{% if not task.hasAttachment %} empty{% endif %}" data-cloudinary-current>
+                        {% if task.hasAttachment %}
+                            <div class="attachment-current-body">
+                                {% include 'shared/_attachment_preview.html.twig' with {
+                                    task: task,
+                                    preview_class: 'attachment-preview-inline'
+                                } only %}
+                                <div class="attachment-current-meta">
+                                    <span class="record-meta-value" data-cloudinary-name>{{ task.attachmentLabel }}</span>
+                                    <a href="{{ task.filePath }}" target="_blank" rel="noreferrer" class="attachment-link" data-cloudinary-link>
+                                        Open file
+                                    </a>
+                                </div>
+                            </div>
+                        {% else %}
+                            <span class="muted-text" data-cloudinary-name>No attachment uploaded yet.</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </section>
+
+            {{ form_widget(form.filePath, {attr: {'data-cloudinary-file-path': ''}}) }}
+            {{ form_widget(form.cloudinaryPublicId, {attr: {'data-cloudinary-public-id': ''}}) }}
+            {{ form_widget(form.originalFileName, {attr: {'data-cloudinary-original-name': ''}}) }}
+            {{ form_widget(form.contentType, {attr: {'data-cloudinary-content-type': ''}}) }}
         </div>
 
         <div style="margin-top: 20px; display:flex; gap:12px;">

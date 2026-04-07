@@ -6,6 +6,7 @@ use App\Entity\Onboardingtask;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -46,10 +47,20 @@ class OnboardingTaskType extends AbstractType
             ]);
         }
 
-        $builder->add('filePath', TextType::class, [
-            'label' => 'Attachment URL',
+        $builder->add('filePath', HiddenType::class, [
             'required' => false,
-            'help' => 'Leave empty to remove the current attachment and clear its stored metadata.',
+        ]);
+
+        $builder->add('cloudinaryPublicId', HiddenType::class, [
+            'required' => false,
+        ]);
+
+        $builder->add('originalFileName', HiddenType::class, [
+            'required' => false,
+        ]);
+
+        $builder->add('contentType', HiddenType::class, [
+            'required' => false,
         ]);
     }
 

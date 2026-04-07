@@ -22,7 +22,7 @@ class OnboardingtaskRepository extends ServiceEntityRepository
     /**
      * @return Onboardingtask[]
      */
-    public function findByPlan(Onboardingplan $plan, ?string $search = null, bool $caseSensitive = false): array
+    public function findByPlan(Onboardingplan $plan, ?string $search = null, bool $caseSensitive = false, array $filters = []): array
     {
         $builder = $this->createQueryBuilder('task')
             ->andWhere('task.plan = :plan')
@@ -30,6 +30,8 @@ class OnboardingtaskRepository extends ServiceEntityRepository
             ->orderBy('task.taskId', 'DESC');
 
         $this->applySearch($builder, $search, $caseSensitive);
+        $this->applyFilters($builder, $filters);
+        $this->applySorting($builder, (string) ($filters['sort'] ?? 'newest'));
 
         return $builder->getQuery()->getResult();
     }
@@ -37,7 +39,7 @@ class OnboardingtaskRepository extends ServiceEntityRepository
     /**
      * @return Onboardingtask[]
      */
-    public function findVisibleFor(User $viewer, ?string $search = null, bool $caseSensitive = false): array
+    public function findVisibleFor(User $viewer, ?string $search = null, bool $caseSensitive = false, array $filters = []): array
     {
         $builder = $this->createQueryBuilder('task')
             ->leftJoin('task.plan', 'plan')
@@ -52,6 +54,8 @@ class OnboardingtaskRepository extends ServiceEntityRepository
         }
 
         $this->applySearch($builder, $search, $caseSensitive);
+        $this->applyFilters($builder, $filters);
+        $this->applySorting($builder, (string) ($filters['sort'] ?? 'newest'));
 
         return $builder->getQuery()->getResult();
     }
@@ -94,6 +98,57 @@ class OnboardingtaskRepository extends ServiceEntityRepository
         }
 
         return sprintf('LOWER(COALESCE(%s, \'\')) LIKE :%s', $field, $parameterName);
+    }
+
+    private function applyFilters(QueryBuilder $builder, array $filters): void
+    {
+        $status = trim((string) ($filters['status'] ?? ''));
+        if ('' !== $status) {
+            $builder
+                ->andWhere('task.status = :taskStatus')
+                ->setParameter('taskStatus', $status);
+        }
+
+        if (!empty($filters['attachment_only'])) {
+            $builder
+                ->andWhere('task.filePath IS NOT NULL')
+                ->andWhere('task.filePath != :emptyFilePath')
+                ->setParameter('emptyFilePath', '');
+        }
+    }
+
+    private function applySorting(QueryBuilder $builder, string $sort): void
+    {
+        switch ($sort) {
+            case 'title':
+                $builder
+                    ->resetDQLPart('orderBy')
+                    ->addOrderBy('task.title', 'ASC')
+                    ->addOrderBy('task.taskId', 'DESC');
+                break;
+
+            case 'status':
+                $builder
+                    ->resetDQLPart('orderBy')
+                    ->addOrderBy('task.status', 'ASC')
+                    ->addOrderBy('task.taskId', 'DESC');
+                break;
+
+            case 'deadline':
+                $builder
+                    ->resetDQLPart('orderBy')
+                    ->addOrderBy('CASE WHEN task.deadline IS NULL THEN 1 ELSE 0 END', 'ASC')
+                    ->addOrderBy('task.deadline', 'ASC')
+                    ->addOrderBy('task.taskId', 'DESC');
+                break;
+
+            case 'newest':
+            default:
+                $builder
+                    ->resetDQLPart('orderBy')
+                    ->addOrderBy('task.taskId', 'DESC');
+                break;
+        }
     }
 
     //    /**
